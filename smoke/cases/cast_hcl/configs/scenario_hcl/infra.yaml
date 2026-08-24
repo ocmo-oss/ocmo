@@ -1,0 +1,11 @@
+_ocmo:
+  cast:
+    format: hcl
+    options:
+      sort_keys: true
+
+region: us-east-1
+count: 3
+tags:
+  env: prod
+  owner: infra

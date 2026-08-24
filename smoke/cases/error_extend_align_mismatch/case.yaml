@@ -1,0 +1,6 @@
+id: error_extend_align_mismatch
+description: extend align with mismatched config count and by-list length returns 422
+resolve_path: scenario_mismatch/root
+expect:
+  status: 422
+  error_substring: align

@@ -1,0 +1,6 @@
+_ocmo:
+  extend:
+    configs:
+      - ./loop_a
+    mode: accumulate
+hint: from-b

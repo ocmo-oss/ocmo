@@ -1,0 +1,11 @@
+id: render_align
+description: render.align pairs each template 1-to-1 with a corresponding by element
+resolve_path: scenario_ralign/app
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: svc-frontend.conf.j2
+      file: frontend.conf
+    - name: svc-backend.conf.j2
+      file: backend.conf

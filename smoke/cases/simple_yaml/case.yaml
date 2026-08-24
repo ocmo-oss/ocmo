@@ -1,0 +1,8 @@
+id: simple_yaml
+description: Plain config resolves as YAML without _ocmo instructions
+resolve_path: scenario1/simple
+expect:
+  status: 200
+  items:
+    - name: simple
+      file: simple.yaml

@@ -1,0 +1,12 @@
+_ocmo:
+  extend:
+    mode: align
+    by: .patches
+    configs:
+      - path: ./base-a
+        key: .defaults
+      - path: ./base-b
+        key: .defaults
+patches:
+  - tier: premium
+  - tier: standard

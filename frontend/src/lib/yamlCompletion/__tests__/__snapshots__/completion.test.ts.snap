@@ -1,0 +1,357 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`actions enum array items > suggests action enum values on empty array item line 1`] = `
+[
+  {
+    "insertText": ""config:read"",
+    "kind": 19,
+    "label": "config:read",
+    "sortText": "!000:config:read",
+  },
+  {
+    "insertText": ""config:write"",
+    "kind": 19,
+    "label": "config:write",
+    "sortText": "!001:config:write",
+  },
+  {
+    "insertText": ""config:delete"",
+    "kind": 19,
+    "label": "config:delete",
+    "sortText": "!002:config:delete",
+  },
+  {
+    "insertText": ""config:resolve"",
+    "kind": 19,
+    "label": "config:resolve",
+    "sortText": "!003:config:resolve",
+  },
+  {
+    "insertText": ""config:tag"",
+    "kind": 19,
+    "label": "config:tag",
+    "sortText": "!004:config:tag",
+  },
+  {
+    "insertText": ""config:describe"",
+    "kind": 19,
+    "label": "config:describe",
+    "sortText": "!005:config:describe",
+  },
+  {
+    "insertText": ""config:audit"",
+    "kind": 19,
+    "label": "config:audit",
+    "sortText": "!006:config:audit",
+  },
+  {
+    "insertText": ""template:read"",
+    "kind": 19,
+    "label": "template:read",
+    "sortText": "!007:template:read",
+  },
+  {
+    "insertText": ""template:write"",
+    "kind": 19,
+    "label": "template:write",
+    "sortText": "!008:template:write",
+  },
+  {
+    "insertText": ""template:delete"",
+    "kind": 19,
+    "label": "template:delete",
+    "sortText": "!009:template:delete",
+  },
+  {
+    "insertText": ""template:tag"",
+    "kind": 19,
+    "label": "template:tag",
+    "sortText": "!010:template:tag",
+  },
+  {
+    "insertText": ""template:describe"",
+    "kind": 19,
+    "label": "template:describe",
+    "sortText": "!011:template:describe",
+  },
+  {
+    "insertText": ""template:audit"",
+    "kind": 19,
+    "label": "template:audit",
+    "sortText": "!012:template:audit",
+  },
+  {
+    "insertText": ""resolver:read"",
+    "kind": 19,
+    "label": "resolver:read",
+    "sortText": "!013:resolver:read",
+  },
+  {
+    "insertText": ""resolver:write"",
+    "kind": 19,
+    "label": "resolver:write",
+    "sortText": "!014:resolver:write",
+  },
+  {
+    "insertText": ""resolver:delete"",
+    "kind": 19,
+    "label": "resolver:delete",
+    "sortText": "!015:resolver:delete",
+  },
+  {
+    "insertText": ""resolver:audit"",
+    "kind": 19,
+    "label": "resolver:audit",
+    "sortText": "!016:resolver:audit",
+  },
+  {
+    "insertText": ""secret:read"",
+    "kind": 19,
+    "label": "secret:read",
+    "sortText": "!017:secret:read",
+  },
+  {
+    "insertText": ""secret:write"",
+    "kind": 19,
+    "label": "secret:write",
+    "sortText": "!018:secret:write",
+  },
+  {
+    "insertText": ""secret:delete"",
+    "kind": 19,
+    "label": "secret:delete",
+    "sortText": "!019:secret:delete",
+  },
+  {
+    "insertText": ""secret:resolve"",
+    "kind": 19,
+    "label": "secret:resolve",
+    "sortText": "!020:secret:resolve",
+  },
+  {
+    "insertText": ""secret:tag"",
+    "kind": 19,
+    "label": "secret:tag",
+    "sortText": "!021:secret:tag",
+  },
+  {
+    "insertText": ""secret:describe"",
+    "kind": 19,
+    "label": "secret:describe",
+    "sortText": "!022:secret:describe",
+  },
+  {
+    "insertText": ""secret:audit"",
+    "kind": 19,
+    "label": "secret:audit",
+    "sortText": "!023:secret:audit",
+  },
+  {
+    "insertText": ""lock:read"",
+    "kind": 19,
+    "label": "lock:read",
+    "sortText": "!024:lock:read",
+  },
+  {
+    "insertText": ""lock:write"",
+    "kind": 19,
+    "label": "lock:write",
+    "sortText": "!025:lock:write",
+  },
+  {
+    "insertText": ""lock:delete"",
+    "kind": 19,
+    "label": "lock:delete",
+    "sortText": "!026:lock:delete",
+  },
+  {
+    "insertText": ""folder:describe"",
+    "kind": 19,
+    "label": "folder:describe",
+    "sortText": "!027:folder:describe",
+  },
+  {
+    "insertText": ""folder:audit"",
+    "kind": 19,
+    "label": "folder:audit",
+    "sortText": "!028:folder:audit",
+  },
+  {
+    "insertText": ""config:*"",
+    "kind": 19,
+    "label": "config:*",
+    "sortText": "!029:config:*",
+  },
+  {
+    "insertText": ""template:*"",
+    "kind": 19,
+    "label": "template:*",
+    "sortText": "!030:template:*",
+  },
+  {
+    "insertText": ""resolver:*"",
+    "kind": 19,
+    "label": "resolver:*",
+    "sortText": "!031:resolver:*",
+  },
+  {
+    "insertText": ""secret:*"",
+    "kind": 19,
+    "label": "secret:*",
+    "sortText": "!032:secret:*",
+  },
+  {
+    "insertText": ""lock:*"",
+    "kind": 19,
+    "label": "lock:*",
+    "sortText": "!033:lock:*",
+  },
+  {
+    "insertText": ""*:read"",
+    "kind": 19,
+    "label": "*:read",
+    "sortText": "!034:*:read",
+  },
+  {
+    "insertText": ""*:write"",
+    "kind": 19,
+    "label": "*:write",
+    "sortText": "!035:*:write",
+  },
+  {
+    "insertText": ""*:delete"",
+    "kind": 19,
+    "label": "*:delete",
+    "sortText": "!036:*:delete",
+  },
+  {
+    "insertText": ""*:resolve"",
+    "kind": 19,
+    "label": "*:resolve",
+    "sortText": "!037:*:resolve",
+  },
+  {
+    "insertText": ""*:tag"",
+    "kind": 19,
+    "label": "*:tag",
+    "sortText": "!038:*:tag",
+  },
+  {
+    "insertText": ""*:describe"",
+    "kind": 19,
+    "label": "*:describe",
+    "sortText": "!039:*:describe",
+  },
+  {
+    "insertText": ""*:audit"",
+    "kind": 19,
+    "label": "*:audit",
+    "sortText": "!040:*:audit",
+  },
+  {
+    "insertText": ""*:*"",
+    "kind": 19,
+    "label": "*:*",
+    "sortText": "!041:*:*",
+  },
+]
+`;
+
+exports[`actors[].kind discriminator > offers discriminator after typing partial "- k" 1`] = `
+[
+  {
+    "insertText": "kind: User
+  claims:
+    key: \${1:alice@example.com}",
+    "kind": 14,
+    "label": "kind: User · required fields",
+    "sortText": "z0::0",
+  },
+  {
+    "insertText": "kind: Resolver
+  path: \${1:deploy/prod}",
+    "kind": 14,
+    "label": "kind: Resolver · required fields",
+    "sortText": "z0::1",
+  },
+]
+`;
+
+exports[`actors[].kind discriminator > offers kind discriminator suggestions on empty array item line 1`] = `
+[
+  {
+    "insertText": "kind: User",
+    "kind": 19,
+    "label": "kind: User",
+    "sortText": "!000:User",
+  },
+  {
+    "insertText": "kind: Resolver",
+    "kind": 19,
+    "label": "kind: Resolver",
+    "sortText": "!001:Resolver",
+  },
+]
+`;
+
+exports[`completionContext on bare dash line > recognises "      -" (no trailing space) as array-item context 1`] = `"array-item"`;
+
+exports[`enclosingArrayItemKeyLineIndent > returns indent of the immediately enclosing array item 1`] = `6`;
+
+exports[`parameter placeholder completion > suggests parameter names when cursor is on the ! character 1`] = `
+[
+  {
+    "insertText": "'{!my_env}'",
+    "kind": 5,
+    "label": "my_env",
+    "sortText": "!000:my_env",
+  },
+]
+`;
+
+exports[`property keys inside actors[] kind: User > suggests "claims" key under kind: User 1`] = `
+[
+  {
+    "insertText": "claims:
+  key: \${1:alice@example.com}",
+    "kind": 14,
+    "label": "claims (kind: User)",
+    "sortText": "0:",
+  },
+  {
+    "insertText": "path: \${1:deploy/prod}",
+    "kind": 14,
+    "label": "path (kind: Resolver)",
+    "sortText": "0:",
+  },
+]
+`;
+
+exports[`shouldAutoTriggerYamlSuggest > does not trigger on an empty first line 1`] = `true`;
+
+exports[`top-level property keys > suggests "policies" on empty document 1`] = `
+[
+  {
+    "insertText": "policies:
+  - id: \${1:allow-dev-readers}
+    description: "Allow developers read access to project/dev/**"
+    effect: \${2:Allow}
+    actors:
+      - kind: User
+        claims:
+          key: \${3:alice@example.com}
+    actions:
+      - "config:read"
+    resources:
+      - "project/dev/**"
+    conditions:
+      ip_range:
+        - \${4:10.0.0.0/8}
+      time_of_day:
+        - "09:00-17:30"",
+    "kind": 14,
+    "label": "policies",
+    "sortText": "0:",
+  },
+]
+`;

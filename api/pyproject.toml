@@ -1,0 +1,111 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ocmo-api"
+version = "0.8.19"
+description = "API service for OCMO"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.13"
+authors = [{ name = "OCMO OSS Contributors" }]
+keywords = ["configuration", "yaml", "django", "api", "secrets"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Django :: 6.0",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: System :: Systems Administration",
+]
+dependencies = [
+    "click>=8.1,<9",
+    "cryptography>=46.0.5",
+    "django>=6.0.2",
+    "django-ninja>=1.5.3",
+    "django-tree-queries>=0.23.0",
+    "gunicorn>=23.0.0",
+    "jinja2>=3.1.6",
+    "jsonschema>=4.26.0",
+    "psycopg2>=2.9.11",
+    "pyjwt>=2.11.0",
+    "pyyaml>=6.0.3,<7.0.0",
+    "redis>=5.0.0",
+    "requests>=2.32.5",
+    "ruamel-yaml>=0.19.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/ocmo-oss/ocmo"
+Repository = "https://github.com/ocmo-oss/ocmo"
+Documentation = "https://github.com/ocmo-oss/ocmo/tree/main/api"
+
+[project.scripts]
+ocmo-api = "ocmoapi.cli:cli"
+
+[tool.hatch.build.targets.wheel]
+packages = ["core", "ocmoapi"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"NOTICE" = "NOTICE"
+"LICENSE" = "LICENSE"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.10",
+    "ruff>=0.4",
+    "django-stubs>=5.2",
+    "types-jsonschema>=4.23",
+    "types-PyYAML>=6.0",
+    "types-requests>=2.32",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"core/managers/tree/_common.py" = ["F401"]
+"core/managers/tree/*.py" = ["F403", "F405"]
+"core/schemas/__init__.py" = ["F403", "F405"]
+"core/models/__init__.py" = ["F401"]
+"core/schemas/generic.py" = ["E402"]
+"core/tests/*.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["mypy_django_plugin.main"]
+warn_unused_ignores = true
+check_untyped_defs = false
+disallow_untyped_defs = false
+strict = false
+exclude = ["core/migrations", "core/tests"]
+
+[[tool.mypy.overrides]]
+module = ["core.migrations.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["core.managers.tree.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["core.schemas.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ["tree_queries.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["core.models.namespace"]
+disable_error_code = ["django-manager-missing"]
+
+[tool.django-stubs]
+django_settings_module = "ocmoapi.settings"

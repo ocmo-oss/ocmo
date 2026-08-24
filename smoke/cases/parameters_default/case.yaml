@@ -1,0 +1,8 @@
+id: parameters_default
+description: Projected and dynamic parameters with _ocmo.name substitution
+resolve_path: infra/prod/clusters/eu-cluster
+expect:
+  status: 200
+  items:
+    - name: eu-cluster-prod.conf
+      file: eu-cluster-prod.conf

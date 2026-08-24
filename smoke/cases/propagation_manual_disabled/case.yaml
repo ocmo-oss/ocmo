@@ -1,0 +1,8 @@
+kind: propagation
+id: propagation_manual_disabled
+description: Disabled propagation returns 404 on manual trigger
+source_path: dev/src
+action: propagate
+expect:
+  status: 404
+  error_substring: not configured

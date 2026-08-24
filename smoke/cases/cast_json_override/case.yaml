@@ -1,0 +1,11 @@
+id: cast_json_override
+description: API ?cast=json overrides _ocmo.cast
+resolve_path: scenario5/envapp
+query:
+  cast: json
+  cast_option_indent: "2"
+expect:
+  status: 200
+  items:
+    - name: envapp
+      file: envapp.json

@@ -1,0 +1,8 @@
+id: parameters_projected_path
+description: ".Path[-N] projected parameter extracts a path segment by negative index"
+resolve_path: app/staging/frontend
+expect:
+  status: 200
+  items:
+    - name: frontend
+      file: frontend.yaml

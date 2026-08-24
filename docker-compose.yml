@@ -1,0 +1,136 @@
+# Production compose — application services only.
+#
+# Postgres, Redis, and the OIDC provider are expected to be provisioned separately.
+# Set connection and OIDC variables via environment or an env file before `docker compose up`.
+#
+# Usage:
+#   docker compose up --build
+#
+# Optional RQ worker (requires external Redis):
+#   docker compose --profile worker up --build
+
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    image: ocmo-api:${OCMO_IMAGE_TAG:-latest}
+    container_name: ocmo-api
+    environment:
+      DJANGO_SETTINGS_MODULE: ocmoapi.settings
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-False}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-*}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_HOST: ${POSTGRES_HOST:?set POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      OIDC_DISCOVERY_DOCUMENT_URL: ${OIDC_DISCOVERY_DOCUMENT_URL:?set OIDC_DISCOVERY_DOCUMENT_URL}
+      OIDC_JWKS_URL: ${OIDC_JWKS_URL:?set OIDC_JWKS_URL}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:?set OIDC_CLIENT_ID}
+      OIDC_JWT_AUDIENCES: ${OIDC_JWT_AUDIENCES:?set OIDC_JWT_AUDIENCES}
+      OIDC_ISSUER: ${OIDC_ISSUER:?set OIDC_ISSUER}
+      OIDC_AUTHORIZATION_URL: ${OIDC_AUTHORIZATION_URL:?set OIDC_AUTHORIZATION_URL}
+      OIDC_TOKEN_URL: ${OIDC_TOKEN_URL:?set OIDC_TOKEN_URL}
+      OIDC_SWAGGER_REDIRECT_URL: ${OIDC_SWAGGER_REDIRECT_URL:?set OIDC_SWAGGER_REDIRECT_URL}
+      OIDC_SCOPES: ${OIDC_SCOPES:-openid profile email groups}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-}
+      OCMO_MASTER_KEY: ${OCMO_MASTER_KEY:?set OCMO_MASTER_KEY}
+      OCMO_PUBLIC_URL: ${OCMO_PUBLIC_URL:?set OCMO_PUBLIC_URL}
+      OCMO_RESOLVE_ARTIFACT_DIR: /tmp/ocmo/resolved
+      OCMO_RESOLVE_ARTIFACT_BACKEND: ${OCMO_RESOLVE_ARTIFACT_BACKEND:-fs}
+      OCMO_RESOLVE_CACHE_BACKEND: ${OCMO_RESOLVE_CACHE_BACKEND:-locmem}
+      GIT_SYNC_TEMP_DIR: /tmp/git-sync
+      GIT_SYNC_LOG_DIR: /var/log/ocmo-api/sync
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-4}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
+    volumes:
+      - ocmo_artifacts:/tmp/ocmo/resolved
+      - git_sync_logs:/var/log/ocmo-api/sync
+      - git_sync_temp:/tmp/git-sync
+    restart: unless-stopped
+    networks:
+      - ocmo-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
+    image: ocmo-frontend:${OCMO_IMAGE_TAG:-latest}
+    container_name: ocmo-frontend
+    restart: unless-stopped
+    networks:
+      - ocmo-network
+
+  gateway:
+    build:
+      context: .
+      dockerfile: docker/gateway/Dockerfile
+    image: ocmo-gateway:${OCMO_IMAGE_TAG:-latest}
+    container_name: ocmo-gateway
+    ports:
+      - "${GATEWAY_PORT:-8080}:80"
+    environment:
+      REDIS_HOST: ${REDIS_HOST:-}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+    volumes:
+      - ./docker/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - ocmo_artifacts:/tmp/ocmo/resolved:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ocmo-network
+
+  rq-worker:
+    profiles: ["worker"]
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    image: ocmo-api:${OCMO_IMAGE_TAG:-latest}
+    container_name: ocmo-rq-worker
+    environment:
+      DJANGO_SETTINGS_MODULE: ocmoapi.settings
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?set DJANGO_SECRET_KEY}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_HOST: ${POSTGRES_HOST:?set POSTGRES_HOST}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:?set REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT:-6379}
+      REDIS_DB: ${REDIS_DB:-0}
+      GIT_SYNC_TEMP_DIR: /tmp/git-sync
+      GIT_SYNC_LOG_DIR: /var/log/ocmo-api/sync
+    volumes:
+      - git_sync_logs:/var/log/ocmo-api/sync
+      - git_sync_temp:/tmp/git-sync
+    depends_on:
+      api:
+        condition: service_healthy
+    command: >
+      sh -c "
+        mkdir -p /var/log/ocmo-api/sync /tmp/git-sync &&
+        uv run python manage.py rqworker git_sync default
+      "
+    restart: unless-stopped
+    networks:
+      - ocmo-network
+
+volumes:
+  ocmo_artifacts:
+  git_sync_logs:
+  git_sync_temp:
+
+networks:
+  ocmo-network:
+    driver: bridge

@@ -1,0 +1,7 @@
+_ocmo:
+  parameters:
+    token:
+      type: secret
+      value: secrets/nonexistent-secret@latest
+
+api_token: "{!token}"

@@ -1,0 +1,12 @@
+_ocmo:
+  extend:
+    mode: distribute
+    by: .overlay
+    configs:
+      - path: ./svc-a
+        key: .spec
+      - path: ./svc-b
+        key: .spec
+overlay:
+  replicas: 3
+  env: production

@@ -1,0 +1,7 @@
+[tool.uv.workspace]
+members = ["sdk", "cli"]
+
+# Resolve the CLI's ocmo-sdk dependency from the workspace member during local development.
+# Published wheels declare ocmo-sdk as a normal PyPI dependency (no path/workspace override).
+[tool.uv.sources]
+ocmo-sdk = { workspace = true }

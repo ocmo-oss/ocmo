@@ -1,0 +1,7 @@
+[run]
+omit =
+    ocmo/_generated/*
+    ocmo/_facade_impl.py
+
+[report]
+fail_under = 85

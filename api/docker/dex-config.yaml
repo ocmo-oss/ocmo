@@ -1,0 +1,64 @@
+# The URL the neighbor service and browser will use to find Dex
+# Note: For local debugging, using http://localhost:9000/dex is often easiest
+issuer: http://localhost:8080/dex/
+
+storage:
+  type: sqlite3
+  config:
+    file: "/tmp/dex.db"
+
+web:
+  http: 0.0.0.0:9000
+  allowedOrigins: ['*']
+
+# Enable the internal "Password DB" (Standalone mode)
+enablePasswordDB: true
+
+staticPasswords:
+  - email: "admin@example.com"
+    # bcrypt hash for "password"
+    hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+    username: "admin"
+    userID: "user-001"
+    groups:
+      - "admins"
+      - "developers"
+  - email: "developer@example.com"
+    # bcrypt hash for "password"
+    hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+    username: "dev-user"
+    userID: "user-002"
+    groups:
+      - "developers"
+
+staticClients:
+  - id: ocmo-api
+    redirectURIs:
+      - http://localhost:8080/api/docs/oauth2-redirect.html
+      - http://localhost:8080/login/callback
+      - http://localhost:8080/auth/silent-callback
+      - /device/callback
+      # CLI browser PKCE (ocmo auth login --browser)
+      - http://127.0.0.1:47291/callback
+    name: 'Ocmo API'
+    public: true
+
+  # Confidential client for the Python SDK / CLI (machine-to-machine).
+  # Local Dex (≤ v2.45) supports the password grant; client_credentials lands in Dex ≥ v2.46.
+  # SDK env: OCMO_CLIENT_ID=ocmo-sdk OCMO_CLIENT_SECRET=dev-only-ocmo-sdk-secret
+  #          OCMO_OIDC_GRANT_TYPE=password OCMO_OIDC_USERNAME=admin@example.com OCMO_OIDC_PASSWORD=password
+  - id: ocmo-sdk
+    name: 'OCMO SDK'
+    secret: dev-only-ocmo-sdk-secret
+    redirectURIs:
+      - http://127.0.0.1:1/callback
+      - /device/callback
+
+oauth2:
+  skipApprovalScreen: true # Useful for faster debugging
+  passwordConnector: local
+  grantTypes:
+    - authorization_code
+    - refresh_token
+    - password
+    - urn:ietf:params:oauth:grant-type:device_code

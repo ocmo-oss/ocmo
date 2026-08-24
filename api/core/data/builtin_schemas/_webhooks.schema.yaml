@@ -1,0 +1,145 @@
+_ocmo:
+  is_json_schema: true
+$schema: https://json-schema.org/draft/2020-12/schema
+title: Namespace webhook delivery configuration
+description: Outbound HTTP notifications for namespace events. Each entry is evaluated independently;
+  payloads are HMAC-signed.
+type: object
+additionalProperties: false
+required:
+- webhooks
+properties:
+  webhooks:
+    type: array
+    description: Webhook delivery entries.
+    items:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - enabled
+      - url
+      - events
+      - signature_key
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 100
+          pattern: ^[a-zA-Z][a-zA-Z0-9_-]*$
+          description: Stable identifier unique within this config.
+          examples:
+          - prod-notify
+        enabled:
+          type: boolean
+          description: When false, the entry is skipped without removing it.
+          examples:
+          - true
+        url:
+          type: string
+          minLength: 1
+          maxLength: 2048
+          format: uri
+          description: HTTPS endpoint that receives POST requests.
+          examples:
+          - https://hooks.example.com/ocmo
+        events:
+          type: array
+          minItems: 1
+          description: Event names that trigger delivery for this entry.
+          items:
+            type: string
+            enum:
+            - config.created
+            - config.updated
+            - config.deleted
+            - config.tagged
+            - config.resolved
+            - resolver.created
+            - resolver.updated
+            - secret.created
+            - secret.updated
+            - secret.deleted
+            - secret.tagged
+            - secret.resolved
+            - namespace.updated
+            - lock.created
+            - lock.updated
+            - lock.deleted
+            - propagation.triggered
+            description: Namespace event identifier.
+            examples:
+            - config.updated
+          examples:
+          - - config.updated
+            - config.tagged
+        filter:
+          type: object
+          additionalProperties: false
+          description: Optional narrowing of which item paths fire this webhook.
+          properties:
+            paths:
+              type: array
+              minItems: 1
+              description: Fnmatch globs matched against the event item path. Omit the filter block to
+                receive all subscribed events.
+              items:
+                type: string
+                minLength: 1
+                maxLength: 512
+                format: uri-reference
+                x-ocmo-uri-reference: resource
+                description: Tree path glob (e.g. ``project/**``).
+                examples:
+                - project/**
+                - app/prod/**
+        signature_header:
+          type: string
+          minLength: 1
+          maxLength: 100
+          description: HTTP header carrying the HMAC-SHA256 hex digest.
+          default: X-OCMO-Signature
+          examples:
+          - X-OCMO-Signature
+        signature_key:
+          type: string
+          minLength: 1
+          maxLength: 512
+          description: HMAC signing key literal or ``{!param}`` reference resolved from ``_ocmo.parameters``.
+          examples:
+          - '{!hmac_signing_key}'
+        payload:
+          type: object
+          additionalProperties: true
+          description: Payload shape controls. Set ``preset`` or ``template`` (mutually exclusive).
+          properties:
+            preset:
+              type: string
+              enum:
+              - ocmo
+              - generic_json
+              - slack
+              - teams
+              - discord
+              description: Built-in payload formatter.
+              examples:
+              - ocmo
+            template:
+              type: string
+              minLength: 1
+              description: Jinja2 template rendered to the request body.
+            headers:
+              type: object
+              description: Extra HTTP headers appended to each delivery.
+              additionalProperties:
+                type: string
+                minLength: 1
+    examples:
+    - - id: example
+        enabled: false
+        url: https://example.com/ocmo/webhook
+        events:
+        - config.updated
+        signature_key: '{!hmac_signing_key}'
+        payload:
+          preset: ocmo

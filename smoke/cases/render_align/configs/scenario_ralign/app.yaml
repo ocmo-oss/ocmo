@@ -1,0 +1,13 @@
+_ocmo:
+  render:
+    templates:
+      - scenario_ralign/svc-frontend.conf.j2
+      - scenario_ralign/svc-backend.conf.j2
+    mode: align
+    by: .services
+
+services:
+  - name: webserver
+    port: 80
+  - name: apiserver
+    port: 8080

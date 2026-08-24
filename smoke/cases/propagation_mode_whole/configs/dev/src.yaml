@@ -1,0 +1,10 @@
+_ocmo:
+  propagation:
+    enabled: true
+    trigger: manual
+    mode: whole
+    targets:
+      - dev/tgt
+  cast:
+    format: yaml
+shared: from_source

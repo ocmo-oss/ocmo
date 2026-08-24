@@ -1,0 +1,11 @@
+id: extend_key_align
+description: extend align with key pairs sliced base fragments with by list
+resolve_path: scenario_keyalign/root
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: base-a
+      file: base-a.yaml
+    - name: base-b
+      file: base-b.yaml

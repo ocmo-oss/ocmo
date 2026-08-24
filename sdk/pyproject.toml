@@ -1,0 +1,74 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ocmo-sdk"
+version = "0.8.19"
+description = "Python client SDK for the OCMO REST API"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.11"
+authors = [{ name = "OCMO OSS Contributors" }]
+keywords = ["configuration", "yaml", "api-client", "sdk"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "attrs>=21.3",
+    "httpx>=0.27",
+    "pyjwt>=2.8",
+    "python-dateutil>=2.8",
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ocmo-oss/ocmo"
+Repository = "https://github.com/ocmo-oss/ocmo"
+Documentation = "https://github.com/ocmo-oss/ocmo/tree/main/sdk"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ocmo"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"NOTICE" = "ocmo/NOTICE"
+"LICENSE" = "ocmo/LICENSE"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.10",
+    "pytest>=8.2",
+    "pytest-asyncio>=0.23",
+    "pytest-cov>=5.0",
+    "respx>=0.21",
+    "ruff>=0.4",
+    "openapi-python-client==0.21.*",
+    "click>=8.1.7,<8.2",
+    "types-PyYAML>=6.0",
+]
+
+[tool.ruff]
+line-length = 120
+exclude = ["ocmo/_generated", "ocmo/_facade_impl.py", "ocmo/_facade_meta.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+strict = true
+python_version = "3.11"
+exclude = ["ocmo/_generated", "ocmo/_facade_impl.py", "ocmo/_facade_meta.py"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "--cov=ocmo --cov-report=term-missing --cov-config=.coveragerc"
+
+[tool.coverage.run]
+omit = ["ocmo/_generated/*", "ocmo/_facade_impl.py"]

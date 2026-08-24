@@ -1,0 +1,9 @@
+_ocmo:
+  extend:
+    mode: accumulate
+    configs:
+      - path: ./shared/db
+        as: .persistence.database
+persistence:
+  database:
+    pool_size: 5

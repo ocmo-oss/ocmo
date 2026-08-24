@@ -1,0 +1,7 @@
+_ocmo:
+  propagation:
+    enabled: false
+    trigger: manual
+    targets:
+      - dev/tgt
+key: src

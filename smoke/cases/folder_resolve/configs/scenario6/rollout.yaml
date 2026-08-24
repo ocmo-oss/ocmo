@@ -1,0 +1,11 @@
+_ocmo:
+  extend:
+    configs:
+      - ./svc-a
+      - ./svc-b
+    by: .overlay
+    mode: distribute
+
+overlay:
+  region: eu-west
+  log_level: debug

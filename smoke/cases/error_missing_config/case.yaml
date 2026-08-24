@@ -1,0 +1,5 @@
+id: error_missing_config
+description: resolving a path that does not exist returns 404
+resolve_path: does/not/exist
+expect:
+  status: 404

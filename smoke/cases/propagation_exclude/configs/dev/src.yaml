@@ -1,0 +1,12 @@
+_ocmo:
+  propagation:
+    enabled: true
+    trigger: manual
+    targets:
+      - dev/tgt
+    exclude:
+      - logging.level
+logging:
+  level: debug
+  host: src
+app: src

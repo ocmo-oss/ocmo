@@ -1,0 +1,295 @@
+# Output format manifest — source of truth for OCMO CLI -o/--output behavior.
+#
+# Command keys use space-separated paths: "get namespace", "ls", "resolve".
+# Generated commands use "{action} {resource}" (canonical resource name).
+#
+# Profile ``supported_formats`` and defaults merge into each command entry.
+# Per-command ``table`` / ``wide`` / ``raw`` blocks configure column layout.
+
+profiles:
+  list_wide:
+    supported_formats: [table, wide, json, yaml, name]
+    default_tty: table
+    default_non_tty: yaml
+    name_field: name
+
+  list:
+    supported_formats: [table, json, yaml, name]
+    default_tty: table
+    default_non_tty: yaml
+    name_field: name
+
+  list_versions:
+    supported_formats: [table, wide, json, yaml, name]
+    default_tty: table
+    default_non_tty: yaml
+    name_field: version
+
+  document:
+    supported_formats: [raw, json, yaml, name]
+    default: raw
+    name_field: path
+
+  ls:
+    supported_formats: [table, wide, json, yaml, name, path]
+    default_tty: table
+    default_non_tty: yaml
+    name_field: path
+
+  resolve:
+    supported_formats: [raw, json, yaml, name]
+    default: raw
+    name_field: name
+
+  can_i:
+    supported_formats: [table, json, yaml]
+    default_tty: table
+    default_non_tty: yaml
+
+  schema:
+    supported_formats: [table, json, yaml]
+    default_tty: yaml
+    default_non_tty: yaml
+
+commands:
+  # ── Hand-written ──────────────────────────────────────────────────────────
+
+  ls:
+    profile: ls
+    table:
+      fields: [type, path]
+    wide:
+      fields: [permissions, versions, author, created, updated, type, path]
+
+  resolve:
+    profile: resolve
+    raw:
+      mode: metadata_and_data
+      hide_null_values: true
+
+  can-i:
+    profile: can_i
+
+  whoami:
+    profile: can_i
+    table:
+      fields: "*"
+
+  api-health:
+    profile: list
+    name_field: status
+
+  schema:
+    supported_formats: [json, yaml]
+    default_tty: yaml
+    default_non_tty: yaml
+
+  auth status:
+    profile: schema
+
+  edit config:
+    profile: document
+
+  edit template:
+    profile: document
+
+  edit secret:
+    profile: document
+
+  edit resolver:
+    profile: document
+
+  # ── Generated: get ────────────────────────────────────────────────────────
+
+  get namespace:
+    profile: list_wide
+    table:
+      fields: [name, description]
+    wide:
+      fields: [name, description, permissions_tag, webhooks_tag, git_sync_tag, created_at, updated_at]
+
+  get globalpermission:
+    profile: list_wide
+    name_field: id
+    table:
+      fields: [id, namespace, position]
+    wide:
+      fields: [id, namespace, position, read, write, delete, audit]
+
+  get lock:
+    profile: list_wide
+    name_field: path
+    table:
+      fields: [path, reason, locked_by]
+    wide:
+      fields: "*"
+
+  get audit:
+    profile: list_wide
+    name_field: id
+    table:
+      fields: [occurred_at, id, operation, object_id]
+    wide:
+      fields: [occurred_at, id, operation, object_id, auth_email, object_type, object_version, error]
+
+  get cast:
+    profile: schema
+
+  get cast list:
+    profile: list
+    name_field: format
+    table:
+      fields: [format]
+
+  get version:
+    profile: list_versions
+    table:
+      fields: [version, tags, updated_at]
+    wide:
+      fields: "*"
+
+  get item:
+    profile: document
+
+  get item list:
+    profile: list
+    name_field: path
+    table:
+      fields: [node_type, path, name]
+
+  # ── Generated: create ─────────────────────────────────────────────────────
+
+  create namespace:
+    profile: list
+
+  create globalpermission:
+    profile: document
+    name_field: id
+
+  create config:
+    profile: document
+
+  create template:
+    profile: document
+
+  create secret:
+    profile: document
+
+  create resolver:
+    profile: document
+
+  create lock:
+    profile: list
+    name_field: path
+
+  # ── Generated: update / delete / move / copy / tag ─────────────────────────
+
+  update namespace:
+    profile: list
+
+  update globalpermission:
+    profile: document
+    name_field: id
+
+  update config:
+    profile: document
+
+  update template:
+    profile: document
+
+  update secret:
+    profile: document
+
+  update resolver:
+    profile: document
+
+  update lock:
+    profile: list
+    name_field: path
+
+  delete namespace:
+    profile: list
+    name_field: namespace
+
+  delete item:
+    profile: list
+    name_field: path
+    supported_formats: [table, json, yaml, name, path]
+    table:
+      fields: [type, version, path]
+
+  delete globalpermission:
+    profile: list
+    name_field: id
+
+  delete lock:
+    profile: list
+    name_field: path
+
+  tag item:
+    profile: list_versions
+    table:
+      fields: [version, tags, updated_at]
+    wide:
+      fields: "*"
+
+  untag item:
+    profile: list_versions
+    table:
+      fields: [version, tags, updated_at]
+    wide:
+      fields: "*"
+
+  propagate config:
+    profile: list
+    name_field: path
+
+  search tree:
+    profile: list
+    name_field: path
+
+  resolve-series audit:
+    supported_formats: [chart, json, yaml]
+    default_tty: chart
+    default_non_tty: yaml
+
+  resolve parameters:
+    supported_formats: [table, json, yaml]
+    default_tty: table
+    default_non_tty: yaml
+    table:
+      fields: [name, type, value, resolved_value, description, transformers]
+
+  resolve draft:
+    profile: resolve
+
+  # Fallback for generated commands not listed explicitly.
+  _generated_defaults:
+    get:
+      profile: list_wide
+    create:
+      profile: list
+    update:
+      profile: list
+    delete:
+      profile: list
+    move:
+      profile: list
+    copy:
+      profile: list
+    tag:
+      profile: list
+    untag:
+      profile: list
+    rotate:
+      profile: list
+    propagate:
+      profile: list
+    search:
+      profile: list_wide
+    timeline:
+      profile: list_wide
+    resolve-series:
+      profile: list_wide
+    resolve:
+      profile: resolve

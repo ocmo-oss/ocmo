@@ -1,0 +1,8 @@
+id: parameters_transformers_chain
+description: multiple transformers applied in sequence to a projected parameter
+resolve_path: chains/test_item
+expect:
+  status: 200
+  items:
+    - name: test_item
+      file: test_item.yaml

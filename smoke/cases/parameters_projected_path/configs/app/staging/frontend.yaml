@@ -1,0 +1,9 @@
+_ocmo:
+  parameters:
+    env_name:
+      type: projected
+      value: .Path[-2]
+      transformers:
+        - upper
+
+environment: "{!env_name}"

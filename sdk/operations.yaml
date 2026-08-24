@@ -1,0 +1,234 @@
+# Canonical OpenAPI operation registry.
+#
+# Keys are stable operation_id values (api/core/operation_ids.py). SDK method names
+# default to the same string unless sdk_method is set. CLI mapping hints follow
+# docs/cli-requirements.md §5.1; the CLI will consume this file when implemented.
+#
+# scope: client | namespace
+# sdk: false — not exposed on OcmoClient / NamespaceView (hand-written or internal)
+
+operations:
+  health:
+    scope: client
+    cli: { hand_written: true }
+
+  version:
+    scope: client
+    cli: { action: version }
+
+  whoami:
+    scope: client
+    cli: { hand_written: true }
+
+  can_i:
+    scope: client
+    cli: { hand_written: true }
+
+  list_namespaces:
+    scope: client
+    cli: { action: get, resource: namespace }
+
+  show_namespace:
+    scope: client
+    cli: { action: get, resource: namespace }
+
+  create_namespace:
+    scope: client
+    cli: { action: create, resource: namespace }
+
+  update_namespace:
+    scope: client
+    cli: { action: update, resource: namespace }
+
+  delete_namespace:
+    scope: client
+    cli: { action: delete, resource: namespace, confirm: destructive }
+
+  navigate_root:
+    scope: namespace
+    cli: { action: ls, resource: tree }
+
+  navigate_path:
+    scope: namespace
+    cli: { action: ls, resource: tree }
+
+  search_root:
+    scope: namespace
+    cli: { action: search, resource: tree }
+
+  search_path:
+    scope: namespace
+    cli: { action: search, resource: tree }
+
+  list_item_versions:
+    scope: namespace
+    cli: { action: get, resource: version }
+
+  get_item:
+    scope: namespace
+    cli: { action: get, resource: item }
+
+  diff_item:
+    scope: namespace
+    cli: { action: diff, resource: item }
+
+  delete_item:
+    scope: namespace
+    cli: { action: delete, resource: item, confirm: destructive }
+
+  move_item:
+    scope: namespace
+    cli: { action: move, resource: item }
+
+  copy_item:
+    scope: namespace
+    cli: { action: copy, resource: item }
+
+  set_tag:
+    scope: namespace
+    cli: { action: tag, resource: item }
+
+  describe_item:
+    scope: namespace
+    cli: { hand_written: true }
+
+  get_config_metadata_schema:
+    scope: client
+    cli: { action: schema, resource: config }
+
+  get_config_data_schema:
+    scope: namespace
+    cli: { action: schema, resource: config }
+
+  create_config:
+    scope: namespace
+    cli: { action: create, resource: config }
+
+  update_config:
+    scope: namespace
+    cli: { action: update, resource: config }
+
+  create_template:
+    scope: namespace
+    cli: { action: create, resource: template }
+
+  update_template:
+    scope: namespace
+    cli: { action: update, resource: template }
+
+  create_secret:
+    scope: namespace
+    cli: { action: create, resource: secret }
+
+  update_secret:
+    scope: namespace
+    cli: { action: update, resource: secret }
+
+  get_resolver_configuration_schema:
+    scope: client
+    cli: { action: schema, resource: resolver }
+
+  create_resolver:
+    scope: namespace
+    cli: { action: create, resource: resolver }
+
+  update_resolver:
+    scope: namespace
+    cli: { action: update, resource: resolver }
+
+  rotate_resolver_token:
+    scope: namespace
+    cli: { action: rotate, resource: token }
+
+  list_cast_formats:
+    scope: client
+    cli: { action: get, resource: cast }
+
+  download_resolved_artifact:
+    scope: namespace
+    sdk: false
+
+  resolve_config:
+    scope: namespace
+    sdk: false
+    cli: { hand_written: true }
+
+  resolve_parameters:
+    scope: namespace
+    cli: { action: resolve, resource: parameters }
+
+  resolve_draft_config:
+    scope: namespace
+    cli: { action: resolve, resource: draft }
+
+  list_global_permissions:
+    scope: client
+    cli: { action: get, resource: globalpermission }
+
+  create_global_permission:
+    scope: client
+    cli: { action: create, resource: globalpermission }
+
+  get_global_permission:
+    scope: client
+    cli: { action: get, resource: globalpermission }
+
+  update_global_permission:
+    scope: client
+    cli: { action: update, resource: globalpermission }
+
+  delete_global_permission:
+    scope: client
+    cli: { action: delete, resource: globalpermission, confirm: destructive }
+
+  move_global_permission:
+    scope: client
+    cli: { action: move, resource: globalpermission }
+
+  list_global_audit:
+    scope: client
+    cli: { action: get, resource: audit }
+
+  get_global_audit_event:
+    scope: client
+    cli: { action: get, resource: audit }
+
+  list_namespace_audit:
+    scope: namespace
+    cli: { action: get, resource: audit }
+
+  get_namespace_audit_event:
+    scope: namespace
+    cli: { action: get, resource: audit }
+
+  namespace_audit_timeline:
+    scope: namespace
+    cli: { action: timeline, resource: audit }
+
+  namespace_audit_resolve_series:
+    scope: namespace
+    cli: { action: resolve-series, resource: audit }
+
+  list_locks:
+    scope: namespace
+    cli: { action: get, resource: lock }
+
+  get_lock:
+    scope: namespace
+    cli: { action: get, resource: lock }
+
+  create_lock:
+    scope: namespace
+    cli: { action: create, resource: lock }
+
+  replace_lock:
+    scope: namespace
+    cli: { action: update, resource: lock }
+
+  delete_lock:
+    scope: namespace
+    cli: { action: delete, resource: lock, confirm: destructive }
+
+  propagate_config:
+    scope: namespace
+    cli: { action: propagate, resource: config }

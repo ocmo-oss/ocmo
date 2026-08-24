@@ -1,0 +1,124 @@
+# OCMO monorepo — api/, sdk/, cli/, frontend/, smoke/, docs/
+#
+# Committed generated artifacts (do NOT add ignore rules for these):
+#   sdk/openapi.json
+#   sdk/operations.yaml
+#   sdk/ocmo/_generated/
+#   sdk/ocmo/_facade_impl.py
+#   sdk/ocmo/_facade_meta.py
+#   cli/commands.yaml
+#   cli/ocmo_cli/_commands_map.py
+
+# Local design prototypes
+prototypes/
+
+# Internal-only design notes (never published)
+docs/internal/
+
+# Secrets and local environment
+.env
+
+# Python
+__pycache__/
+*.py[codz]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+/lib/
+/lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+__pypackages__/
+.pdm-python
+.pdm-build/
+.pixi
+
+# Virtual environments (workspace + per-package)
+.venv/
+.venv-*/
+.venv-local/
+.venv-uv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Test, coverage, and type-check caches
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py.cover
+.hypothesis/
+.pytest_cache/
+cover/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Linters
+.ruff_cache/
+
+# SDK codegen staging (openapi-python-client output before copy into ocmo/_generated/)
+sdk/.generated-staging/
+
+# Distribution / packaging outputs
+dist/
+
+# Django (api/)
+api/db.sqlite3
+api/db.sqlite3-journal
+api/*.log
+api/local_settings.py
+
+# Node / frontend
+node_modules/
+.pnpm-store/
+frontend/dist/
+*.tsbuildinfo
+
+# Documentation builds
+docs/_build/
+site/
+
+# Local-only assets (use img/logo-large.png in docs/README)
+img/ocmo_logo.png
+
+# Local scratch files
+**/NOTICE.test
+
+# IDE and OS
+.cursor/
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# PyPI local config
+.pypirc

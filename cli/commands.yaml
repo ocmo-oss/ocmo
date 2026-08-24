@@ -1,0 +1,166 @@
+operations:
+  health:
+    hand_written: true
+  version:
+    hand_written: true
+  whoami:
+    hand_written: true
+  can_i:
+    hand_written: true
+  list_namespaces:
+    action: get
+    resource: namespace
+  show_namespace:
+    action: get
+    resource: namespace
+  create_namespace:
+    action: create
+    resource: namespace
+  update_namespace:
+    action: update
+    resource: namespace
+  delete_namespace:
+    action: delete
+    resource: namespace
+    confirm: destructive
+  navigate_root:
+    hand_written: true
+  navigate_path:
+    hand_written: true
+  search_root:
+    action: search
+    resource: tree
+  search_path:
+    action: search
+    resource: tree
+  list_item_versions:
+    action: get
+    resource: version
+  get_item:
+    action: get
+    resource: item
+  diff_item:
+    hand_written: true
+  delete_item:
+    action: delete
+    resource: item
+    confirm: destructive
+  move_item:
+    hand_written: true
+    action: move
+    resource: item
+  copy_item:
+    hand_written: true
+    action: copy
+    resource: item
+  set_tag:
+    action: tag
+    resource: item
+  describe_item:
+    hand_written: true
+  get_config_metadata_schema:
+    hand_written: true
+  get_config_data_schema:
+    hand_written: true
+  create_config:
+    action: create
+    resource: config
+  update_config:
+    action: update
+    resource: config
+  create_template:
+    action: create
+    resource: template
+  update_template:
+    action: update
+    resource: template
+  create_secret:
+    action: create
+    resource: secret
+    confirm: sensitive
+  update_secret:
+    action: update
+    resource: secret
+    confirm: sensitive
+  get_resolver_configuration_schema:
+    hand_written: true
+  create_resolver:
+    action: create
+    resource: resolver
+  update_resolver:
+    action: update
+    resource: resolver
+  rotate_resolver_token:
+    action: rotate
+    resource: token
+    confirm: destructive
+  list_cast_formats:
+    action: get
+    resource: cast
+  download_resolved_artifact:
+    skip: Internal SDK operation; surfaced via `ocmo resolve`.
+  resolve_config:
+    hand_written: true
+  resolve_parameters:
+    hand_written: true
+    action: resolve
+    resource: parameters
+  resolve_draft_config:
+    hand_written: true
+    action: resolve
+    resource: draft
+  list_global_permissions:
+    action: get
+    resource: globalpermission
+  create_global_permission:
+    action: create
+    resource: globalpermission
+  get_global_permission:
+    action: get
+    resource: globalpermission
+  update_global_permission:
+    action: update
+    resource: globalpermission
+  delete_global_permission:
+    action: delete
+    resource: globalpermission
+    confirm: destructive
+  move_global_permission:
+    hand_written: true
+    action: move
+    resource: globalpermission
+  list_global_audit:
+    action: get
+    resource: audit
+  get_global_audit_event:
+    action: get
+    resource: audit
+  list_namespace_audit:
+    action: get
+    resource: audit
+  get_namespace_audit_event:
+    action: get
+    resource: audit
+  namespace_audit_timeline:
+    hand_written: true
+  namespace_audit_resolve_series:
+    hand_written: true
+  list_locks:
+    action: get
+    resource: lock
+  get_lock:
+    action: get
+    resource: lock
+  create_lock:
+    action: create
+    resource: lock
+  replace_lock:
+    action: update
+    resource: lock
+  delete_lock:
+    action: delete
+    resource: lock
+    confirm: destructive
+  propagate_config:
+    action: propagate
+    resource: config

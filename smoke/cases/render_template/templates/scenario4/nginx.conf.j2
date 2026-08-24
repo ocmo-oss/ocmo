@@ -1,0 +1,8 @@
+# ocmo.name: {{ app_name }}.conf
+server {
+    listen {% if ssl_enabled %}443 ssl{% else %}80{% endif %};
+    server_name {{ domain }};
+    location / {
+        proxy_pass http://{{ backend_host }}:{{ backend_port }};
+    }
+}

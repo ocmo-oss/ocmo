@@ -1,0 +1,163 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  * {
+    @apply border-slate-300/90 dark:border-gray-700;
+  }
+
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-surface-canvas text-slate-900 dark:bg-gray-950 dark:text-gray-100;
+  }
+
+  /* Native form controls — follow app theme, not OS preference */
+  input:where([type='checkbox'], [type='radio']) {
+    @apply rounded border-slate-400 bg-surface-elevated text-brand-600 accent-brand-600;
+    color-scheme: light;
+  }
+
+  :root.dark input:where([type='checkbox'], [type='radio']) {
+    @apply border-gray-600 bg-gray-800 accent-brand-500;
+    color-scheme: dark;
+  }
+
+  input:where(
+    [type='date'],
+    [type='datetime-local'],
+    [type='time'],
+    [type='month'],
+    [type='week'],
+    [type='number']
+  ),
+  select,
+  textarea {
+    @apply bg-surface-elevated text-slate-900;
+    color-scheme: light;
+  }
+
+  :root.dark input:where(
+    [type='date'],
+    [type='datetime-local'],
+    [type='time'],
+    [type='month'],
+    [type='week'],
+    [type='number']
+  ),
+  :root.dark select,
+  :root.dark textarea {
+    @apply bg-gray-800 text-gray-100;
+    color-scheme: dark;
+  }
+
+  /* Scrollbar — thin track, auto-hide */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-slate-400 dark:bg-gray-700;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-500 dark:bg-gray-600;
+  }
+}
+
+/* Focus ring */
+@layer utilities {
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-1;
+  }
+}
+
+/* Item description markdown */
+.item-markdown :where(p, ul, ol, pre, blockquote) {
+  @apply my-1;
+}
+
+.item-markdown :where(h1, h2, h3, h4) {
+  @apply mb-1 mt-2 font-medium text-slate-700 dark:text-gray-300;
+}
+
+.item-markdown :where(h1) { @apply text-sm; }
+.item-markdown :where(h2, h3, h4) { @apply text-xs; }
+
+.item-markdown :where(ul, ol) {
+  @apply ml-4 list-outside;
+}
+
+.item-markdown :where(ul) { @apply list-disc; }
+.item-markdown :where(ol) { @apply list-decimal; }
+
+.item-markdown :where(li) {
+  @apply my-0.5;
+}
+
+.item-markdown :where(a) {
+  @apply text-brand-600 underline decoration-brand-300 underline-offset-2 hover:text-brand-700 dark:text-brand-400 dark:decoration-brand-700;
+}
+
+.item-markdown :where(code) {
+  @apply rounded bg-slate-200/80 px-1 py-0.5 font-mono text-[10px] text-slate-800 dark:bg-gray-800 dark:text-gray-300;
+}
+
+.item-markdown :where(pre) {
+  @apply overflow-x-auto rounded bg-slate-200/80 p-2 font-mono text-[10px] text-slate-800 dark:bg-gray-900 dark:text-gray-300;
+}
+
+/* Monaco editor — empty-state placeholder hint */
+.editor-empty-hint,
+.yaml-editor-empty-hint {
+  color: rgba(100, 116, 139, 0.55);
+  font-family: var(--monaco-monospace-font, Consolas, "Courier New", monospace);
+  font-size: 13px;
+  font-style: italic;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.dark .editor-empty-hint,
+.dark .yaml-editor-empty-hint {
+  color: rgba(150, 150, 150, 0.75);
+}
+
+.item-markdown :where(pre code) {
+  @apply bg-transparent p-0;
+}
+
+.item-markdown :where(blockquote) {
+  @apply border-l-2 border-slate-400 pl-2 italic text-slate-600 dark:border-gray-700 dark:text-gray-400;
+}
+
+.item-markdown :where(table) {
+  @apply w-full border-collapse text-[10px];
+}
+
+.item-markdown :where(th, td) {
+  @apply border border-slate-300 px-2 py-1 dark:border-gray-700;
+}
+
+.item-markdown-panel {
+  @apply max-h-48 overflow-y-auto pr-1;
+}
+
+.item-markdown-collapsed {
+  @apply overflow-hidden pr-0;
+  max-height: calc(2 * 0.75rem * 1.625);
+}

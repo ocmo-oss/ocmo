@@ -1,0 +1,11 @@
+kind: propagation
+id: propagation_tag_glob_no_match
+description: Non-matching tag name skips propagation
+source_path: dev/src
+action: tag
+tag:
+  name: other
+  version: 1
+expect:
+  status: 200
+  propagation: false

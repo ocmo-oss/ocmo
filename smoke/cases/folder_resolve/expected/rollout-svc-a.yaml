@@ -1,0 +1,4 @@
+name: svc-a
+port: 8080
+region: eu-west
+log_level: debug

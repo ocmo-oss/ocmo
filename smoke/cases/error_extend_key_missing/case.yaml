@@ -1,0 +1,6 @@
+id: error_extend_key_missing
+description: missing extend key without optional suffix returns 422
+resolve_path: scenario_keyerr/prod
+expect:
+  status: 422
+  error_substring: not found

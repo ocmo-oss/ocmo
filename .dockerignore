@@ -1,0 +1,15 @@
+.git
+.gitignore
+**/__pycache__
+**/.venv
+**/.mypy_cache
+**/.ruff_cache
+**/.pytest_cache
+frontend/node_modules
+frontend/dist
+.pnpm-store
+smoke
+cli
+sdk
+docs
+.cursor

@@ -1,0 +1,5 @@
+# Ephemeral CLI build output.
+#
+# Committed (regenerate with `scripts/generate_commands.py --write`, CI fails on drift):
+#   commands.yaml
+#   ocmo_cli/_commands_map.py

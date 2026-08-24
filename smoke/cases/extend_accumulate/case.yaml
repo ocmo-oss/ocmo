@@ -1,0 +1,8 @@
+id: extend_accumulate
+description: extend.accumulate merges base config then current config data
+resolve_path: scenario2/prod
+expect:
+  status: 200
+  items:
+    - name: prod
+      file: prod.yaml

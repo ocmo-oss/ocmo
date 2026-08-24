@@ -1,0 +1,22 @@
+# Configuration for openapi-python-client code generator.
+# ADR: openapi-python-client was chosen because it:
+#   - Supports OpenAPI 3.1
+#   - Generates httpx-based sync + async clients
+#   - Produces fully typed Pydantic v2 models
+#   - Supports discriminated unions (node_type, auth_type)
+#   - Is actively maintained and pure-Python (uv compatible)
+#
+# Generate: cd sdk/ && uv run openapi-python-client generate \
+#               --path openapi.json \
+#               --config openapi-python-client.yaml \
+#               --output-path ocmo/_generated \
+#               --overwrite
+
+project_name_override: "ocmo-generated"
+package_name_override: "ocmo._generated"
+
+# Do not fail on unknown enum values — §3.1 requirement
+use_path_prefixes_for_tag_names: false
+
+# Ignore unknown response fields — §3.1 requirement
+# (openapi-python-client uses model_config = ConfigDict(extra="ignore") by default)

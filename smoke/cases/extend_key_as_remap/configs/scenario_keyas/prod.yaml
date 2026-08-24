@@ -1,0 +1,10 @@
+_ocmo:
+  extend:
+    mode: accumulate
+    configs:
+      - path: ./shared/all
+        key: .database
+        as: .persistence.db
+persistence:
+  db:
+    cc: dd

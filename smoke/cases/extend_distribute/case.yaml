@@ -1,0 +1,11 @@
+id: extend_distribute
+description: extend.distribute merges same overlay into each base config
+resolve_path: scenario6/rollout
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: svc-a.yaml
+      file: svc-a.yaml
+    - name: svc-b
+      file: svc-b.yaml

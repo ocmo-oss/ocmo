@@ -1,0 +1,18 @@
+kind: propagation
+id: propagation_tag
+description: Tag trigger propagates and returns propagation in tag response
+source_path: dev/src
+action: tag
+tag:
+  name: release
+  version: 2
+updates:
+  - path: dev/src
+    file: updates/src-v2.yaml
+expect:
+  status: 200
+  propagation: true
+  targets:
+    - path: dev/tgt
+      status: updated
+      file: tgt.yaml

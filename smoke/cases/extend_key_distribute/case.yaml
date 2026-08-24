@@ -1,0 +1,11 @@
+id: extend_key_distribute
+description: extend distribute with key slices each base before overlay merge
+resolve_path: scenario_keydist/rollout
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: svc-a
+      file: svc-a.yaml
+    - name: svc-b
+      file: svc-b.yaml

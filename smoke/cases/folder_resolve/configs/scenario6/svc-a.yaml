@@ -1,0 +1,4 @@
+_ocmo:
+  name: "svc-a.yaml"
+name: svc-a
+port: 8080

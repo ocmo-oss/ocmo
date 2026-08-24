@@ -1,0 +1,11 @@
+id: extend_align
+description: extend.align pairs each base config 1-to-1 with a corresponding by element
+resolve_path: scenario_align/root
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: base-a
+      file: base-a.yaml
+    - name: base-b
+      file: base-b.yaml

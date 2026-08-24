@@ -1,0 +1,5 @@
+# target header
+key: from_source
+nested:
+  # nested comment
+  value: keep

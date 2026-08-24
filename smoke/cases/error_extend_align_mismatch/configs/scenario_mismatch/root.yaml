@@ -1,0 +1,11 @@
+_ocmo:
+  extend:
+    configs:
+      - ./base
+    mode: align
+    by: .overrides
+
+overrides:
+  - env: prod
+  - env: staging
+  - env: dev

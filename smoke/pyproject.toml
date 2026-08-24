@@ -1,0 +1,20 @@
+[project]
+name = "ocmo-smoke"
+version = "0.1.0"
+description = "HTTP smoke tests for OCMO resolve API"
+requires-python = ">=3.13"
+dependencies = [
+    "pytest>=8.3.0",
+    "requests>=2.32.0",
+    "pyyaml>=6.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+pythonpath = ["."]
+addopts = "-ra"
+markers = [
+    "smoke: resolve API smoke tests against a running OCMO service",
+    "resolver: resolver token visibility and rotation smoke tests",
+    "content_types: document upload endpoints accept all OpenAPI media types",
+]

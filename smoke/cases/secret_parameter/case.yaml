@@ -1,0 +1,8 @@
+id: secret_parameter
+description: secret parameter resolves field from encrypted secret
+resolve_path: scenario7/use-secret
+expect:
+  status: 200
+  items:
+    - name: use-secret
+      file: use-secret.json

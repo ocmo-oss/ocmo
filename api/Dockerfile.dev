@@ -1,0 +1,29 @@
+# Development image for the OCMO API.
+# Build context: api/
+# Uses Django runserver and installs dev dependency groups.
+# Pair with docker-compose.dev.yml (source bind-mount + local Postgres/Redis/Dex).
+
+FROM python:3.13-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        postgresql-client \
+        libpq-dev \
+        gcc \
+        python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir uv
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync
+
+EXPOSE 8000
+
+CMD ["bash", "/app/docker/entrypoint.dev.sh"]

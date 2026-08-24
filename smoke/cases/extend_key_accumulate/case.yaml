@@ -1,0 +1,8 @@
+id: extend_key_accumulate
+description: extend accumulate with key extracts a subtree and merges at root
+resolve_path: scenario_key/prod
+expect:
+  status: 200
+  items:
+    - name: prod
+      file: prod.yaml

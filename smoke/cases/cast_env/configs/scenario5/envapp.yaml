@@ -1,0 +1,14 @@
+_ocmo:
+  cast:
+    format: env
+    options:
+      type: unix
+      uppercase: true
+      prefix: APP_
+
+database:
+  host: db.example.com
+  port: 5432
+flags:
+  - alpha
+  - beta

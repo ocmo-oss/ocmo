@@ -1,0 +1,3 @@
+# Local development stack — includes file from repository root.
+include:
+  - path: ../docker-compose.dev.yml

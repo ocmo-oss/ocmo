@@ -1,0 +1,10 @@
+_ocmo:
+  parameters:
+    title:
+      type: projected
+      value: .Name
+      transformers:
+        - slug
+        - upper
+
+result: "{!title}"

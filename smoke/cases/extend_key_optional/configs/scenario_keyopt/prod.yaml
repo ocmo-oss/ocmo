@@ -1,0 +1,7 @@
+_ocmo:
+  extend:
+    mode: accumulate
+    configs:
+      - path: ./shared/all
+        key: .database?
+value: ok

@@ -1,0 +1,13 @@
+"""Exit code constants — public contract, covered by tests."""
+
+SUCCESS = 0
+FAILURE = 1
+USAGE_ERROR = 2
+NOT_FOUND = 3
+AUTH_ERROR = 4
+CONFLICT = 5
+LOCKED = 6
+VALIDATION_ERROR = 7
+HOOK_FAILURE = 8
+VERIFY_FAILURE = 9
+INTERRUPTED = 130

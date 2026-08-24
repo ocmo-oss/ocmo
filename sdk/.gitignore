@@ -1,0 +1,10 @@
+# Ephemeral SDK build/codegen output.
+#
+# Committed (regenerate with `make generate`, CI fails on drift):
+#   openapi.json
+#   operations.yaml
+#   ocmo/_generated/
+#   ocmo/_facade_impl.py
+#   ocmo/_facade_meta.py
+
+.generated-staging/

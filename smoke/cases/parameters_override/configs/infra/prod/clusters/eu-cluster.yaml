@@ -1,0 +1,28 @@
+_ocmo:
+  parameters:
+    env:
+      type: projected
+      value: .Path[-3]
+      description: deployment environment
+      transformers:
+        - lower
+    cluster:
+      type: projected
+      value: .Name
+      description: cluster name
+      transformers:
+        - lower
+    replicas:
+      type: dynamic
+      value: 3
+      description: pod replicas
+      transformers:
+        - int
+  name: "{!cluster}-{!env}.conf"
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{!cluster}-{!env}"
+spec:
+  replicas: "{!replicas}"

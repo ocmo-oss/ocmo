@@ -1,0 +1,11 @@
+kind: propagation
+id: propagation_mode_whole
+description: Whole mode merges _ocmo but preserves target propagation rules
+source_path: dev/src
+action: propagate
+expect:
+  status: 200
+  targets:
+    - path: dev/tgt
+      status: updated
+      file: tgt.yaml

@@ -1,0 +1,6 @@
+_ocmo:
+  render:
+    templates:
+      - scenario_err_tpl/no_such_template.j2
+
+value: test

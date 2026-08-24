@@ -1,0 +1,8 @@
+id: render_ocmo_name_header
+description: "# ocmo.name: header in template overrides the output item name"
+resolve_path: scenario_namehdr/cfg
+expect:
+  status: 200
+  items:
+    - name: greeting.txt
+      file: greeting.txt

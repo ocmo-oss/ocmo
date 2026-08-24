@@ -1,0 +1,7 @@
+_ocmo:
+  propagation:
+    enabled: true
+    trigger: manual
+    targets:
+      - dev/tgt@1
+key: merged

@@ -1,0 +1,8 @@
+id: parameters_omit
+description: "{!omit} placeholder drops keys and list items from the resolved output"
+resolve_path: scenario_omit/config
+expect:
+  status: 200
+  items:
+    - name: config
+      file: config.yaml

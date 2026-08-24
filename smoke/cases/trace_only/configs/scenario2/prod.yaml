@@ -1,0 +1,10 @@
+_ocmo:
+  extend:
+    configs:
+      - ./base
+    mode: accumulate
+
+database:
+  host: db.prod.example.com
+  pool_size: 20
+log_level: warn

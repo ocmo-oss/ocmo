@@ -1,0 +1,8 @@
+id: error_invalid_cast_format
+description: unknown cast format passed via ?cast= query parameter returns 422 at resolve time
+resolve_path: scenario_badcast/cfg
+query:
+  cast: notaformat
+expect:
+  status: 422
+  error_substring: Unknown cast format

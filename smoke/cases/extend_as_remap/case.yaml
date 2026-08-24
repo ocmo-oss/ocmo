@@ -1,0 +1,8 @@
+id: extend_as_remap
+description: extend as wraps whole base document under target path
+resolve_path: scenario_as/prod
+expect:
+  status: 200
+  items:
+    - name: prod
+      file: prod.yaml

@@ -1,0 +1,8 @@
+_ocmo:
+  propagation:
+    enabled: true
+    trigger: tag
+    tag: stable
+    targets:
+      - dev/tgt
+key: promoted
