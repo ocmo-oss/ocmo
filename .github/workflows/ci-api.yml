@@ -1,0 +1,76 @@
+name: CI — API
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/ci-api.yml
+      - api/**
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ci-api.yml
+      - api/**
+
+concurrency:
+  group: ci-api-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint, typecheck, test, and build image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: api
+    env:
+      POSTGRES_DB: ocmoapi
+      POSTGRES_USER: ocmoapi-user
+      POSTGRES_PASSWORD: ocmoapi1906031218435
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5432"
+      DJANGO_SECRET_KEY: ci-test-secret-key
+      DJANGO_DEBUG: "False"
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: ocmoapi
+          POSTGRES_USER: ocmoapi-user
+          POSTGRES_PASSWORD: ocmoapi1906031218435
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ocmoapi-user -d ocmoapi"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 # v5.4.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: api/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      - name: Ruff format check
+        run: uv run ruff format --check .
+
+      - name: Mypy
+        run: uv run mypy core ocmoapi
+
+      - name: Unit tests
+        run: uv run python manage.py test --keepdb -v2
+
+      - name: Docker image build
+        working-directory: ${{ github.workspace }}
+        run: docker build -f api/Dockerfile -t ocmo-api:ci api
