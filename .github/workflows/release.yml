@@ -101,10 +101,9 @@ jobs:
         run: |
           publish_args=(--trusted-publishing always --check-url https://pypi.org/simple)
           if [[ "${{ matrix.package.workspace }}" == "true" ]]; then
-            uv publish --package "${{ matrix.package.name }}" "${publish_args[@]}"
+            uv publish "${publish_args[@]}" dist/*
           else
-            cd "${{ matrix.package.directory }}"
-            uv publish "${publish_args[@]}"
+            uv publish "${publish_args[@]}" "${{ matrix.package.directory }}/dist"/*
           fi
 
   publish-docker:
