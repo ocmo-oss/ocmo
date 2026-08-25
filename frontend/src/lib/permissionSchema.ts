@@ -51,7 +51,7 @@ export const PERMISSIONS_POLICY_CONFIG_PATH = '_permissions'
 const LOCK_PERMISSION_OPS = ['lock:read', 'lock:write', 'lock:delete'] as const
 
 export function extractPermissionActionEnum(schema: JsonSchemaDocument): string[] {
-  const policies = schema.properties?.policies
+  const policies = (schema.properties as Record<string, unknown> | undefined)?.policies
   if (!policies || typeof policies !== 'object' || Array.isArray(policies)) {
     return []
   }

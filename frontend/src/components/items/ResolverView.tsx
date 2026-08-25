@@ -106,7 +106,7 @@ export default function ResolverView({
   schemaRef.current = schema
   const completionDisposableRef = useRef<import('monaco-editor').IDisposable | null>(null)
   const suggestTriggerDisposableRef = useRef<import('monaco-editor').IDisposable | null>(null)
-  const emptyHintDisposableRef = useRef<import('monaco-editor').IDisposable | null>(null)
+  const emptyHintDisposableRef = useRef<import('monaco-editor').IDisposable & { refresh: () => void } | null>(null)
   const saveShortcutMountRef = useRef<
     (editorInstance: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) => void
   >(() => {})

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { ApiError } from '../api/client'
-import { formatApiErrorDetail } from '../lib/apiAvailability'
+import { ApiError } from '../../api/client'
+import { formatApiErrorDetail } from '../../lib/apiAvailability'
 import { isApiUnavailableQueryError, isPermissionDeniedError } from '../QueryAccessGate'
 
 describe('isPermissionDeniedError', () => {

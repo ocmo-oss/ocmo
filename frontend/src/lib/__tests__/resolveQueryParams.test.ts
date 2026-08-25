@@ -23,7 +23,7 @@ describe('buildResolveQueryParams', () => {
       dynamicParams: { env: 'prod' },
       cast: 'json',
       markStable: true,
-      castOptions: { indent: 2 },
+      castOptions: { indent: '2' },
     })).toEqual({
       version: 'v3',
       'mark-stable': true,

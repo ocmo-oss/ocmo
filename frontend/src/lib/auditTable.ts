@@ -301,7 +301,7 @@ export function parseAuditSearchParams(params: URLSearchParams): AuditUrlState {
   const filters: AuditFilters = {}
 
   for (const key of FILTER_PARAM_KEYS) {
-    const raw = params.get(key)
+    const raw = params.get(key as string)
     if (!raw) continue
     if (key === 'permission_ok' || key === 'from_cache') {
       const parsed = parseBoolean(raw)
@@ -340,7 +340,7 @@ export function buildAuditSearchParams(state: AuditUrlState): URLSearchParams {
   for (const key of FILTER_PARAM_KEYS) {
     const value = filters[key]
     if (value === undefined || value === '') continue
-    params.set(key, String(value))
+    params.set(key as string, String(value))
   }
 
   return params
@@ -366,8 +366,8 @@ export function visibleAuditColumns(columns: AuditColumnId[], isGlobal: boolean)
 }
 
 function renderPermissionBadge(value: boolean | null | undefined): ReactNode {
-  if (value === false) return createElement(Badge, { variant: 'error' }, 'denied')
-  if (value === true) return createElement(Badge, { variant: 'success' }, 'ok')
+  if (value === false) return createElement(Badge, { variant: 'error', children: 'denied' })
+  if (value === true) return createElement(Badge, { variant: 'success', children: 'ok' })
   return createElement('span', { className: 'text-gray-400' }, '—')
 }
 

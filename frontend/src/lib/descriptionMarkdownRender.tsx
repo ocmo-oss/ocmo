@@ -1,3 +1,4 @@
+import type { Options } from 'react-markdown'
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize'
 import remarkGfm from 'remark-gfm'
 import type { Components } from 'react-markdown'
@@ -11,7 +12,9 @@ export const descriptionSanitizeSchema = {
 }
 
 export const descriptionRemarkPlugins = [remarkGfm]
-export const descriptionRehypePlugins = [rehypeSanitize(descriptionSanitizeSchema)]
+export const descriptionRehypePlugins = [
+  rehypeSanitize(descriptionSanitizeSchema),
+] as NonNullable<Options['rehypePlugins']>
 
 export function isExternalMarkdownLink(
   href: string | undefined,

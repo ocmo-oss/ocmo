@@ -7,7 +7,7 @@ function isSaveKey(event: KeyboardEvent): boolean {
 }
 
 function isMonacoSaveShortcut(
-  e: editor.IKeyboardEvent,
+  e: Monaco.IKeyboardEvent,
   monaco: typeof Monaco,
 ): boolean {
   if (!e.ctrlKey && !e.metaKey) return false
