@@ -28,7 +28,7 @@ export function NamespaceConfigTagField({
     staleTime: 30_000,
   })
 
-  const config = data?.type === 'config' ? data : null
+  const config = data && data.type === 'config' ? data : null
 
   return (
     <div className="space-y-1">

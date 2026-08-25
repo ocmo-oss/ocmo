@@ -158,7 +158,7 @@ export function mapExtendedNode(raw: RawBaseNode): AnyExtendedNode {
         description: raw.description,
         version: 1,
         author: raw.author ?? '',
-        token1: raw.token1 ?? null,
+        token1: raw.token1 ?? '',
         token1_last_used: raw.token1_last_used ?? null,
         token2: raw.token2 ?? null,
         token2_last_used: raw.token2_last_used ?? null,

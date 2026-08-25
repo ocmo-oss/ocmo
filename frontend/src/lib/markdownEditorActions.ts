@@ -164,8 +164,6 @@ export function applyMarkdownAction(
       return { value: newValue, ...collapsedCaret(urlStart) }
     }
     case 'codeBlock': {
-      const selected = value.slice(start, end)
-
       if (hadSelection) {
         return wrapSelection(value, start, end, '```\n', '\n```', 'code')
       }

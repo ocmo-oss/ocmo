@@ -33,7 +33,7 @@ import { useMonacoEditorTheme } from '../../hooks/useMonacoEditorTheme'
 import { yamlEditorOptions } from '../../lib/yamlEditorOptions'
 import { useConfigYamlSchema } from '../../hooks/useConfigYamlSchema'
 import { useItemSaveShortcut } from '../../hooks/useItemSaveShortcut'
-import { isBuiltinNamespacePath, isBuiltinNamespaceSchemaPath, getBuiltinNamespacePaths } from '../../lib/builtinPaths'
+import { isBuiltinNamespacePath, isBuiltinNamespaceSchemaPath } from '../../lib/builtinPaths'
 import { createItemEditorModelPath } from '../../lib/configEditorSchema'
 import { cn } from '../ui/cn'
 import type { ItemEditorMode } from '../../lib/itemEditorMode'
@@ -107,7 +107,7 @@ export default function ConfigEditor({ item, namespace, permissions, mode = 'edi
   metadataKeyRef.current = configMetadataKey
   const completionDisposableRef = useRef<import('monaco-editor').IDisposable | null>(null)
   const suggestTriggerDisposableRef = useRef<import('monaco-editor').IDisposable | null>(null)
-  const emptyHintDisposableRef = useRef<import('monaco-editor').IDisposable | null>(null)
+  const emptyHintDisposableRef = useRef<import('monaco-editor').IDisposable & { refresh: () => void } | null>(null)
   const saveShortcutMountRef = useRef<
     (editorInstance: editor.IStandaloneCodeEditor, monaco: typeof import('monaco-editor')) => void
   >(() => {})
@@ -120,9 +120,7 @@ export default function ConfigEditor({ item, namespace, permissions, mode = 'edi
       namespace,
       configPath: item.path,
       metadataKey,
-      allowOutsideMetadata: getBuiltinNamespacePaths().config
-        .filter(path => path === '_permissions' || path === '_webhooks')
-        .includes(item.path),
+      allowOutsideMetadata: item.path === '_permissions' || item.path === '_webhooks',
     }
   }, [namespace, item.path])
 

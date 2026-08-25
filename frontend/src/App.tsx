@@ -102,11 +102,6 @@ const router = createBrowserRouter(
     element: <Navigate to="/" replace />,
   },
   ],
-  {
-    future: {
-      v7_startTransition: true,
-    },
-  },
 )
 
 export function App() {

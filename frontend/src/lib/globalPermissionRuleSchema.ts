@@ -93,20 +93,22 @@ export function buildGlobalPermissionRuleSchema(
     }
   }
 
-  const actor = globalPermissionRuleSchema.$defs?.actor as JsonSchemaDocument | undefined
-  const claims = actor?.properties?.claims as JsonSchemaDocument | undefined
-  if (!actor || !claims || Object.keys(claimExample).length === 0) {
+  const defs = globalPermissionRuleSchema.$defs as Record<string, JsonSchemaDocument> | undefined
+  const actor = defs?.actor
+  const actorProperties = actor?.properties as Record<string, JsonSchemaDocument> | undefined
+  const claims = actorProperties?.claims
+  if (!actor || !claims || !defs || Object.keys(claimExample).length === 0) {
     return globalPermissionRuleSchema
   }
 
   return {
     ...globalPermissionRuleSchema,
     $defs: {
-      ...globalPermissionRuleSchema.$defs,
+      ...defs,
       actor: {
         ...actor,
         properties: {
-          ...actor.properties,
+          ...actorProperties,
           claims: {
             ...claims,
             examples: [claimExample],

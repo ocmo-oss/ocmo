@@ -28,7 +28,7 @@ function matchesEnabledWhen(
 }
 
 export function getCastOptionFieldState(
-  field: string,
+  _field: string,
   prop: JsonSchemaProperty,
   properties: Record<string, JsonSchemaProperty>,
   values: Record<string, string | boolean>,

@@ -3060,6 +3060,10 @@ function buildYamlCompletionSuggestions(
     return []
   }
 
+  if (!effectiveTargetSchema) {
+    return []
+  }
+
   return propertySuggestions(
     monaco,
     effectiveTargetSchema,

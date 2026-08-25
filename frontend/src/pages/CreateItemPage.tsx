@@ -16,6 +16,7 @@ import { CreateItemPathHeader } from '../components/items/CreateItemPathHeader'
 import { Skeleton } from '../components/ui/Skeleton'
 import { PermissionDenied } from '../components/items/PermissionDenied'
 import { pathSegments } from '../lib/paths'
+import type { ConfigNode, ResolverNode, SecretNode } from '../api/types'
 
 const ConfigEditor = lazy(() => import('../components/items/ConfigEditor'))
 const TemplateEditor = lazy(() => import('../components/items/TemplateEditor'))
@@ -87,13 +88,13 @@ export function CreateItemPage() {
     if (!item || !namespace) return null
     switch (validType) {
       case 'config':
-        return <ConfigEditor item={item} namespace={namespace} permissions={permissions} mode="create" />
+        return <ConfigEditor item={item as ConfigNode} namespace={namespace} permissions={permissions} mode="create" />
       case 'template':
-        return <TemplateEditor item={item} namespace={namespace} permissions={permissions} mode="create" />
+        return <TemplateEditor item={item as ConfigNode} namespace={namespace} permissions={permissions} mode="create" />
       case 'secret':
-        return <SecretView item={item} namespace={namespace} permissions={permissions} mode="create" />
+        return <SecretView item={item as SecretNode} namespace={namespace} permissions={permissions} mode="create" />
       case 'resolver':
-        return <ResolverView item={item} namespace={namespace} permissions={permissions} mode="create" />
+        return <ResolverView item={item as ResolverNode} namespace={namespace} permissions={permissions} mode="create" />
     }
   })()
 
