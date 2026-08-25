@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  DOCKERHUB_NAMESPACE: ${{ vars.DOCKERHUB_NAMESPACE || 'ocmooss' }}
+
+jobs:
+  version:
+    name: Resolve version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.versions.outputs.version }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Verify shared version
+        id: versions
+        run: |
+          set -euo pipefail
+
+          api_version=$(grep -E '^version = ' api/pyproject.toml | head -1 | sed -E 's/^version = "(.*)"/\1/')
+          sdk_version=$(grep -E '^version = ' sdk/pyproject.toml | head -1 | sed -E 's/^version = "(.*)"/\1/')
+          cli_version=$(grep -E '^version = ' cli/pyproject.toml | head -1 | sed -E 's/^version = "(.*)"/\1/')
+          frontend_version=$(node -p "require('./frontend/package.json').version")
+
+          for component_version in "$api_version" "$sdk_version" "$cli_version" "$frontend_version"; do
+            if [[ "$component_version" != "$api_version" ]]; then
+              echo "Version mismatch: api=$api_version sdk=$sdk_version cli=$cli_version frontend=$frontend_version" >&2
+              exit 1
+            fi
+          done
+
+          echo "version=$api_version" >> "$GITHUB_OUTPUT"
+          echo "Publishing version $api_version"
+
+  publish-pypi:
+    name: Publish PyPI — ${{ matrix.package.name }}
+    needs: version
+    if: matrix.package.pypi_publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      max-parallel: 1
+      matrix:
+        package:
+          # PyPI trusted publisher must exist for each package (Project → Publishing).
+          # "Pending" clears after the first successful publish from this workflow.
+          - name: ocmo-api
+            directory: api
+            workspace: false
+            pypi_publish: true
+          - name: ocmo-sdk
+            directory: sdk
+            workspace: true
+            pypi_publish: true
+          - name: ocmo-cli
+            directory: cli
+            workspace: true
+            pypi_publish: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 # v5.4.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: |
+            uv.lock
+            api/uv.lock
+
+      - name: Install build dependencies
+        run: |
+          if [[ "${{ matrix.package.workspace }}" == "true" ]]; then
+            uv sync --frozen --package "${{ matrix.package.name }}"
+          else
+            cd "${{ matrix.package.directory }}"
+            uv sync --frozen --no-dev
+          fi
+
+      - name: Build wheel
+        run: |
+          if [[ "${{ matrix.package.workspace }}" == "true" ]]; then
+            uv build --package "${{ matrix.package.name }}" --wheel
+          else
+            cd "${{ matrix.package.directory }}"
+            uv build --wheel
+          fi
+
+      - name: Publish to PyPI (trusted publishing)
+        run: |
+          publish_args=(--trusted-publishing always --check-url https://pypi.org/simple)
+          if [[ "${{ matrix.package.workspace }}" == "true" ]]; then
+            uv publish --package "${{ matrix.package.name }}" "${publish_args[@]}"
+          else
+            cd "${{ matrix.package.directory }}"
+            uv publish "${publish_args[@]}"
+          fi
+
+  publish-docker:
+    name: Publish Docker images
+    needs: version
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: release
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      matrix:
+        include:
+          - image: ocmo-api
+            context: api
+            dockerfile: api/Dockerfile
+          - image: ocmo-frontend
+            context: frontend
+            dockerfile: frontend/Dockerfile
+          - image: ocmo-gateway
+            context: .
+            dockerfile: docker/gateway/Dockerfile
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
+
+      - name: Log in to Docker Hub (OIDC)
+        if: vars.DOCKERHUB_OIDC_CONNECTION_ID != ''
+        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4.5.0
+        with:
+          username: ${{ env.DOCKERHUB_NAMESPACE }}
+        env:
+          DOCKERHUB_OIDC_CONNECTIONID: ${{ vars.DOCKERHUB_OIDC_CONNECTION_ID }}
+
+      - name: Log in to Docker Hub (access token)
+        if: vars.DOCKERHUB_OIDC_CONNECTION_ID == ''
+        uses: docker/login-action@06fb636fac595d6fb4b28a5dfcb21a6f5091859c # v4.5.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ env.DOCKERHUB_NAMESPACE }}/${{ matrix.image }}:${{ needs.version.outputs.version }}
+            ${{ env.DOCKERHUB_NAMESPACE }}/${{ matrix.image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

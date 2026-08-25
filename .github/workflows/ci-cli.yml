@@ -1,0 +1,53 @@
+name: CI — CLI
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/ci-cli.yml
+      - pyproject.toml
+      - uv.lock
+      - cli/**
+      - sdk/**
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ci-cli.yml
+      - pyproject.toml
+      - uv.lock
+      - cli/**
+      - sdk/**
+
+concurrency:
+  group: ci-cli-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint, typecheck, and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: astral-sh/setup-uv@0c5e2b8115b80b4c7c5ddf6ffdd634974642d182 # v5.4.1
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --frozen --package ocmo-cli
+
+      - name: Ruff lint
+        run: uv run --package ocmo-cli ruff check cli/
+
+      - name: Ruff format check
+        run: uv run --package ocmo-cli ruff format --check cli/
+
+      - name: Mypy
+        run: uv run --package ocmo-cli mypy cli/ocmo_cli
+
+      - name: Unit tests
+        run: uv run --package ocmo-cli pytest cli/tests

@@ -1,0 +1,58 @@
+name: CI — Frontend
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/ci-frontend.yml
+      - frontend/**
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ci-frontend.yml
+      - frontend/**
+
+concurrency:
+  group: ci-frontend-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint, format, build, test, and build image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Enable pnpm
+        run: corepack enable && corepack prepare pnpm@10.28.2 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: ESLint
+        run: pnpm lint
+
+      - name: Prettier format check
+        run: pnpm exec prettier --check src
+
+      - name: Build
+        run: pnpm build
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Docker image build
+        working-directory: ${{ github.workspace }}
+        run: docker build -f frontend/Dockerfile -t ocmo-frontend:ci frontend
