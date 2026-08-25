@@ -1,20 +1,18 @@
 # Production compose — application services only.
 #
 # Postgres, Redis, and the OIDC provider are expected to be provisioned separately.
-# Set connection and OIDC variables via environment or an env file before `docker compose up`.
+# Images are pulled from Docker Hub (ocmooss/*). Set OCMO_IMAGE_TAG to a release
+# version (e.g. 0.8.19) or use latest.
 #
 # Usage:
-#   docker compose up --build
+#   docker compose --env-file .env up
 #
 # Optional RQ worker (requires external Redis):
-#   docker compose --profile worker up --build
+#   docker compose --profile worker up
 
 services:
   api:
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    image: ocmo-api:${OCMO_IMAGE_TAG:-latest}
+    image: ocmooss/ocmo-api:${OCMO_IMAGE_TAG:-latest}
     container_name: ocmo-api
     environment:
       DJANGO_SETTINGS_MODULE: ocmoapi.settings
@@ -57,22 +55,14 @@ services:
       - ocmo-network
 
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
-    image: ocmo-frontend:${OCMO_IMAGE_TAG:-latest}
+    image: ocmooss/ocmo-frontend:${OCMO_IMAGE_TAG:-latest}
     container_name: ocmo-frontend
     restart: unless-stopped
     networks:
       - ocmo-network
 
   gateway:
-    build:
-      context: .
-      dockerfile: docker/gateway/Dockerfile
-    image: ocmo-gateway:${OCMO_IMAGE_TAG:-latest}
+    image: ocmooss/ocmo-gateway:${OCMO_IMAGE_TAG:-latest}
     container_name: ocmo-gateway
     ports:
       - "${GATEWAY_PORT:-8080}:80"
@@ -93,10 +83,7 @@ services:
 
   rq-worker:
     profiles: ["worker"]
-    build:
-      context: ./api
-      dockerfile: Dockerfile
-    image: ocmo-api:${OCMO_IMAGE_TAG:-latest}
+    image: ocmooss/ocmo-api:${OCMO_IMAGE_TAG:-latest}
     container_name: ocmo-rq-worker
     environment:
       DJANGO_SETTINGS_MODULE: ocmoapi.settings
