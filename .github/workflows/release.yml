@@ -48,7 +48,6 @@ jobs:
   publish-pypi:
     name: Publish PyPI — ${{ matrix.package.name }}
     needs: version
-    if: matrix.package.pypi_publish
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: release
@@ -64,15 +63,12 @@ jobs:
           - name: ocmo-api
             directory: api
             workspace: false
-            pypi_publish: true
           - name: ocmo-sdk
             directory: sdk
             workspace: true
-            pypi_publish: true
           - name: ocmo-cli
             directory: cli
             workspace: true
-            pypi_publish: true
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
