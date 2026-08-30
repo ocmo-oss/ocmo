@@ -1,5 +1,5 @@
-import { lazy, Suspense, useMemo } from 'react'
-import { Navigate, useParams, useSearchParams } from 'react-router-dom'
+import { lazy, Suspense, useMemo } from "react";
+import { Navigate, useParams, useSearchParams } from "react-router-dom";
 import {
   isCreateableItemType,
   normalizePathSegment,
@@ -7,28 +7,28 @@ import {
   stubResolverNode,
   stubSecretNode,
   stubTemplateNode,
-} from '../lib/createItemStubs'
-import { useCreateItemPath } from '../lib/createItemPath'
-import { validateTreePathCharacters } from '../lib/locationPath'
-import { useDebouncedValue } from '../hooks/useDebouncedValue'
-import { useItemPermissions } from '../hooks/useItemPermissions'
-import { CreateItemPathHeader } from '../components/items/CreateItemPathHeader'
-import { Skeleton } from '../components/ui/Skeleton'
-import { PermissionDenied } from '../components/items/PermissionDenied'
-import { pathSegments } from '../lib/paths'
-import type { ConfigNode, ResolverNode, SecretNode } from '../api/types'
+} from "../lib/createItemStubs";
+import { useCreateItemPath } from "../lib/createItemPath";
+import { validateTreePathCharacters } from "../lib/locationPath";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useItemPermissions } from "../hooks/useItemPermissions";
+import { CreateItemPathHeader } from "../components/items/CreateItemPathHeader";
+import { Skeleton } from "../components/ui/Skeleton";
+import { PermissionDenied } from "../components/items/PermissionDenied";
+import { pathSegments } from "../lib/paths";
+import type { ConfigNode, ResolverNode, SecretNode } from "../api/types";
 
-const ConfigEditor = lazy(() => import('../components/items/ConfigEditor'))
-const TemplateEditor = lazy(() => import('../components/items/TemplateEditor'))
-const SecretView = lazy(() => import('../components/items/SecretView'))
-const ResolverView = lazy(() => import('../components/items/ResolverView'))
+const ConfigEditor = lazy(() => import("../components/items/ConfigEditor"));
+const TemplateEditor = lazy(() => import("../components/items/TemplateEditor"));
+const SecretView = lazy(() => import("../components/items/SecretView"));
+const ResolverView = lazy(() => import("../components/items/ResolverView"));
 
-const PERMISSIONS_DEBOUNCE_MS = 400
+const PERMISSIONS_DEBOUNCE_MS = 400;
 
 export function CreateItemPage() {
-  const { namespace, type } = useParams<{ namespace: string; type: string }>()
-  const [searchParams] = useSearchParams()
-  const parentPath = normalizePathSegment(searchParams.get('in') ?? '')
+  const { namespace, type } = useParams<{ namespace: string; type: string }>();
+  const [searchParams] = useSearchParams();
+  const parentPath = normalizePathSegment(searchParams.get("in") ?? "");
 
   const {
     prefixSegments,
@@ -37,79 +37,120 @@ export function CreateItemPage() {
     initialParentSegments,
     onInputChange,
     onInputKeyDown,
-  } = useCreateItemPath(parentPath)
+  } = useCreateItemPath(parentPath);
 
-  const validType = type && isCreateableItemType(type) ? type : null
+  const validType = type && isCreateableItemType(type) ? type : null;
 
-  function resolveCreatePathError(path: string, hasInput: boolean): string | undefined {
+  function resolveCreatePathError(
+    path: string,
+    hasInput: boolean,
+  ): string | undefined {
     if (!hasInput) {
-      return undefined
+      return undefined;
     }
-    return validateTreePathCharacters(path)
-      ?? (path.length === 0 || pathSegments(path).length === 0 ? 'Enter a valid path' : undefined)
+    return (
+      validateTreePathCharacters(path) ??
+      (path.length === 0 || pathSegments(path).length === 0
+        ? "Enter a valid path"
+        : undefined)
+    );
   }
 
-  const pathError = resolveCreatePathError(fullPath, currentInput.trim().length > 0)
+  const pathError = resolveCreatePathError(
+    fullPath,
+    currentInput.trim().length > 0,
+  );
 
-  const debouncedFullPath = useDebouncedValue(fullPath, PERMISSIONS_DEBOUNCE_MS)
+  const debouncedFullPath = useDebouncedValue(
+    fullPath,
+    PERMISSIONS_DEBOUNCE_MS,
+  );
   const debouncedPathError = resolveCreatePathError(
     debouncedFullPath,
     currentInput.trim().length > 0,
-  )
+  );
 
   const permissions = useItemPermissions(
-    namespace ?? '',
+    namespace ?? "",
     debouncedFullPath,
-    validType ?? 'config',
+    validType ?? "config",
     Boolean(validType && namespace && debouncedFullPath && !debouncedPathError),
-  )
+  );
 
   const item = useMemo(() => {
     if (!validType || !fullPath) {
-      return null
+      return null;
     }
     switch (validType) {
-      case 'config':
-        return stubConfigNode(fullPath)
-      case 'template':
-        return stubTemplateNode(fullPath)
-      case 'secret':
-        return stubSecretNode(fullPath)
-      case 'resolver':
-        return stubResolverNode(fullPath)
+      case "config":
+        return stubConfigNode(fullPath);
+      case "template":
+        return stubTemplateNode(fullPath);
+      case "secret":
+        return stubSecretNode(fullPath);
+      case "resolver":
+        return stubResolverNode(fullPath);
     }
-  }, [validType, fullPath])
+  }, [validType, fullPath]);
 
   if (!validType) {
-    return <Navigate to={`/ns/${namespace}/configs`} replace />
+    return <Navigate to={`/ns/${namespace}/configs`} replace />;
   }
 
   const editor = (() => {
-    if (!item || !namespace) return null
+    if (!item || !namespace) return null;
     switch (validType) {
-      case 'config':
-        return <ConfigEditor item={item as ConfigNode} namespace={namespace} permissions={permissions} mode="create" />
-      case 'template':
-        return <TemplateEditor item={item as ConfigNode} namespace={namespace} permissions={permissions} mode="create" />
-      case 'secret':
-        return <SecretView item={item as SecretNode} namespace={namespace} permissions={permissions} mode="create" />
-      case 'resolver':
-        return <ResolverView item={item as ResolverNode} namespace={namespace} permissions={permissions} mode="create" />
+      case "config":
+        return (
+          <ConfigEditor
+            item={item as ConfigNode}
+            namespace={namespace}
+            permissions={permissions}
+            mode="create"
+          />
+        );
+      case "template":
+        return (
+          <TemplateEditor
+            item={item as ConfigNode}
+            namespace={namespace}
+            permissions={permissions}
+            mode="create"
+          />
+        );
+      case "secret":
+        return (
+          <SecretView
+            item={item as SecretNode}
+            namespace={namespace}
+            permissions={permissions}
+            mode="create"
+          />
+        );
+      case "resolver":
+        return (
+          <ResolverView
+            item={item as ResolverNode}
+            namespace={namespace}
+            permissions={permissions}
+            mode="create"
+          />
+        );
     }
-  })()
+  })();
 
   const showPermissionDenied = Boolean(
-    fullPath
-    && !pathError
-    && debouncedFullPath === fullPath
-    && !permissions.isLoading
-    && !permissions.canWrite,
-  )
+    fullPath &&
+    !pathError &&
+    debouncedFullPath === fullPath &&
+    !permissions.isLoading &&
+    !permissions.canWrite,
+  );
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       <CreateItemPathHeader
-        namespace={namespace ?? ''}
+        namespace={namespace ?? ""}
         type={validType}
         prefixSegments={prefixSegments}
         initialParentSegments={initialParentSegments}
@@ -127,16 +168,18 @@ export function CreateItemPage() {
         ) : showPermissionDenied ? (
           <PermissionDenied message="You do not have permission to create this item." />
         ) : (
-          <Suspense fallback={
-            <div className="p-6 space-y-3">
-              <Skeleton className="h-8 w-64" />
-              <Skeleton className="h-64 w-full" />
-            </div>
-          }>
+          <Suspense
+            fallback={
+              <div className="p-6 space-y-3">
+                <Skeleton className="h-8 w-64" />
+                <Skeleton className="h-64 w-full" />
+              </div>
+            }
+          >
             {editor}
           </Suspense>
         )}
       </div>
     </div>
-  )
+  );
 }

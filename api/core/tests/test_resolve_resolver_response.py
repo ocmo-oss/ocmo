@@ -39,6 +39,15 @@ class ResolveResolverResponseTests(TestCase):
             'validate: "ls -la {!conf}"\npost_resolve: "ls -la"\n',
             "resolver",
         )
+        TreeManager(self.ns, "app/cast-svc", auth=None).create_item(
+            "cast:\n"
+            "  format: yaml\n"
+            "  options:\n"
+            "    explicit_start: true\n"
+            "    trailing_newline: true\n"
+            'validate: "ls -la {!conf}"\n',
+            "resolver",
+        )
         self.resolver_path = "app/svc"
 
     def tearDown(self):
@@ -105,3 +114,48 @@ class ResolveResolverResponseTests(TestCase):
         assert payload is not None
         self.assertEqual(payload["hooks"]["validate"], "ls -la {!conf}")
         self.assertEqual(payload["hooks"]["post_resolve"], "ls -la")
+
+    def test_resolver_cast_options_merged_on_init(self):
+        auth = AuthManager(
+            {
+                "_type": "resolver",
+                "namespace": self.ns.id,
+                "name": "cast-svc",
+                "access_scope": "app",
+                "token_number": 1,
+            }
+        )
+        mgr = ResolutionManager(
+            self.ns,
+            "cfg",
+            auth=auth,
+            query_params={},
+            base_url="http://testserver/",
+            trace_only=True,
+        )
+        self.assertEqual(mgr.cast, "yaml")
+        self.assertEqual(
+            mgr.cast_options,
+            {"explicit_start": True},
+        )
+
+    def test_resolver_cast_trace_only_resolve(self):
+        auth = AuthManager(
+            {
+                "_type": "resolver",
+                "namespace": self.ns.id,
+                "name": "cast-svc",
+                "access_scope": "app",
+                "token_number": 1,
+            }
+        )
+        with self._patch_client_auth(auth):
+            resp = self.client.get(
+                f"/api/v1/ns/{self.ns.name}/~resolve/cfg",
+                {"trace_only": "true"},
+                HTTP_X_OCMO_RESOLVER_TOKEN="unused-in-patched-test",
+            )
+        self.assertEqual(resp.status_code, 200, resp.content)
+        payload = resp.json()
+        self.assertTrue(payload.get("trace_only"))
+        self.assertIn("resolver", payload)

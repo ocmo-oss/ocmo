@@ -1,41 +1,41 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from "react";
 
 export interface HistorySelectionItem {
-  key: string
-  kind: 'version' | 'tag'
-  label: string
-  version: number
-  tagName?: string
+  key: string;
+  kind: "version" | "tag";
+  label: string;
+  version: number;
+  tagName?: string;
 }
 
 export function useHistorySelection() {
-  const [selected, setSelected] = useState<HistorySelectionItem[]>([])
+  const [selected, setSelected] = useState<HistorySelectionItem[]>([]);
 
   const toggle = useCallback((item: HistorySelectionItem) => {
-    setSelected(prev => {
-      const exists = prev.some(s => s.key === item.key)
-      if (exists) return prev.filter(s => s.key !== item.key)
-      if (prev.length >= 2) return [prev[1]!, item]
-      return [...prev, item]
-    })
-  }, [])
+    setSelected((prev) => {
+      const exists = prev.some((s) => s.key === item.key);
+      if (exists) return prev.filter((s) => s.key !== item.key);
+      if (prev.length >= 2) return [prev[1]!, item];
+      return [...prev, item];
+    });
+  }, []);
 
-  const clear = useCallback(() => setSelected([]), [])
+  const clear = useCallback(() => setSelected([]), []);
 
   const isSelected = useCallback(
-    (key: string) => selected.some(s => s.key === key),
+    (key: string) => selected.some((s) => s.key === key),
     [selected],
-  )
+  );
 
   const selectedTags = useMemo(
-    () => selected.filter(s => s.kind === 'tag'),
+    () => selected.filter((s) => s.kind === "tag"),
     [selected],
-  )
+  );
 
   const selectedVersions = useMemo(
-    () => selected.filter(s => s.kind === 'version'),
+    () => selected.filter((s) => s.kind === "version"),
     [selected],
-  )
+  );
 
   return {
     selected,
@@ -45,7 +45,9 @@ export function useHistorySelection() {
     clear,
     isSelected,
     canDiff: selected.length === 2,
-    canUntag: selectedTags.length > 0 && !selectedTags.some(t => t.tagName === 'latest'),
+    canUntag:
+      selectedTags.length > 0 &&
+      !selectedTags.some((t) => t.tagName === "latest"),
     canRemove: selectedVersions.length > 0,
-  }
+  };
 }

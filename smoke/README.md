@@ -17,7 +17,7 @@ Template paths keep their extension, e.g. `templates/scenario4/nginx.conf.j2`.
 ## Prerequisites
 
 - OCMO API running (default `http://localhost:8000`)
-- Auth disabled or reachable without credentials (dev setup)
+- Auth disabled, or set `OCMO_SMOKE_TOKEN` to a valid Bearer JWT for API calls
 - `OCMO_MASTER_KEY` set if cases use secrets
 
 ## Run
@@ -69,6 +69,7 @@ Each test sends the same logical document via every `supported_types` media type
 | Flag / env | Purpose |
 |---|---|
 | `--base-url URL` | API base URL (default `OCMO_SMOKE_BASE_URL` or `http://localhost:8000`) |
+| `OCMO_SMOKE_TOKEN` | Bearer token when the API requires authentication |
 | `--keep-namespace` | Do not delete namespace after test (`OCMO_SMOKE_KEEP_NAMESPACE=1`) |
 
 On failure, pytest shows a unified diff between `expected/<file>` and the downloaded artifact.

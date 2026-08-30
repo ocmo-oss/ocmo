@@ -306,11 +306,7 @@ class ResolutionManager:
 
             if cast is None and rc.cast is not None:
                 effective_cast_fmt = rc.cast.format
-                resolver_opts = (
-                    rc.cast.options.model_dump(exclude_none=True)  # type: ignore[attr-defined]
-                    if rc.cast.options
-                    else {}
-                )
+                resolver_opts = dict(rc.cast.options or {})
                 effective_cast_options = {**resolver_opts, **effective_cast_options}
 
             merged_params: dict[str, Any] = dict(rc.parameters or {})

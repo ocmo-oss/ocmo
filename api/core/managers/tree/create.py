@@ -13,7 +13,7 @@ class TreeCreateMixin:
         operation=OP_CREATE_ITEM,
     )
     @require_permissions(PermCheck(lambda self, node_type: f"{node_type}:write"))
-    def create_item(self, data: str, node_type: str):
+    def create_item(self, data: str, node_type: str, *, validate_references: bool = True):
         if not self.is_creatable:
             raise CapabilityDenied(f"{node_type.title()} can't be created by path '{self.path}'")
         self._ensure_writable()
@@ -65,7 +65,7 @@ class TreeCreateMixin:
 
             if version_data:
                 if node_type == "config":
-                    self._validate_config_on_save(version_data)
+                    self._validate_config_on_save(version_data, validate_references=validate_references)
                 version_model_class = globals().get(f"{node_type.title()}Version")
                 item_version = version_model_class(config=item, data=version_data, updater=actor)
                 item_version.save()

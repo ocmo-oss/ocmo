@@ -17,12 +17,15 @@ def _get_kwargs(
     *,
     body: LocationPayload,
     tag_to_copy: Union[Unset, str] = "latest",
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Dict[str, Any]:
     headers: Dict[str, Any] = {}
 
     params: Dict[str, Any] = {}
 
     params["tag_to_copy"] = tag_to_copy
+
+    params["skip_reference_validation"] = skip_reference_validation
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -80,6 +83,7 @@ def sync_detailed(
     client: AuthenticatedClient,
     body: LocationPayload,
     tag_to_copy: Union[Unset, str] = "latest",
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Response[Union[CopiedItemsSchema, ErrorSchema]]:
     """Copy Item
 
@@ -89,6 +93,7 @@ def sync_detailed(
         namespace (str):
         path (str):
         tag_to_copy (Union[Unset, str]):  Default: 'latest'.
+        skip_reference_validation (Union[Unset, bool]):  Default: False.
         body (LocationPayload):
 
     Raises:
@@ -104,6 +109,7 @@ def sync_detailed(
         path=path,
         body=body,
         tag_to_copy=tag_to_copy,
+        skip_reference_validation=skip_reference_validation,
     )
 
     response = client.get_httpx_client().request(
@@ -120,6 +126,7 @@ def sync(
     client: AuthenticatedClient,
     body: LocationPayload,
     tag_to_copy: Union[Unset, str] = "latest",
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Optional[Union[CopiedItemsSchema, ErrorSchema]]:
     """Copy Item
 
@@ -129,6 +136,7 @@ def sync(
         namespace (str):
         path (str):
         tag_to_copy (Union[Unset, str]):  Default: 'latest'.
+        skip_reference_validation (Union[Unset, bool]):  Default: False.
         body (LocationPayload):
 
     Raises:
@@ -145,6 +153,7 @@ def sync(
         client=client,
         body=body,
         tag_to_copy=tag_to_copy,
+        skip_reference_validation=skip_reference_validation,
     ).parsed
 
 
@@ -155,6 +164,7 @@ async def asyncio_detailed(
     client: AuthenticatedClient,
     body: LocationPayload,
     tag_to_copy: Union[Unset, str] = "latest",
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Response[Union[CopiedItemsSchema, ErrorSchema]]:
     """Copy Item
 
@@ -164,6 +174,7 @@ async def asyncio_detailed(
         namespace (str):
         path (str):
         tag_to_copy (Union[Unset, str]):  Default: 'latest'.
+        skip_reference_validation (Union[Unset, bool]):  Default: False.
         body (LocationPayload):
 
     Raises:
@@ -179,6 +190,7 @@ async def asyncio_detailed(
         path=path,
         body=body,
         tag_to_copy=tag_to_copy,
+        skip_reference_validation=skip_reference_validation,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -193,6 +205,7 @@ async def asyncio(
     client: AuthenticatedClient,
     body: LocationPayload,
     tag_to_copy: Union[Unset, str] = "latest",
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Optional[Union[CopiedItemsSchema, ErrorSchema]]:
     """Copy Item
 
@@ -202,6 +215,7 @@ async def asyncio(
         namespace (str):
         path (str):
         tag_to_copy (Union[Unset, str]):  Default: 'latest'.
+        skip_reference_validation (Union[Unset, bool]):  Default: False.
         body (LocationPayload):
 
     Raises:
@@ -219,5 +233,6 @@ async def asyncio(
             client=client,
             body=body,
             tag_to_copy=tag_to_copy,
+            skip_reference_validation=skip_reference_validation,
         )
     ).parsed

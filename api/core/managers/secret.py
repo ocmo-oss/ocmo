@@ -3,7 +3,7 @@ import logging
 from django.db import transaction
 
 from ..decorators import PermCheck, audit, enrich_audit, require_permissions, webhook
-from ..exceptions import SecretParameterError, TreeItemConflict
+from ..exceptions import NotFound, SecretParameterError, TreeItemConflict
 from ..models import Secret, SecretVersion, TreeItem
 from ..shortcuts import safe_yaml_load, validate_path_characters
 from .auth import AuthManager
@@ -35,7 +35,7 @@ class SecretManager:
             return self._secret
         try:
             self._secret = TreeManager(self.namespace, self.path, auth=None).get_or_raise(["secret"])
-        except TreeItem.DoesNotExist as exc:
+        except (TreeItem.DoesNotExist, NotFound) as exc:
             raise SecretParameterError(f"Secret {self.path!r} not found") from exc
         return self._secret
 

@@ -49,7 +49,8 @@
 }
 
 .vyshyvanka-band--complete {
-  box-shadow: 0 8px 32px color-mix(in srgb, var(--vy-accent-top) 14%, transparent);
+  box-shadow: 0 8px 32px
+    color-mix(in srgb, var(--vy-accent-top) 14%, transparent);
 }
 
 .vyshyvanka-band__canvas {
@@ -74,7 +75,11 @@
 
 .vyshyvanka-band__edge-blur--top {
   top: 0;
-  background: linear-gradient(to bottom, var(--vy-edge-fade) 0%, transparent 100%);
+  background: linear-gradient(
+    to bottom,
+    var(--vy-edge-fade) 0%,
+    transparent 100%
+  );
   mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
 }
@@ -115,13 +120,33 @@
 }
 
 .vyshyvanka-band__pattern--top {
-  mask-image: linear-gradient(to bottom, transparent 0%, black var(--vy-fade-size), black 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black var(--vy-fade-size), black 100%);
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black var(--vy-fade-size),
+    black 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black var(--vy-fade-size),
+    black 100%
+  );
 }
 
 .vyshyvanka-band__pattern--bottom {
-  mask-image: linear-gradient(to top, transparent 0%, black var(--vy-fade-size), black 100%);
-  -webkit-mask-image: linear-gradient(to top, transparent 0%, black var(--vy-fade-size), black 100%);
+  mask-image: linear-gradient(
+    to top,
+    transparent 0%,
+    black var(--vy-fade-size),
+    black 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to top,
+    transparent 0%,
+    black var(--vy-fade-size),
+    black 100%
+  );
 }
 
 .vyshyvanka-band__message {
@@ -170,7 +195,7 @@
 
 .vy-stitch::before,
 .vy-stitch::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 50%;
   top: 50%;

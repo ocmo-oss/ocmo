@@ -1,54 +1,75 @@
-import { useEffect, useRef, useState } from 'react'
-import { AlertCircle, AlertTriangle, Info, X, ChevronDown, Trash2 } from 'lucide-react'
-import { formatUserDateTimeRelative } from '../lib/datetime'
-import { formatNotificationCopy, useNotifications } from '../store/notifications'
-import type { Severity } from '../store/notifications'
-import { cn } from '../components/ui/cn'
-import { NotificationCopyButton } from '../components/ui/NotificationCopyButton'
+import { useEffect, useRef, useState } from "react";
+import {
+  AlertCircle,
+  AlertTriangle,
+  Info,
+  X,
+  ChevronDown,
+  Trash2,
+} from "lucide-react";
+import { formatUserDateTimeRelative } from "../lib/datetime";
+import {
+  formatNotificationCopy,
+  useNotifications,
+} from "../store/notifications";
+import type { Severity } from "../store/notifications";
+import { cn } from "../components/ui/cn";
+import { NotificationCopyButton } from "../components/ui/NotificationCopyButton";
 
 function severityIcon(s: Severity) {
-  if (s === 'error') return <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />
-  if (s === 'warning') return <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />
-  return <Info className="h-4 w-4 text-blue-500 shrink-0" />
+  if (s === "error")
+    return <AlertCircle className="h-4 w-4 text-red-500 shrink-0" />;
+  if (s === "warning")
+    return <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0" />;
+  return <Info className="h-4 w-4 text-blue-500 shrink-0" />;
 }
 
 function severityBg(s: Severity) {
-  if (s === 'error') return 'border-l-red-500'
-  if (s === 'warning') return 'border-l-yellow-500'
-  return 'border-l-blue-500'
+  if (s === "error") return "border-l-red-500";
+  if (s === "warning") return "border-l-yellow-500";
+  return "border-l-blue-500";
 }
 
 function NotificationRow({
-  id, severity, message, detail, auditEventId, timestamp, count, onDismiss,
+  id,
+  severity,
+  message,
+  detail,
+  auditEventId,
+  timestamp,
+  count,
+  onDismiss,
   defaultExpanded = false,
 }: {
-  id: string
-  severity: Severity
-  message: string
-  detail?: string
-  auditEventId?: string
-  timestamp: number
-  count: number
-  onDismiss: (id: string) => void
-  defaultExpanded?: boolean
+  id: string;
+  severity: Severity;
+  message: string;
+  detail?: string;
+  auditEventId?: string;
+  timestamp: number;
+  count: number;
+  onDismiss: (id: string) => void;
+  defaultExpanded?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(defaultExpanded)
-  const showExpandToggle = Boolean(detail) || message.length > 80
+  const [expanded, setExpanded] = useState(defaultExpanded);
+  const showExpandToggle = Boolean(detail) || message.length > 80;
 
   return (
-    <div className={cn(
-      'border-l-2 bg-surface-elevated dark:bg-gray-800 rounded-r px-3 py-2 text-sm shadow-sm',
-      severityBg(severity),
-    )}>
+    <div
+      className={cn(
+        "border-l-2 bg-surface-elevated dark:bg-gray-800 rounded-r px-3 py-2 text-sm shadow-sm",
+        severityBg(severity),
+      )}
+    >
       <div className="flex items-start gap-2">
         {severityIcon(severity)}
         <div className="flex-1 min-w-0">
           <button
             type="button"
-            onClick={() => setExpanded(e => !e)}
+            onClick={() => setExpanded((e) => !e)}
             className={cn(
-              'w-full text-left text-gray-800 dark:text-gray-200',
-              !expanded && 'line-clamp-2',
+              "w-full text-left text-gray-800 dark:text-gray-200",
+              !expanded && "line-clamp-2",
             )}
           >
             {message}
@@ -68,19 +89,29 @@ function NotificationRow({
             {showExpandToggle && (
               <button
                 type="button"
-                onClick={e => { e.stopPropagation(); setExpanded(v => !v) }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setExpanded((v) => !v);
+                }}
                 className="flex items-center gap-0.5 hover:text-gray-600 dark:hover:text-gray-300"
                 aria-expanded={expanded}
               >
-                <ChevronDown className={cn('h-3 w-3 transition-transform', expanded && 'rotate-180')} />
-                {expanded ? 'Less' : 'More'}
+                <ChevronDown
+                  className={cn(
+                    "h-3 w-3 transition-transform",
+                    expanded && "rotate-180",
+                  )}
+                />
+                {expanded ? "Less" : "More"}
               </button>
             )}
           </div>
         </div>
         <NotificationCopyButton
           className="ml-1"
-          getText={() => formatNotificationCopy({ message, detail, auditEventId })}
+          getText={() =>
+            formatNotificationCopy({ message, detail, auditEventId })
+          }
         />
         <button
           onClick={() => onDismiss(id)}
@@ -91,37 +122,38 @@ function NotificationRow({
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 export function NotificationsTray() {
-  const { notifications, trayOpen, closeTray, dismiss, dismissAll } = useNotifications()
-  const panelRef = useRef<HTMLDivElement>(null)
+  const { notifications, trayOpen, closeTray, dismiss, dismissAll } =
+    useNotifications();
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!trayOpen) return
+    if (!trayOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeTray()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [trayOpen, closeTray])
+      if (e.key === "Escape") closeTray();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [trayOpen, closeTray]);
 
   useEffect(() => {
-    if (!trayOpen) return
+    if (!trayOpen) return;
     const onClick = (e: MouseEvent) => {
       if (!panelRef.current?.contains(e.target as Node)) {
-        closeTray()
+        closeTray();
       }
-    }
-    const t = setTimeout(() => document.addEventListener('click', onClick), 0)
+    };
+    const t = setTimeout(() => document.addEventListener("click", onClick), 0);
     return () => {
-      clearTimeout(t)
-      document.removeEventListener('click', onClick)
-    }
-  }, [trayOpen, closeTray])
+      clearTimeout(t);
+      document.removeEventListener("click", onClick);
+    };
+  }, [trayOpen, closeTray]);
 
-  if (!trayOpen) return null
+  if (!trayOpen) return null;
 
   return (
     <div
@@ -132,7 +164,8 @@ export function NotificationsTray() {
     >
       <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
         <span className="font-semibold text-sm text-gray-800 dark:text-gray-200">
-          Notifications {notifications.length > 0 && `(${notifications.length})`}
+          Notifications{" "}
+          {notifications.length > 0 && `(${notifications.length})`}
         </span>
         <div className="flex items-center gap-1">
           {notifications.length > 0 && (
@@ -156,7 +189,9 @@ export function NotificationsTray() {
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {notifications.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 mt-8">No notifications</p>
+          <p className="text-center text-sm text-gray-400 mt-8">
+            No notifications
+          </p>
         ) : (
           notifications.map((n, index) => (
             <NotificationRow
@@ -169,5 +204,5 @@ export function NotificationsTray() {
         )}
       </div>
     </div>
-  )
+  );
 }

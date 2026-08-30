@@ -1,10 +1,13 @@
-import { api } from './client'
-import { localDateTimeInputToUtcIso } from '../lib/datetime'
-import type { Lock, LocksList, LockPayload } from './types'
+import { api } from "./client";
+import { localDateTimeInputToUtcIso } from "../lib/datetime";
+import type { Lock, LocksList, LockPayload } from "./types";
 
 export const locksApi = {
-  list: (ns: string, params?: { limit?: number; offset?: number }, signal?: AbortSignal) =>
-    api.get<LocksList>(`/ns/${ns}/~lock/`, { params, signal }),
+  list: (
+    ns: string,
+    params?: { limit?: number; offset?: number },
+    signal?: AbortSignal,
+  ) => api.get<LocksList>(`/ns/${ns}/~lock/`, { params, signal }),
 
   get: (ns: string, path: string, signal?: AbortSignal) =>
     api.get<Lock>(`/ns/${ns}/~lock/${path}`, { signal }),
@@ -13,7 +16,7 @@ export const locksApi = {
     api.post<Lock>(`/ns/${ns}/~lock/${path}`, {
       ...payload,
       expires_at: payload.expires_at
-        ? localDateTimeInputToUtcIso(payload.expires_at) ?? payload.expires_at
+        ? (localDateTimeInputToUtcIso(payload.expires_at) ?? payload.expires_at)
         : undefined,
     }),
 
@@ -22,4 +25,4 @@ export const locksApi = {
 
   delete: (ns: string, path: string) =>
     api.delete<void>(`/ns/${ns}/~lock/${path}`),
-}
+};

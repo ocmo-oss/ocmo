@@ -1,36 +1,40 @@
-import { AlertCircle, AlertTriangle, Info } from 'lucide-react'
-import type { Notification, Severity } from '../../store/notifications'
-import { formatNotificationCopy } from '../../store/notifications'
-import { cn } from './cn'
-import { NotificationCopyButton } from './NotificationCopyButton'
+import { AlertCircle, AlertTriangle, Info } from "lucide-react";
+import type { Notification, Severity } from "../../store/notifications";
+import { formatNotificationCopy } from "../../store/notifications";
+import { cn } from "./cn";
+import { NotificationCopyButton } from "./NotificationCopyButton";
 
 function severityIcon(s: Severity) {
-  if (s === 'error') return <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />
-  if (s === 'warning') return <AlertTriangle className="h-4 w-4 shrink-0 text-orange-500" />
-  return <Info className="h-4 w-4 shrink-0 text-blue-500" />
+  if (s === "error")
+    return <AlertCircle className="h-4 w-4 shrink-0 text-red-500" />;
+  if (s === "warning")
+    return <AlertTriangle className="h-4 w-4 shrink-0 text-orange-500" />;
+  return <Info className="h-4 w-4 shrink-0 text-blue-500" />;
 }
 
 function severityStyles(s: Severity) {
-  if (s === 'error') {
-    return 'border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/40'
+  if (s === "error") {
+    return "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950/40";
   }
-  if (s === 'warning') {
-    return 'border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/40'
+  if (s === "warning") {
+    return "border-orange-300 bg-orange-50 dark:border-orange-800 dark:bg-orange-950/40";
   }
-  return 'border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40'
+  return "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/40";
 }
 
 interface ModalNotificationBannerProps {
-  notification: Notification
+  notification: Notification;
 }
 
-export function ModalNotificationBanner({ notification }: ModalNotificationBannerProps) {
-  const { severity, message, detail, auditEventId } = notification
+export function ModalNotificationBanner({
+  notification,
+}: ModalNotificationBannerProps) {
+  const { severity, message, detail, auditEventId } = notification;
 
   return (
     <div
       className={cn(
-        'shrink-0 border-b px-6 py-3 text-sm',
+        "shrink-0 border-b px-6 py-3 text-sm",
         severityStyles(severity),
       )}
       role="alert"
@@ -46,9 +50,11 @@ export function ModalNotificationBanner({ notification }: ModalNotificationBanne
           )}
         </div>
         <NotificationCopyButton
-          getText={() => formatNotificationCopy({ message, detail, auditEventId })}
+          getText={() =>
+            formatNotificationCopy({ message, detail, auditEventId })
+          }
         />
       </div>
     </div>
-  )
+  );
 }

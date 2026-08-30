@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 
 from click.testing import CliRunner
 
+from ocmo_cli._output import format_datetime
 from ocmo_cli.commands.timeline import (
     _entry_message,
     _fetch_timeline_entries,
@@ -33,13 +34,12 @@ def test_timeline_audit_rejects_output_format() -> None:
 
 
 def test_entry_message_uses_api_note() -> None:
-    occurred_at, message = _entry_message(
-        {
-            "occurred_at": "2026-08-09T15:06:42+00:00",
-            "message": "User alice@example.com set tag `stable` to version 2",
-        }
-    )
-    assert occurred_at == "Aug 9, 18:06:42"
+    entry = {
+        "occurred_at": "2026-08-09T15:06:42+00:00",
+        "message": "User alice@example.com set tag `stable` to version 2",
+    }
+    occurred_at, message = _entry_message(entry)
+    assert occurred_at == format_datetime(entry["occurred_at"])
     assert message == "User alice@example.com set tag `stable` to version 2"
 
 

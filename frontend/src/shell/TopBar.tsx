@@ -1,15 +1,28 @@
-import { Link, useParams } from 'react-router-dom'
-import { Bell, CheckCircle, ChevronDown, House, Info, LayoutGrid, LogOut, Moon, Sun, User, ShieldCheck, X } from 'lucide-react'
-import { Switch } from '@headlessui/react'
-import { useEffect, useRef, useState } from 'react'
-import { useAuth } from '../auth/useAuth'
-import { useNotifications } from '../store/notifications'
-import { useTheme } from '../store/theme'
-import { useDefaultNamespace } from '../store/defaultNamespace'
-import { NamespaceSelector } from '../components/shell/NamespaceSelector'
-import { Tooltip } from '../components/ui/Tooltip'
-import { cn } from '../components/ui/cn'
-import ocmoLogo from '../assets/logo-large.png'
+import { Link, useParams } from "react-router-dom";
+import {
+  Bell,
+  CheckCircle,
+  ChevronDown,
+  House,
+  Info,
+  LayoutGrid,
+  LogOut,
+  Moon,
+  Sun,
+  User,
+  ShieldCheck,
+  X,
+} from "lucide-react";
+import { Switch } from "@headlessui/react";
+import { useEffect, useRef, useState } from "react";
+import { useAuth } from "../auth/useAuth";
+import { useNotifications } from "../store/notifications";
+import { useTheme } from "../store/theme";
+import { useDefaultNamespace } from "../store/defaultNamespace";
+import { NamespaceSelector } from "../components/shell/NamespaceSelector";
+import { Tooltip } from "../components/ui/Tooltip";
+import { cn } from "../components/ui/cn";
+import ocmoLogo from "../assets/logo-large.png";
 
 function OcmoLogo() {
   return (
@@ -21,52 +34,58 @@ function OcmoLogo() {
           className="h-full w-full object-contain"
         />
       </span>
-      <span className="hidden font-semibold text-gray-900 dark:text-gray-100 sm:block text-sm">OCMO</span>
+      <span className="hidden font-semibold text-gray-900 dark:text-gray-100 sm:block text-sm">
+        OCMO
+      </span>
     </Link>
-  )
+  );
 }
 
-const SUCCESS_PULSE_MS = 2000
+const SUCCESS_PULSE_MS = 2000;
 
 function NotificationsBell() {
-  const { notifications, toggleTray, shakeGeneration, successPulseGeneration } = useNotifications()
-  const count = notifications.length
-  const hasError = notifications.some(n => n.severity === 'error')
-  const [shaking, setShaking] = useState(false)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const prevShakeGeneration = useRef(shakeGeneration)
-  const prevSuccessGeneration = useRef(successPulseGeneration)
-  const successTimerRef = useRef<ReturnType<typeof setTimeout>>()
+  const { notifications, toggleTray, shakeGeneration, successPulseGeneration } =
+    useNotifications();
+  const count = notifications.length;
+  const hasError = notifications.some((n) => n.severity === "error");
+  const [shaking, setShaking] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const prevShakeGeneration = useRef(shakeGeneration);
+  const prevSuccessGeneration = useRef(successPulseGeneration);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
   useEffect(() => {
-    if (shakeGeneration === prevShakeGeneration.current) return
-    prevShakeGeneration.current = shakeGeneration
-    setShaking(true)
-    const t = setTimeout(() => setShaking(false), 600)
-    return () => clearTimeout(t)
-  }, [shakeGeneration])
+    if (shakeGeneration === prevShakeGeneration.current) return;
+    prevShakeGeneration.current = shakeGeneration;
+    setShaking(true);
+    const t = setTimeout(() => setShaking(false), 600);
+    return () => clearTimeout(t);
+  }, [shakeGeneration]);
 
   useEffect(() => {
-    if (successPulseGeneration === prevSuccessGeneration.current) return
-    prevSuccessGeneration.current = successPulseGeneration
-    setShowSuccess(true)
-    clearTimeout(successTimerRef.current)
-    successTimerRef.current = setTimeout(() => setShowSuccess(false), SUCCESS_PULSE_MS)
-    return () => clearTimeout(successTimerRef.current)
-  }, [successPulseGeneration])
+    if (successPulseGeneration === prevSuccessGeneration.current) return;
+    prevSuccessGeneration.current = successPulseGeneration;
+    setShowSuccess(true);
+    clearTimeout(successTimerRef.current);
+    successTimerRef.current = setTimeout(
+      () => setShowSuccess(false),
+      SUCCESS_PULSE_MS,
+    );
+    return () => clearTimeout(successTimerRef.current);
+  }, [successPulseGeneration]);
 
   return (
     <button
       onClick={toggleTray}
       className={cn(
-        'relative rounded p-1.5 transition-all duration-300',
+        "relative rounded p-1.5 transition-all duration-300",
         showSuccess
-          ? 'bg-green-50 text-green-600 ring-2 ring-green-400/60 dark:bg-green-950/50 dark:text-green-400 dark:ring-green-500/50'
-          : 'text-gray-500 hover:bg-slate-200 dark:text-gray-400 dark:hover:bg-gray-800',
-        !showSuccess && hasError && 'text-red-500 dark:text-red-400',
-        shaking && !showSuccess && 'animate-bell-shake',
+          ? "bg-green-50 text-green-600 ring-2 ring-green-400/60 dark:bg-green-950/50 dark:text-green-400 dark:ring-green-500/50"
+          : "text-gray-500 hover:bg-slate-200 dark:text-gray-400 dark:hover:bg-gray-800",
+        !showSuccess && hasError && "text-red-500 dark:text-red-400",
+        shaking && !showSuccess && "animate-bell-shake",
       )}
-      aria-label={`Notifications${count > 0 ? ` (${count})` : ''}`}
+      aria-label={`Notifications${count > 0 ? ` (${count})` : ""}`}
     >
       {showSuccess ? (
         <CheckCircle className="h-4 w-4" />
@@ -74,75 +93,82 @@ function NotificationsBell() {
         <Bell className="h-4 w-4" />
       )}
       {count > 0 && !showSuccess && (
-        <span className={cn(
-          'absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white',
-          hasError ? 'bg-red-500' : 'bg-brand-600',
-        )}>
-          {count > 99 ? '99+' : count}
+        <span
+          className={cn(
+            "absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold text-white",
+            hasError ? "bg-red-500" : "bg-brand-600",
+          )}
+        >
+          {count > 99 ? "99+" : count}
         </span>
       )}
     </button>
-  )
+  );
 }
 
 function ThemeToggle() {
-  const { theme, setTheme } = useTheme()
-  const isDark = theme === 'dark'
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
     <div className="flex items-center justify-between gap-3 px-3 py-2">
       <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">
-        {isDark ? <Moon className="h-3.5 w-3.5" /> : <Sun className="h-3.5 w-3.5" />}
+        {isDark ? (
+          <Moon className="h-3.5 w-3.5" />
+        ) : (
+          <Sun className="h-3.5 w-3.5" />
+        )}
         Dark theme
       </div>
       <Switch
         checked={isDark}
-        onChange={checked => setTheme(checked ? 'dark' : 'light')}
+        onChange={(checked) => setTheme(checked ? "dark" : "light")}
         className={cn(
-          'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900',
-          isDark ? 'bg-brand-600' : 'bg-slate-300 dark:bg-gray-700',
+          "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900",
+          isDark ? "bg-brand-600" : "bg-slate-300 dark:bg-gray-700",
         )}
       >
         <span
           aria-hidden="true"
           className={cn(
-            'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition',
-            isDark ? 'translate-x-4' : 'translate-x-0',
+            "pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition",
+            isDark ? "translate-x-4" : "translate-x-0",
           )}
         />
       </Switch>
     </div>
-  )
+  );
 }
 
 function UserMenu() {
-  const { user, whoami, logout, isGlobalAdmin } = useAuth()
-  const { namespace: defaultNamespace, clearDefaultNamespace } = useDefaultNamespace()
-  const [open, setOpen] = useState(false)
+  const { user, whoami, logout, isGlobalAdmin } = useAuth();
+  const { namespace: defaultNamespace, clearDefaultNamespace } =
+    useDefaultNamespace();
+  const [open, setOpen] = useState(false);
 
   const displayName =
-    whoami?.display_name
-    ?? user?.profile?.name
-    ?? user?.profile?.preferred_username
-    ?? 'User'
+    whoami?.display_name ??
+    user?.profile?.name ??
+    user?.profile?.preferred_username ??
+    "User";
   const subtitle =
-    whoami?.auth_type === 'user'
+    whoami?.auth_type === "user"
       ? (whoami.user_details.email ?? whoami.identifier)
-      : whoami?.auth_type === 'resolver'
-        ? `Resolver · scope: ${whoami.access_scope || '/'}`
-        : null
+      : whoami?.auth_type === "resolver"
+        ? `Resolver · scope: ${whoami.access_scope || "/"}`
+        : null;
 
-  const Icon = isGlobalAdmin ? ShieldCheck : User
+  const Icon = isGlobalAdmin ? ShieldCheck : User;
 
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         className={cn(
-          'flex items-center gap-1.5 rounded-md px-2 py-1 text-sm hover:bg-slate-200 dark:hover:bg-gray-800',
+          "flex items-center gap-1.5 rounded-md px-2 py-1 text-sm hover:bg-slate-200 dark:hover:bg-gray-800",
           isGlobalAdmin
-            ? 'text-brand-700 dark:text-brand-400'
-            : 'text-gray-600 dark:text-gray-300',
+            ? "text-brand-700 dark:text-brand-400"
+            : "text-gray-600 dark:text-gray-300",
         )}
       >
         <Icon className="h-4 w-4 shrink-0" />
@@ -155,12 +181,18 @@ function UserMenu() {
           <div className="absolute right-0 top-full mt-1 z-40 w-56 rounded-lg border bg-surface-elevated shadow-lg dark:border-gray-700 dark:bg-gray-900">
             <div className="border-b px-3 py-2.5 dark:border-gray-700">
               <div className="flex items-center gap-2">
-                <Icon className={cn(
-                  'h-5 w-5 shrink-0',
-                  isGlobalAdmin ? 'text-brand-600 dark:text-brand-400' : 'text-gray-400',
-                )} />
+                <Icon
+                  className={cn(
+                    "h-5 w-5 shrink-0",
+                    isGlobalAdmin
+                      ? "text-brand-600 dark:text-brand-400"
+                      : "text-gray-400",
+                  )}
+                />
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{displayName}</p>
+                  <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    {displayName}
+                  </p>
                   {subtitle && (
                     <p className="truncate text-xs text-gray-400">{subtitle}</p>
                   )}
@@ -195,8 +227,15 @@ function UserMenu() {
             {defaultNamespace && (
               <div className="border-b px-3 py-2 dark:border-gray-700">
                 <div className="flex items-center gap-2">
-                  <Tooltip content="Default namespace" side="left" align="center">
-                    <span className="inline-flex shrink-0 text-brand-600 dark:text-brand-400" aria-hidden="true">
+                  <Tooltip
+                    content="Default namespace"
+                    side="left"
+                    align="center"
+                  >
+                    <span
+                      className="inline-flex shrink-0 text-brand-600 dark:text-brand-400"
+                      aria-hidden="true"
+                    >
                       <House className="h-3.5 w-3.5 fill-current" />
                     </span>
                   </Tooltip>
@@ -210,12 +249,16 @@ function UserMenu() {
                       {defaultNamespace}
                     </span>
                   </Tooltip>
-                  <Tooltip content="Clear default namespace" side="left" align="center">
+                  <Tooltip
+                    content="Clear default namespace"
+                    side="left"
+                    align="center"
+                  >
                     <button
                       type="button"
                       onClick={() => {
-                        clearDefaultNamespace()
-                        setOpen(false)
+                        clearDefaultNamespace();
+                        setOpen(false);
                       }}
                       aria-label="Clear default namespace"
                       className="shrink-0 rounded p-1 text-gray-400 hover:bg-slate-200 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-200"
@@ -227,7 +270,10 @@ function UserMenu() {
               </div>
             )}
             <button
-              onClick={() => { void logout(); setOpen(false) }}
+              onClick={() => {
+                void logout();
+                setOpen(false);
+              }}
               className="flex w-full items-center gap-2 rounded-b-lg px-3 py-2 text-sm text-gray-700 hover:bg-slate-100 dark:text-gray-200 dark:hover:bg-gray-800"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -237,11 +283,11 @@ function UserMenu() {
         </>
       )}
     </div>
-  )
+  );
 }
 
 export function TopBar() {
-  const { namespace } = useParams<{ namespace?: string }>()
+  const { namespace } = useParams<{ namespace?: string }>();
 
   return (
     <header className="fixed inset-x-0 top-0 z-30 flex h-12 items-center gap-3 border-b bg-surface px-3 dark:border-gray-700 dark:bg-gray-950">
@@ -259,5 +305,5 @@ export function TopBar() {
       <NotificationsBell />
       <UserMenu />
     </header>
-  )
+  );
 }

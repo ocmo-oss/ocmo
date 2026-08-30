@@ -1,9 +1,9 @@
-export type ItemEditorMode = 'create' | 'edit'
+export type ItemEditorMode = "create" | "edit";
 
 export function isCreateMode(mode: ItemEditorMode): boolean {
-  return mode === 'create'
+  return mode === "create";
 }
 
 export function hasEditorContent(content: string): boolean {
-  return content.trim().length > 0
+  return content.trim().length > 0;
 }

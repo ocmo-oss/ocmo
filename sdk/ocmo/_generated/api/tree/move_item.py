@@ -12,7 +12,7 @@ from ...models.location_payload import LocationPayload
 from ...models.resolver_schema import ResolverSchema
 from ...models.secret_schema import SecretSchema
 from ...models.template_schema import TemplateSchema
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
@@ -20,12 +20,20 @@ def _get_kwargs(
     path: str,
     *,
     body: LocationPayload,
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Dict[str, Any]:
     headers: Dict[str, Any] = {}
+
+    params: Dict[str, Any] = {}
+
+    params["skip_reference_validation"] = skip_reference_validation
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: Dict[str, Any] = {
         "method": "post",
         "url": f"/api/v1/ns/{namespace}/~move/{path}",
+        "params": params,
     }
 
     _body = body.to_dict()
@@ -121,6 +129,7 @@ def sync_detailed(
     *,
     client: AuthenticatedClient,
     body: LocationPayload,
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Response[
     Union[ErrorSchema, Union["ConfigSchema", "FolderSchema", "ResolverSchema", "SecretSchema", "TemplateSchema"]]
 ]:
@@ -131,6 +140,7 @@ def sync_detailed(
     Args:
         namespace (str):
         path (str):
+        skip_reference_validation (Union[Unset, bool]):  Default: False.
         body (LocationPayload):
 
     Raises:
@@ -145,6 +155,7 @@ def sync_detailed(
         namespace=namespace,
         path=path,
         body=body,
+        skip_reference_validation=skip_reference_validation,
     )
 
     response = client.get_httpx_client().request(
@@ -160,6 +171,7 @@ def sync(
     *,
     client: AuthenticatedClient,
     body: LocationPayload,
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Optional[
     Union[ErrorSchema, Union["ConfigSchema", "FolderSchema", "ResolverSchema", "SecretSchema", "TemplateSchema"]]
 ]:
@@ -170,6 +182,7 @@ def sync(
     Args:
         namespace (str):
         path (str):
+        skip_reference_validation (Union[Unset, bool]):  Default: False.
         body (LocationPayload):
 
     Raises:
@@ -185,6 +198,7 @@ def sync(
         path=path,
         client=client,
         body=body,
+        skip_reference_validation=skip_reference_validation,
     ).parsed
 
 
@@ -194,6 +208,7 @@ async def asyncio_detailed(
     *,
     client: AuthenticatedClient,
     body: LocationPayload,
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Response[
     Union[ErrorSchema, Union["ConfigSchema", "FolderSchema", "ResolverSchema", "SecretSchema", "TemplateSchema"]]
 ]:
@@ -204,6 +219,7 @@ async def asyncio_detailed(
     Args:
         namespace (str):
         path (str):
+        skip_reference_validation (Union[Unset, bool]):  Default: False.
         body (LocationPayload):
 
     Raises:
@@ -218,6 +234,7 @@ async def asyncio_detailed(
         namespace=namespace,
         path=path,
         body=body,
+        skip_reference_validation=skip_reference_validation,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -231,6 +248,7 @@ async def asyncio(
     *,
     client: AuthenticatedClient,
     body: LocationPayload,
+    skip_reference_validation: Union[Unset, bool] = False,
 ) -> Optional[
     Union[ErrorSchema, Union["ConfigSchema", "FolderSchema", "ResolverSchema", "SecretSchema", "TemplateSchema"]]
 ]:
@@ -241,6 +259,7 @@ async def asyncio(
     Args:
         namespace (str):
         path (str):
+        skip_reference_validation (Union[Unset, bool]):  Default: False.
         body (LocationPayload):
 
     Raises:
@@ -257,5 +276,6 @@ async def asyncio(
             path=path,
             client=client,
             body=body,
+            skip_reference_validation=skip_reference_validation,
         )
     ).parsed

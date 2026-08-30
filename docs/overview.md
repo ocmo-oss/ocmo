@@ -64,3 +64,4 @@ All four surfaces talk to the same REST API. The gateway is optional in producti
 - [Quick Start](quickstart/README.md) — running the full stack in 10 minutes
 - [Concepts](concepts/README.md) — namespaces, trees, versions, and the resolve pipeline
 - [Features](features/README.md) — deep dives on each capability
+- [Comparison with other products](comparison_with_other_products.md) — Git, GitOps, cloud config, KV, feature flags

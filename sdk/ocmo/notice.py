@@ -24,9 +24,7 @@ def load_notice_text() -> str:
     for path in _notice_paths():
         if path.is_file():
             return path.read_text(encoding="utf-8").strip() + "\n"
-    raise FileNotFoundError(
-        f"NOTICE file not found; searched: {', '.join(str(p) for p in _notice_paths())}"
-    )
+    raise FileNotFoundError(f"NOTICE file not found; searched: {', '.join(str(p) for p in _notice_paths())}")
 
 
 def product_version_info(*, include_notice: bool = False) -> dict[str, Any]:

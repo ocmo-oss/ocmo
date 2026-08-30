@@ -259,6 +259,36 @@ class ExtendKeyResolveTests(TestCase):
         self.assertEqual(ref.path, "../bases/prod")
         self.assertEqual(ref.key, ".tier")
 
+    def test_accumulate_int_key_list_merges_mapping_items(self):
+        self._create(
+            "bases/deployment",
+            "spec:\n"
+            "  template:\n"
+            "    spec:\n"
+            "      containers:\n"
+            "        - args: [--v=2]\n"
+            "          image: quay.io/app:v1\n"
+            "          name: app\n",
+        )
+        self._create(
+            "app/patch",
+            "_ocmo:\n"
+            "  extend:\n"
+            "    configs:\n"
+            "      - ../bases/deployment\n"
+            "    mode: accumulate\n"
+            "spec:\n"
+            "  template:\n"
+            "    spec:\n"
+            "      containers:\n"
+            "        0:\n"
+            "          image: dummy:1.0.0\n",
+        )
+        container = self._resolve("app/patch")[0]["spec"]["template"]["spec"]["containers"][0]
+        self.assertEqual(container["image"], "dummy:1.0.0")
+        self.assertEqual(container["args"], ["--v=2"])
+        self.assertEqual(container["name"], "app")
+
     def test_tree_save_validates_object_ref_path(self):
         with self.assertRaises(ValidationError):
             TreeManager(self.ns, "app/missing-ref", auth=None).create_item(

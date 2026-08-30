@@ -21,6 +21,7 @@ def test_move_item_help_has_source_target_yes_and_no_output_flags() -> None:
     assert "TARGET" in result.output
     assert "--yes" in result.output
     assert "--dry-run" in result.output
+    assert "--skip-reference-validation" in result.output
     assert_help_excludes_io_flags(result.output)
 
 
@@ -31,6 +32,7 @@ def test_copy_item_help_has_source_target_yes_and_no_output_flags() -> None:
     assert "SOURCE" in result.output
     assert "TARGET" in result.output
     assert "--yes" in result.output
+    assert "--skip-reference-validation" in result.output
     assert_help_excludes_io_flags(result.output)
 
 
@@ -189,6 +191,60 @@ def test_copy_item_calls_sdk_with_directory_target() -> None:
         target_path="a/d",
     )
     assert "Item 'b/c/d' was copied to 'a/d'." in result.output
+
+
+def test_move_item_calls_sdk_with_skip_reference_validation() -> None:
+    view = MagicMock()
+    view.move_item.return_value = {"path": "app/archive/web"}
+
+    ctx = MagicMock()
+    ctx.require_namespace.return_value = "prod"
+    ctx.ns.return_value = view
+    ctx.namespace_view.return_value = view
+    ctx.output = None
+    ctx.dry_run = False
+    ctx.yes = True
+
+    runner = CliRunner()
+    result = runner.invoke(
+        move_item_cmd,
+        ["app/web", "app/archive/web", "--skip-reference-validation"],
+        obj=ctx,
+    )
+
+    assert result.exit_code == 0, result.output
+    view.move_item.assert_called_once_with(
+        "app/web",
+        target_path="app/archive/web",
+        skip_reference_validation=True,
+    )
+
+
+def test_copy_item_calls_sdk_with_skip_reference_validation() -> None:
+    view = MagicMock()
+    view.copy_item.return_value = {"items": []}
+
+    ctx = MagicMock()
+    ctx.require_namespace.return_value = "prod"
+    ctx.ns.return_value = view
+    ctx.namespace_view.return_value = view
+    ctx.output = None
+    ctx.dry_run = False
+    ctx.yes = True
+
+    runner = CliRunner()
+    result = runner.invoke(
+        copy_item_cmd,
+        ["app/web", "app/staging/web", "--skip-reference-validation"],
+        obj=ctx,
+    )
+
+    assert result.exit_code == 0, result.output
+    view.copy_item.assert_called_once_with(
+        "app/web",
+        target_path="app/staging/web",
+        skip_reference_validation=True,
+    )
 
 
 def test_move_item_dry_run_skips_confirmation() -> None:

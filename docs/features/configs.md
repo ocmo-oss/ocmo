@@ -218,6 +218,23 @@ Default: 1 MiB (`OCMO_MAX_CONFIG_UPLOAD_BYTES`). Returns HTTP 413 if exceeded.
 
 ---
 
+## Move and copy reference validation
+
+When moving or copying a config or folder subtree, OCMO validates that each config's
+`_ocmo` references would resolve correctly **after** the operation:
+
+- **Move** — simulates post-move paths and checks extend, render, schema, and secret
+  references from the new folder context. Relative references that worked before may
+  fail after a move if the destination changes how paths resolve.
+- **Copy** — additionally orders folder descendants by reference dependencies before
+  creation so items referenced within the copy set exist when each config is created.
+
+Set `skip_reference_validation=true` on move/copy (REST query param, SDK kwarg, or CLI
+`--skip-reference-validation`) to bypass validation. On copy, skipping validation also
+skips topological ordering.
+
+---
+
 ## Required permissions
 
 | Operation | Permission |

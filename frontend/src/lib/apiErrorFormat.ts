@@ -1,19 +1,21 @@
-export function formatServerErrorDetail(payload: Record<string, unknown>): string {
-  const raw = payload.errors ?? payload.error ?? payload.detail
+export function formatServerErrorDetail(
+  payload: Record<string, unknown>,
+): string {
+  const raw = payload.errors ?? payload.error ?? payload.detail;
   if (Array.isArray(raw)) {
-    return raw.map((item) => String(item)).join('\n')
+    return raw.map((item) => String(item)).join("\n");
   }
-  if (raw != null && raw !== '') {
-    return String(raw)
+  if (raw != null && raw !== "") {
+    return String(raw);
   }
-  return 'Request failed'
+  return "Request failed";
 }
 
 export function parseApiErrorBody(status: number, body: string): string {
   try {
-    const payload = JSON.parse(body) as Record<string, unknown>
-    return formatServerErrorDetail(payload)
+    const payload = JSON.parse(body) as Record<string, unknown>;
+    return formatServerErrorDetail(payload);
   } catch {
-    return `HTTP ${status}`
+    return `HTTP ${status}`;
   }
 }

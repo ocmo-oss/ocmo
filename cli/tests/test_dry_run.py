@@ -124,10 +124,40 @@ def test_format_tag_item() -> None:
         version=None,
         namespace="prod",
         args=["app/web"],
-        kwargs={"tag": "release"},
+        kwargs={"body": {"tag": "release", "version": 3}},
         client_scope=False,
     )
-    assert lines == ["Would tag item 'app/web' as 'release' in namespace 'prod'."]
+    assert lines == ["Would tag item 'app/web' as 'release' at version 3 (latest) in namespace 'prod'."]
+
+
+def test_format_tag_item_with_explicit_version() -> None:
+    lines = format_generated_dry_run(
+        op_id="set_tag",
+        action="tag",
+        resource="item",
+        path="app/web",
+        version="2",
+        namespace="prod",
+        args=["app/web"],
+        kwargs={"body": {"tag": "release", "version": 2}},
+        client_scope=False,
+    )
+    assert lines == ["Would tag item 'app/web' as 'release' at version 2 in namespace 'prod'."]
+
+
+def test_format_tag_item_with_tagged_version_ref() -> None:
+    lines = format_generated_dry_run(
+        op_id="set_tag",
+        action="tag",
+        resource="item",
+        path="app/web",
+        version="stable",
+        namespace="prod",
+        args=["app/web"],
+        kwargs={"body": {"tag": "release", "version": 5}},
+        client_scope=False,
+    )
+    assert lines == ["Would tag item 'app/web' as 'release' at version 5 (stable) in namespace 'prod'."]
 
 
 def test_format_apply_dry_run() -> None:
@@ -150,6 +180,18 @@ def test_format_resolve_dry_run() -> None:
     assert lines[0] == "Would resolve 'app/web' in namespace 'prod'."
     assert "Cast output as json." in lines
     assert "Parameters: replicas=3." in lines
+
+
+def test_format_resolve_dry_run_mark_stable() -> None:
+    lines = format_resolve_dry_run(
+        path="app/web",
+        namespace="prod",
+        mark_stable=True,
+    )
+    assert lines == [
+        "Would resolve 'app/web' in namespace 'prod'.",
+        "Would advance the stable tag after resolve.",
+    ]
 
 
 def test_emit_dry_run_plan_writes_to_stderr(capsys) -> None:

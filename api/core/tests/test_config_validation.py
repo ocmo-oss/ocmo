@@ -9,7 +9,7 @@ from core.managers.auth import AuthManager
 from core.managers.config_validation import ConfigValidationManager
 from core.managers.tree import TreeManager
 from core.models import GlobalPermissionRule, Namespace
-from core.schemas.requests import ConfigOcmoMetadataSchema
+from core.schemas.requests import ConfigOcmoMetadataSchema, TagPayload
 from core.tests.namespace_helpers import create_test_namespace
 
 _TEST_MASTER_KEY = "ZDPuvW6Hx/1UxDK7K/CydLouVKtJl24nbHyb2EkvTzs="
@@ -376,3 +376,106 @@ class ConfigValidationParseTests(TestCase):
         self.assertEqual(metadata.name, None)
         self.assertFalse(metadata.is_json_schema)
         self.assertEqual(body, ["one", "two"])
+
+
+class ConfigReferenceValidationTests(TestCase):
+    def setUp(self):
+        self.ns = create_test_namespace("cfg-ref-val")
+
+    def test_save_validates_extend_path_after_substituting_dynamic_default(self):
+        TreeManager(self.ns, "bases/prod", auth=None).create_item("tier: prod\n", "config")
+        TreeManager(self.ns, "app/root", auth=None).create_item(
+            """\
+_ocmo:
+  parameters:
+    env:
+      type: dynamic
+      value: prod
+      description: Environment name
+  extend:
+    configs:
+      - path: ../bases/{!env}
+        key: .tier
+    mode: accumulate
+value: ok
+""",
+            "config",
+        )
+
+    def test_save_validates_extend_tag_after_substituting_dynamic_default(self):
+        TreeManager(self.ns, "shared/images", auth=None).create_item("registry: pinned\n", "config")
+        TreeManager(self.ns, "shared/images", auth=None).set_item_tag(TagPayload(tag="pinned", version=1))
+        TreeManager(self.ns, "app/overlay", auth=None).create_item(
+            """\
+_ocmo:
+  parameters:
+    image_tag:
+      type: dynamic
+      value: pinned
+      description: Image config tag
+  extend:
+    configs:
+      - ../shared/images@{!image_tag}
+    mode: accumulate
+value: ok
+""",
+            "config",
+        )
+
+    def test_save_rejects_extend_when_default_resolves_to_missing_config(self):
+        with self.assertRaises(ValidationError):
+            TreeManager(self.ns, "app/root", auth=None).create_item(
+                """\
+_ocmo:
+  parameters:
+    env:
+      type: dynamic
+      value: missing
+      description: Environment name
+  extend:
+    configs:
+      - ../bases/{!env}
+    mode: accumulate
+value: ok
+""",
+                "config",
+            )
+
+    def test_save_rejects_extend_when_default_tag_missing_on_target(self):
+        TreeManager(self.ns, "shared/images", auth=None).create_item("registry: latest\n", "config")
+        with self.assertRaises(ValidationError):
+            TreeManager(self.ns, "app/overlay", auth=None).create_item(
+                """\
+_ocmo:
+  parameters:
+    image_tag:
+      type: dynamic
+      value: pinned
+      description: Image config tag
+  extend:
+    configs:
+      - ../shared/images@{!image_tag}
+    mode: accumulate
+value: ok
+""",
+                "config",
+            )
+
+    def test_save_validates_extend_with_projected_path_segment(self):
+        TreeManager(self.ns, "bases/prod", auth=None).create_item("tier: prod\n", "config")
+        TreeManager(self.ns, "apps/payments/prod/release", auth=None).create_item(
+            """\
+_ocmo:
+  parameters:
+    env:
+      type: projected
+      value: .Path[-2]
+      description: Environment segment
+  extend:
+    configs:
+      - ../../../bases/{!env}
+    mode: accumulate
+value: ok
+""",
+            "config",
+        )

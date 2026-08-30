@@ -1,15 +1,17 @@
-import type { editor } from 'monaco-editor'
+import type { editor } from "monaco-editor";
 
 /** Shared Monaco options for YAML config/resolver editors with schema completion. */
-export function yamlEditorOptions(readOnly = false): editor.IStandaloneEditorConstructionOptions {
+export function yamlEditorOptions(
+  readOnly = false,
+): editor.IStandaloneEditorConstructionOptions {
   return {
     minimap: { enabled: false },
     fontSize: 13,
-    lineNumbers: 'on',
+    lineNumbers: "on",
     scrollBeyondLastLine: false,
-    wordWrap: 'on',
+    wordWrap: "on",
     readOnly,
-    accessibilitySupport: 'on',
+    accessibilitySupport: "on",
     fixedOverflowWidgets: true,
     quickSuggestions: {
       other: true,
@@ -21,9 +23,9 @@ export function yamlEditorOptions(readOnly = false): editor.IStandaloneEditorCon
       preview: true,
       showIcons: true,
       showStatusBar: true,
-      previewMode: 'subwordSmart',
+      previewMode: "subwordSmart",
       showWords: false,
     },
-    wordBasedSuggestions: 'off',
-  }
+    wordBasedSuggestions: "off",
+  };
 }

@@ -67,8 +67,8 @@ All paths below are relative to `/api/v1/ns/{ns}/`.
 | `GET` | `~versions/{path}` | Version history |
 | `GET` | `~navigate/{path}` | Tree navigation (`?recursive=false`) |
 | `GET` | `~search/` | Search (`?q=`, `?type=`, `?limit=`, `?offset=`) |
-| `POST` | `~move/{path}` | Move item to new path — body: `{target_path}` |
-| `POST` | `~copy/{path}` | Copy item — body: `{target_path}` |
+| `POST` | `~move/{path}` | Move item to new path — body: `{target_path}`; query: `skip_reference_validation` (default `false`) |
+| `POST` | `~copy/{path}` | Copy item — body: `{target_path}`; query: `tag_to_copy` (default `latest`), `skip_reference_validation` (default `false`) |
 | `DELETE` | `~delete/{path}` | Delete item or version (`?version=`, `?preview=true`) |
 | `POST` | `~tag/{path}` | Set or delete a tag — body: `{tag, version?}` |
 | `POST` | `~describe/{path}` | Set Markdown description — body: `{description}` |

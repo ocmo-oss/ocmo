@@ -1,6 +1,6 @@
-import { TreeSearch } from '../components/tree/TreeSearch'
-import { TreeNav } from '../components/tree/TreeNav'
-import { CreateItemButton } from '../components/tree/CreateItemButton'
+import { TreeSearch } from "../components/tree/TreeSearch";
+import { TreeNav } from "../components/tree/TreeNav";
+import { CreateItemButton } from "../components/tree/CreateItemButton";
 
 export function ConfigsSidebar() {
   return (
@@ -15,5 +15,5 @@ export function ConfigsSidebar() {
         <TreeNav />
       </div>
     </aside>
-  )
+  );
 }

@@ -14,6 +14,12 @@ Core vocabulary you need before using any OCMO feature.
 
 ## Minimal mental model
 
+One of the main ideas of OCMO that we should separate config data from exact syntax to which it should be rendered. By this reason all OCMO configs items are defined exclusively in YAML (or JSON that is subset of YAML) and later it is possible to [resolve config](../features/resolving/README.md) to required format using [cast](../features/resolving/cast.md) (for formats the easily mapped from YAML) or [render](../features/resolving/render.md) features (for complex syntax cases. E.g. Nginx config).
+
+Another core principle that configuration that define how config should be handled on resolve (parameters, extend, cast, render, name, propagation, etc) should leave right next to config data. Thats why config might have optional `_ocmo` block that define all this configuration.
+
+As result we might create following items types in namespace:
+
 ```
 Namespace
 └── Tree (hierarchical paths)
@@ -21,7 +27,7 @@ Namespace
     ├── template: Jinja2 source referenced during render
     ├── secret:   encrypted YAML; values injected at resolve time
     ├── resolver: API token + config for automated consumers
-    └── folder:   grouping node; can be resolved as a batch
+    └── folder:   grouping node; can be resolved as a batch. Folder created and removed automatically
 ```
 
-A **resolve** call takes a config (or folder), runs it through the pipeline (extend → render parameters → cast → artifact), and returns a signed download URL. The pipeline is controlled by the `_ocmo` block in the config file.
+A **resolve** call takes a config (or folder), runs it through the pipeline (extend → evaluate parameters → cast/render tempate → artifact), and returns a signed download URL. 

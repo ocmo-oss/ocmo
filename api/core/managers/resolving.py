@@ -459,6 +459,7 @@ class ResolvePipelineManager:
                 self.namespace,
                 resolved_path,
                 version,
+                dynamic_params=self.dynamic_params,
                 auth=self.auth,
                 no_creds=self.no_creds,
             )

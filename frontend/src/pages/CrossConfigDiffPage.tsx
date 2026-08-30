@@ -1,144 +1,173 @@
-import { useEffect, useRef, useState } from 'react'
-import { useParams, useSearchParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { ArrowLeftRight, GitCompare } from 'lucide-react'
-import { treeApi } from '../api/tree'
-import type { ItemType } from '../api/types'
-import { DiffSidePicker } from '../components/diff/DiffSidePicker'
-import { ApiUnavailable } from '../components/ApiUnavailable'
-import { hasDiffVersionHistory, isDiffableType } from '../lib/diffableTypes'
-import { isApiUnavailableError } from '../lib/apiAvailability'
+import { useEffect, useRef, useState } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeftRight, GitCompare } from "lucide-react";
+import { treeApi } from "../api/tree";
+import type { ItemType } from "../api/types";
+import { DiffSidePicker } from "../components/diff/DiffSidePicker";
+import { ApiUnavailable } from "../components/ApiUnavailable";
+import { hasDiffVersionHistory, isDiffableType } from "../lib/diffableTypes";
+import { isApiUnavailableError } from "../lib/apiAvailability";
 import {
   buildCrossConfigDiffSearchParams,
   crossConfigDiffSearchParamsEqual,
   parseCrossConfigDiffSearchParams,
-} from '../lib/crossConfigDiffUrl'
-import { ITEM_TYPE_LABELS } from '../lib/itemTypes'
-import { renderUnifiedDiff } from '../lib/unifiedDiff'
-import { Button } from '../components/ui/Button'
-import { Skeleton } from '../components/ui/Skeleton'
+} from "../lib/crossConfigDiffUrl";
+import { ITEM_TYPE_LABELS } from "../lib/itemTypes";
+import { renderUnifiedDiff } from "../lib/unifiedDiff";
+import { Button } from "../components/ui/Button";
+import { Skeleton } from "../components/ui/Skeleton";
 
 function readInitialDiffState() {
-  return parseCrossConfigDiffSearchParams(new URLSearchParams(window.location.search))
+  return parseCrossConfigDiffSearchParams(
+    new URLSearchParams(window.location.search),
+  );
 }
 
 export function CrossConfigDiffPage() {
-  const { namespace } = useParams<{ namespace: string }>()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const initialState = readInitialDiffState()
-  const isApplyingUrlRef = useRef(false)
+  const { namespace } = useParams<{ namespace: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialState = readInitialDiffState();
+  const isApplyingUrlRef = useRef(false);
 
-  const [fromPath, setFromPath] = useState(initialState.fromPath)
-  const [toPath, setToPath] = useState(initialState.toPath)
-  const [fromType, setFromType] = useState<ItemType | null>(null)
-  const [toType, setToType] = useState<ItemType | null>(null)
-  const [fromRef, setFromRef] = useState(initialState.fromRef)
-  const [toRef, setToRef] = useState(initialState.toRef)
-  const [reveal, setReveal] = useState(initialState.reveal)
+  const [fromPath, setFromPath] = useState(initialState.fromPath);
+  const [toPath, setToPath] = useState(initialState.toPath);
+  const [fromType, setFromType] = useState<ItemType | null>(null);
+  const [toType, setToType] = useState<ItemType | null>(null);
+  const [fromRef, setFromRef] = useState(initialState.fromRef);
+  const [toRef, setToRef] = useState(initialState.toRef);
+  const [reveal, setReveal] = useState(initialState.reveal);
 
-  const trimmedFrom = fromPath.trim()
-  const trimmedTo = toPath.trim()
+  const trimmedFrom = fromPath.trim();
+  const trimmedTo = toPath.trim();
 
   const fromItem = useQuery({
-    queryKey: ['item', namespace, trimmedFrom, 'diff-side'],
+    queryKey: ["item", namespace, trimmedFrom, "diff-side"],
     queryFn: ({ signal }) => treeApi.get(namespace!, trimmedFrom, {}, signal),
     enabled: Boolean(namespace && trimmedFrom),
     staleTime: 30_000,
-  })
+  });
 
   const toItem = useQuery({
-    queryKey: ['item', namespace, trimmedTo, 'diff-side'],
+    queryKey: ["item", namespace, trimmedTo, "diff-side"],
     queryFn: ({ signal }) => treeApi.get(namespace!, trimmedTo, {}, signal),
     enabled: Boolean(namespace && trimmedTo),
     staleTime: 30_000,
-  })
+  });
 
-  const fromResolved = !trimmedFrom || (!fromItem.isFetching && (fromItem.data !== undefined || fromItem.isError))
-  const toResolved = !trimmedTo || (!toItem.isFetching && (toItem.data !== undefined || toItem.isError))
-  const sidesResolved = fromResolved && toResolved
+  const fromResolved =
+    !trimmedFrom ||
+    (!fromItem.isFetching && (fromItem.data !== undefined || fromItem.isError));
+  const toResolved =
+    !trimmedTo ||
+    (!toItem.isFetching && (toItem.data !== undefined || toItem.isError));
+  const sidesResolved = fromResolved && toResolved;
 
   const canCompare = Boolean(
-    trimmedFrom
-    && trimmedTo
-    && fromItem.data
-    && toItem.data
-    && fromItem.data.type === toItem.data.type
-    && isDiffableType(fromItem.data.type),
-  )
+    trimmedFrom &&
+    trimmedTo &&
+    fromItem.data &&
+    toItem.data &&
+    fromItem.data.type === toItem.data.type &&
+    isDiffableType(fromItem.data.type),
+  );
 
   const { data, isFetching, isError, error } = useQuery({
-    queryKey: ['cross-diff', namespace, trimmedFrom, fromRef, trimmedTo, toRef, reveal],
-    queryFn: ({ signal }) => treeApi.diff(namespace!, trimmedFrom, {
-      from: fromRef,
-      to: toRef,
-      to_path: trimmedTo !== trimmedFrom ? trimmedTo : undefined,
+    queryKey: [
+      "cross-diff",
+      namespace,
+      trimmedFrom,
+      fromRef,
+      trimmedTo,
+      toRef,
       reveal,
-    }, signal),
+    ],
+    queryFn: ({ signal }) =>
+      treeApi.diff(
+        namespace!,
+        trimmedFrom,
+        {
+          from: fromRef,
+          to: toRef,
+          to_path: trimmedTo !== trimmedFrom ? trimmedTo : undefined,
+          reveal,
+        },
+        signal,
+      ),
     enabled: canCompare,
     staleTime: 0,
     retry: false,
-  })
+  });
 
   const handleSwap = () => {
-    setFromPath(toPath)
-    setToPath(fromPath)
-    setFromType(toType)
-    setToType(fromType)
-    setFromRef(toRef)
-    setToRef(fromRef)
-  }
+    setFromPath(toPath);
+    setToPath(fromPath);
+    setFromType(toType);
+    setToType(fromType);
+    setFromRef(toRef);
+    setToRef(fromRef);
+  };
 
   const diffLabel = canCompare
     ? hasDiffVersionHistory(fromItem.data!.type)
       ? `${trimmedFrom}@${fromRef} → ${trimmedTo}@${toRef}`
       : `${trimmedFrom} → ${trimmedTo}`
-    : ''
+    : "";
 
-  const typeMismatchHint = trimmedFrom && trimmedTo && sidesResolved && fromItem.data && toItem.data
-    && fromItem.data.type !== toItem.data.type
-    ? `Both sides must be the same type (from: ${ITEM_TYPE_LABELS[fromItem.data.type]}, to: ${ITEM_TYPE_LABELS[toItem.data.type]}).`
-    : null
+  const typeMismatchHint =
+    trimmedFrom &&
+    trimmedTo &&
+    sidesResolved &&
+    fromItem.data &&
+    toItem.data &&
+    fromItem.data.type !== toItem.data.type
+      ? `Both sides must be the same type (from: ${ITEM_TYPE_LABELS[fromItem.data.type]}, to: ${ITEM_TYPE_LABELS[toItem.data.type]}).`
+      : null;
 
-  const showRevealSecrets = fromType === 'secret' || toType === 'secret'
-    || fromItem.data?.type === 'secret'
-    || toItem.data?.type === 'secret'
+  const showRevealSecrets =
+    fromType === "secret" ||
+    toType === "secret" ||
+    fromItem.data?.type === "secret" ||
+    toItem.data?.type === "secret";
 
-  const searchParamsKey = searchParams.toString()
+  const searchParamsKey = searchParams.toString();
 
   useEffect(() => {
-    if (!sidesResolved) return
-    const hasSecret = fromItem.data?.type === 'secret' || toItem.data?.type === 'secret'
-    if (!hasSecret) setReveal(false)
-  }, [fromItem.data, sidesResolved, toItem.data])
+    if (!sidesResolved) return;
+    const hasSecret =
+      fromItem.data?.type === "secret" || toItem.data?.type === "secret";
+    if (!hasSecret) setReveal(false);
+  }, [fromItem.data, sidesResolved, toItem.data]);
 
   useEffect(() => {
-    const parsed = parseCrossConfigDiffSearchParams(searchParams)
+    const parsed = parseCrossConfigDiffSearchParams(searchParams);
     const built = canCompare
       ? buildCrossConfigDiffSearchParams({
-        fromPath: trimmedFrom,
-        toPath: trimmedTo,
-        fromRef,
-        toRef,
-        reveal,
-      })
-      : new URLSearchParams()
+          fromPath: trimmedFrom,
+          toPath: trimmedTo,
+          fromRef,
+          toRef,
+          reveal,
+        })
+      : new URLSearchParams();
 
-    if (canCompare && crossConfigDiffSearchParamsEqual(searchParams, built)) return
-    if (!canCompare && searchParamsKey === '') return
+    if (canCompare && crossConfigDiffSearchParamsEqual(searchParams, built))
+      return;
+    if (!canCompare && searchParamsKey === "") return;
 
-    isApplyingUrlRef.current = true
-    setFromPath(parsed.fromPath)
-    setToPath(parsed.toPath)
-    setFromRef(parsed.fromRef)
-    setToRef(parsed.toRef)
-    setReveal(parsed.reveal)
-  }, [searchParamsKey])
+    isApplyingUrlRef.current = true;
+    setFromPath(parsed.fromPath);
+    setToPath(parsed.toPath);
+    setFromRef(parsed.fromRef);
+    setToRef(parsed.toRef);
+    setReveal(parsed.reveal);
+  }, [searchParamsKey]);
 
   useEffect(() => {
-    if (!sidesResolved) return
+    if (!sidesResolved) return;
     if (isApplyingUrlRef.current) {
-      isApplyingUrlRef.current = false
-      return
+      isApplyingUrlRef.current = false;
+      return;
     }
 
     if (canCompare) {
@@ -148,15 +177,15 @@ export function CrossConfigDiffPage() {
         fromRef,
         toRef,
         reveal,
-      })
+      });
       if (!crossConfigDiffSearchParamsEqual(searchParams, next)) {
-        setSearchParams(next, { replace: true })
+        setSearchParams(next, { replace: true });
       }
-      return
+      return;
     }
 
-    if (searchParamsKey !== '') {
-      setSearchParams({}, { replace: true })
+    if (searchParamsKey !== "") {
+      setSearchParams({}, { replace: true });
     }
   }, [
     canCompare,
@@ -168,7 +197,7 @@ export function CrossConfigDiffPage() {
     toRef,
     trimmedFrom,
     trimmedTo,
-  ])
+  ]);
 
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden lg:flex-row">
@@ -180,7 +209,8 @@ export function CrossConfigDiffPage() {
               Cross-config diff
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Compare configs, templates, secrets, or resolvers at different paths or versions.
+              Compare configs, templates, secrets, or resolvers at different
+              paths or versions.
             </p>
           </div>
         </div>
@@ -226,7 +256,7 @@ export function CrossConfigDiffPage() {
             <input
               type="checkbox"
               checked={reveal}
-              onChange={e => setReveal(e.target.checked)}
+              onChange={(e) => setReveal(e.target.checked)}
               className="rounded border-slate-400"
             />
             Reveal secrets
@@ -234,7 +264,9 @@ export function CrossConfigDiffPage() {
         )}
 
         {typeMismatchHint && (
-          <p className="text-xs text-amber-600 dark:text-amber-400">{typeMismatchHint}</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            {typeMismatchHint}
+          </p>
         )}
       </aside>
 
@@ -259,17 +291,23 @@ export function CrossConfigDiffPage() {
 
           {isError && canCompare && !isFetching && (
             <div className="flex h-full items-center justify-center p-6">
-              {isApiUnavailableError(error)
-                ? <ApiUnavailable message={error instanceof Error ? error.message : undefined} />
-                : <p className="text-sm text-red-500">{(error as Error).message}</p>}
+              {isApiUnavailableError(error) ? (
+                <ApiUnavailable
+                  message={error instanceof Error ? error.message : undefined}
+                />
+              ) : (
+                <p className="text-sm text-red-500">
+                  {(error as Error).message}
+                </p>
+              )}
             </div>
           )}
 
           {data && !isFetching && canCompare && (
             <div className="h-full min-h-0 w-full">
               {renderUnifiedDiff(
-                data.from.content ?? '',
-                data.to.content ?? '',
+                data.from.content ?? "",
+                data.to.content ?? "",
                 `${data.from.path} ↔ ${data.to.path}`,
               )}
             </div>
@@ -283,5 +321,5 @@ export function CrossConfigDiffPage() {
         </div>
       </section>
     </div>
-  )
+  );
 }

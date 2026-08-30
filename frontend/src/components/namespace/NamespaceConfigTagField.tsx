@@ -1,16 +1,16 @@
-import type { ReactNode } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { treeApi } from '../../api/tree'
-import { VersionTagSelector } from '../items/VersionTagSelector'
-import { Skeleton } from '../ui/Skeleton'
+import type { ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { treeApi } from "../../api/tree";
+import { VersionTagSelector } from "../items/VersionTagSelector";
+import { Skeleton } from "../ui/Skeleton";
 
 interface NamespaceConfigTagFieldProps {
-  namespace: string
-  path: string
-  label: string
-  description?: ReactNode
-  value: string
-  onChange: (ref: string) => void
+  namespace: string;
+  path: string;
+  label: string;
+  description?: ReactNode;
+  value: string;
+  onChange: (ref: string) => void;
 }
 
 export function NamespaceConfigTagField({
@@ -22,20 +22,24 @@ export function NamespaceConfigTagField({
   onChange,
 }: NamespaceConfigTagFieldProps) {
   const { data, isLoading } = useQuery({
-    queryKey: ['item', namespace, path, 'settings-tag-field'],
+    queryKey: ["item", namespace, path, "settings-tag-field"],
     queryFn: ({ signal }) => treeApi.get(namespace, path, {}, signal),
     enabled: !!namespace,
     staleTime: 30_000,
-  })
+  });
 
-  const config = data && data.type === 'config' ? data : null
+  const config = data && data.type === "config" ? data : null;
 
   return (
     <div className="space-y-1">
       <div>
-        <p className="text-sm font-medium leading-tight text-gray-700 dark:text-gray-300">{label}</p>
+        <p className="text-sm font-medium leading-tight text-gray-700 dark:text-gray-300">
+          {label}
+        </p>
         {description && (
-          <p className="text-[11px] leading-snug text-gray-400">{description}</p>
+          <p className="text-[11px] leading-snug text-gray-400">
+            {description}
+          </p>
         )}
       </div>
       {isLoading || !config ? (
@@ -52,5 +56,5 @@ export function NamespaceConfigTagField({
         />
       )}
     </div>
-  )
+  );
 }

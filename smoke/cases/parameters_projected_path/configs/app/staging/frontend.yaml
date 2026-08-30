@@ -3,6 +3,7 @@ _ocmo:
     env_name:
       type: projected
       value: .Path[-2]
+      description: Environment segment from config path
       transformers:
         - upper
 

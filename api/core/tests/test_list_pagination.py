@@ -169,6 +169,19 @@ class ListPaginationApiTests(TestCase):
             {1},
         )
 
+    def test_versions_include_reserved_tags_on_version_rows(self):
+        path = "versioned/reserved-tags"
+        self._create_config(path)
+        update = self._update_config(path)
+        self.assertEqual(update.status_code, 200, update.content)
+
+        response = self.client.get(f"/api/v1/ns/{self.ns.name}/~versions/{path}")
+        self.assertEqual(response.status_code, 200, response.content)
+        data = response.json()
+        latest_row = next(row for row in data["versions"] if row["version"] == 2)
+        self.assertIn("latest", latest_row["tags"])
+        self.assertEqual(data["item"]["tags"]["latest"], 2)
+
     def test_versions_tagged_only_filter(self):
         path = "versioned/tagged-only"
         self._create_config(path)
@@ -191,7 +204,7 @@ class ListPaginationApiTests(TestCase):
         data = response.json()
         self.assertEqual(data["versions_count"], 1)
         self.assertEqual(data["versions"][0]["version"], 2)
-        self.assertEqual(data["versions"][0]["tags"], ["pinned"])
+        self.assertCountEqual(data["versions"][0]["tags"], ["pinned", "latest"])
 
     def test_locks_list_pagination(self):
         for name in ("lock-a", "lock-b", "lock-c"):

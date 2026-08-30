@@ -1,33 +1,37 @@
-import { useEffect, useRef } from 'react'
-import { X } from 'lucide-react'
-import { DescriptionMarkdown } from '../ui/DescriptionMarkdown'
+import { useEffect, useRef } from "react";
+import { X } from "lucide-react";
+import { DescriptionMarkdown } from "../ui/DescriptionMarkdown";
 
 interface DescriptionReadModalProps {
-  open: boolean
-  onClose: () => void
-  description: string
+  open: boolean;
+  onClose: () => void;
+  description: string;
 }
 
-export function DescriptionReadModal({ open, onClose, description }: DescriptionReadModalProps) {
-  const overlayRef = useRef<HTMLDivElement>(null)
+export function DescriptionReadModal({
+  open,
+  onClose,
+  description,
+}: DescriptionReadModalProps) {
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!open) return
+    if (!open) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, onClose])
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
 
-  if (!open) return null
+  if (!open) return null;
 
   return (
     <div
       ref={overlayRef}
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-6 backdrop-blur-sm"
-      onClick={event => {
-        if (event.target === overlayRef.current) onClose()
+      onClick={(event) => {
+        if (event.target === overlayRef.current) onClose();
       }}
       role="dialog"
       aria-modal="true"
@@ -55,5 +59,5 @@ export function DescriptionReadModal({ open, onClose, description }: Description
         </div>
       </div>
     </div>
-  )
+  );
 }

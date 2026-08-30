@@ -77,8 +77,8 @@ prod = client.ns("prod")
 | `prod.list_item_versions(path, **kwargs)` | Version history |
 | `prod.delete_item(path, preview=True)` | Delete item |
 | `prod.delete_version(path, version, preview=True)` | Soft-delete version |
-| `prod.move_item(path, target_path)` | Move |
-| `prod.copy_item(path, target_path)` | Copy |
+| `prod.move_item(path, target_path, skip_reference_validation=False)` | Move |
+| `prod.copy_item(path, target_path, tag_to_copy='latest', skip_reference_validation=False)` | Copy |
 | `prod.set_tag(path, tag, version=None)` | Set or delete tag |
 | `prod.describe_item(path, description)` | Set description |
 | `prod.diff_item(path, from_version, to_version)` | Diff two versions |

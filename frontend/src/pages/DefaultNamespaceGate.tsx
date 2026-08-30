@@ -1,35 +1,37 @@
-import { useEffect, useRef } from 'react'
-import { Navigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { namespacesApi } from '../api/namespaces'
-import { useDefaultNamespace } from '../store/defaultNamespace'
-import { pushNotification } from '../store/notifications'
-import { Skeleton } from '../components/ui/Skeleton'
+import { useEffect, useRef } from "react";
+import { Navigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { namespacesApi } from "../api/namespaces";
+import { useDefaultNamespace } from "../store/defaultNamespace";
+import { pushNotification } from "../store/notifications";
+import { Skeleton } from "../components/ui/Skeleton";
 
 export function DefaultNamespaceGate() {
-  const { namespace: defaultNamespace, clearDefaultNamespace } = useDefaultNamespace()
-  const clearedStale = useRef(false)
+  const { namespace: defaultNamespace, clearDefaultNamespace } =
+    useDefaultNamespace();
+  const clearedStale = useRef(false);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['namespaces', 'default-gate'],
+    queryKey: ["namespaces", "default-gate"],
     queryFn: ({ signal }) => namespacesApi.list({ limit: 500 }, signal),
     staleTime: 30_000,
-  })
+  });
 
   const isAccessible =
     defaultNamespace != null &&
-    data?.items.some(ns => ns.name === defaultNamespace)
+    data?.items.some((ns) => ns.name === defaultNamespace);
 
   useEffect(() => {
-    if (isLoading || !defaultNamespace || isAccessible || clearedStale.current) return
-    clearedStale.current = true
-    clearDefaultNamespace()
+    if (isLoading || !defaultNamespace || isAccessible || clearedStale.current)
+      return;
+    clearedStale.current = true;
+    clearDefaultNamespace();
     pushNotification(
-      'info',
-      'Default namespace removed',
+      "info",
+      "Default namespace removed",
       `"${defaultNamespace}" is no longer available. Open All namespaces to choose another.`,
-    )
-  }, [isLoading, defaultNamespace, isAccessible, clearDefaultNamespace])
+    );
+  }, [isLoading, defaultNamespace, isAccessible, clearDefaultNamespace]);
 
   if (isLoading) {
     return (
@@ -38,7 +40,7 @@ export function DefaultNamespaceGate() {
           <Skeleton key={i} className="h-16 w-full rounded-lg" />
         ))}
       </div>
-    )
+    );
   }
 
   if (defaultNamespace && isAccessible) {
@@ -48,8 +50,8 @@ export function DefaultNamespaceGate() {
         replace
         state={{ defaultNamespaceRedirect: true }}
       />
-    )
+    );
   }
 
-  return <Navigate to="/namespaces" replace />
+  return <Navigate to="/namespaces" replace />;
 }

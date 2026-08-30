@@ -1,11 +1,11 @@
-import { ItemAuditTimeline } from './ItemAuditTimeline'
-import type { ItemType } from '../../api/types'
-import { ResolveStatsChart } from './ResolveStatsChart'
+import { ItemAuditTimeline } from "./ItemAuditTimeline";
+import type { ItemType } from "../../api/types";
+import { ResolveStatsChart } from "./ResolveStatsChart";
 
 interface ItemAuditTabProps {
-  namespace: string
-  path: string
-  type: ItemType
+  namespace: string;
+  path: string;
+  type: ItemType;
 }
 
 export function ItemAuditTab({ namespace, path, type }: ItemAuditTabProps) {
@@ -16,5 +16,5 @@ export function ItemAuditTab({ namespace, path, type }: ItemAuditTabProps) {
         <ItemAuditTimeline namespace={namespace} path={path} type={type} />
       </div>
     </div>
-  )
+  );
 }

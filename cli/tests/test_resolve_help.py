@@ -24,6 +24,7 @@ _RESOLVE_OPTIONS = (
     "--hook-timeout",
     "--trust-hooks",
     "--print-hooks",
+    "--mark-stable",
 )
 
 _DRAFT_OPTIONS = (
@@ -70,3 +71,4 @@ def test_resolve_draft_help_has_no_version_or_field_flags() -> None:
     assert "--version" not in result.output
     assert "  -V," not in result.output
     assert "--field" not in result.output
+    assert "--mark-stable" not in result.output

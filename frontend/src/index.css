@@ -24,23 +24,23 @@
   }
 
   /* Native form controls — follow app theme, not OS preference */
-  input:where([type='checkbox'], [type='radio']) {
+  input:where([type="checkbox"], [type="radio"]) {
     @apply rounded border-slate-400 bg-surface-elevated text-brand-600 accent-brand-600;
     color-scheme: light;
   }
 
-  :root.dark input:where([type='checkbox'], [type='radio']) {
+  :root.dark input:where([type="checkbox"], [type="radio"]) {
     @apply border-gray-600 bg-gray-800 accent-brand-500;
     color-scheme: dark;
   }
 
   input:where(
-    [type='date'],
-    [type='datetime-local'],
-    [type='time'],
-    [type='month'],
-    [type='week'],
-    [type='number']
+    [type="date"],
+    [type="datetime-local"],
+    [type="time"],
+    [type="month"],
+    [type="week"],
+    [type="number"]
   ),
   select,
   textarea {
@@ -48,14 +48,15 @@
     color-scheme: light;
   }
 
-  :root.dark input:where(
-    [type='date'],
-    [type='datetime-local'],
-    [type='time'],
-    [type='month'],
-    [type='week'],
-    [type='number']
-  ),
+  :root.dark
+    input:where(
+      [type="date"],
+      [type="datetime-local"],
+      [type="time"],
+      [type="month"],
+      [type="week"],
+      [type="number"]
+    ),
   :root.dark select,
   :root.dark textarea {
     @apply bg-gray-800 text-gray-100;
@@ -94,15 +95,23 @@
   @apply mb-1 mt-2 font-medium text-slate-700 dark:text-gray-300;
 }
 
-.item-markdown :where(h1) { @apply text-sm; }
-.item-markdown :where(h2, h3, h4) { @apply text-xs; }
+.item-markdown :where(h1) {
+  @apply text-sm;
+}
+.item-markdown :where(h2, h3, h4) {
+  @apply text-xs;
+}
 
 .item-markdown :where(ul, ol) {
   @apply ml-4 list-outside;
 }
 
-.item-markdown :where(ul) { @apply list-disc; }
-.item-markdown :where(ol) { @apply list-decimal; }
+.item-markdown :where(ul) {
+  @apply list-disc;
+}
+.item-markdown :where(ol) {
+  @apply list-decimal;
+}
 
 .item-markdown :where(li) {
   @apply my-0.5;

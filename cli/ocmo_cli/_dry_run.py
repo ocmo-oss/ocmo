@@ -35,6 +35,20 @@ def body_dict(kwargs: dict[str, Any]) -> dict[str, Any]:
     return body if isinstance(body, dict) else {}
 
 
+def _tag_target_version_text(body: dict[str, Any], version_ref: str | None) -> str:
+    """Describe the concrete version a tag dry-run would point at."""
+    version_number = body.get("version")
+    if version_number in (None, ""):
+        return ""
+
+    text = f" at version {version_number}"
+    if not version_ref or version_ref == "latest":
+        return f"{text} (latest)"
+    if version_ref.isdigit() and int(version_ref) == int(version_number):
+        return text
+    return f"{text} ({version_ref})"
+
+
 def primary_target(
     op_id: str,
     *,
@@ -121,6 +135,8 @@ def format_generated_dry_run(
         destination = payload.get("target_path") or kwargs.get("target_path")
         dest = str(destination or "?")
         lines.append(f"Would move item {quote(target or '?')} to {quote(dest)}{ns}.")
+        if kwargs.get("skip_reference_validation"):
+            lines.append("Reference validation would be skipped.")
         lines.append(f"After move, item will be available at {quote(dest)}.")
         return lines
 
@@ -130,6 +146,8 @@ def format_generated_dry_run(
         tag = kwargs.get("tag_to_copy")
         tag_text = f" (tag {quote(str(tag))})" if tag else ""
         lines.append(f"Would copy item {quote(target or '?')} to {quote(dest)}" f"{tag_text}{ns}.")
+        if kwargs.get("skip_reference_validation"):
+            lines.append("Reference validation would be skipped.")
         lines.append(f"After copy, item will be available at {quote(dest)}.")
         return lines
 
@@ -145,7 +163,8 @@ def format_generated_dry_run(
         body = kwargs.get("body")
         if tag is None and isinstance(body, dict):
             tag = body.get("tag")
-        lines.append(f"Would tag item {quote(target or '?')} as {quote(str(tag or '?'))}{ns}.")
+        version_text = _tag_target_version_text(payload, version)
+        lines.append(f"Would tag item {quote(target or '?')} as {quote(str(tag or '?'))}{version_text}{ns}.")
         return lines
 
     if op_id == "rotate_resolver_token":
@@ -240,6 +259,7 @@ def format_resolve_dry_run(
     namespace: str,
     cast: str | None = None,
     parameters: dict[str, Any] | None = None,
+    mark_stable: bool = False,
 ) -> list[str]:
     lines = [f"Would resolve {quote(path)} in namespace {quote(namespace)}."]
     if cast:
@@ -247,6 +267,8 @@ def format_resolve_dry_run(
     if parameters:
         params = ", ".join(f"{key}={value!r}" for key, value in sorted(parameters.items()))
         lines.append(f"Parameters: {params}.")
+    if mark_stable:
+        lines.append("Would advance the stable tag after resolve.")
     return lines
 
 

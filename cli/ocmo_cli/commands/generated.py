@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import click
 
@@ -602,6 +602,14 @@ def _execute_generated(
         if file_path:
             content = sys.stdin.read() if file_path == "-" else Path(file_path).read_text()
 
+        tag_body_version = version
+        if op_id == "set_tag" and action == "tag" and path is not None:
+            from .._version_output import resolve_tag_version_number  # deferred
+
+            tag_body_version = str(
+                resolve_tag_version_number(ctx.namespace_view(namespace), path, version),
+            )
+
         body_payload: dict[str, Any] | None = None
         untag_mode = action == "untag" and op_id == "set_tag"
         if untag_mode:
@@ -616,7 +624,7 @@ def _execute_generated(
                     address=path,
                     content=content,
                     extra=merged_extra,
-                    address_version=version,
+                    address_version=(tag_body_version if op_id == "set_tag" and action == "tag" else version),
                 )
             except ValueError as exc:
                 print(f"Error: {format_usage_error(exc)}", file=sys.stderr)
@@ -895,13 +903,6 @@ def _structured_output_includes_token(fmt: str, field: str | None) -> bool:
 
 
 def _load_ops_yaml() -> dict[str, Any]:
-    from pathlib import Path
+    from .._operations_meta import load_operations_meta
 
-    import yaml  # deferred
-
-    ops_path = Path(__file__).parent.parent.parent.parent / "sdk" / "operations.yaml"
-    if not ops_path.exists():
-        return {}
-    with ops_path.open() as f:
-        data = yaml.safe_load(f) or {}
-    return cast(dict[str, Any], data.get("operations", {}))
+    return load_operations_meta()

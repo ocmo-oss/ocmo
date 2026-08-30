@@ -1,5 +1,4 @@
 from ._common import *
-from .constants import _RESERVED_TAGS
 
 
 class TreeVersionsMixin:
@@ -32,16 +31,11 @@ class TreeVersionsMixin:
 
         versions_count = len(ordered_versions)
         version_rows = []
-        reserved_tags = _RESERVED_TAGS.get(item.node_type, frozenset())
         for version_obj in ordered_versions[offset : offset + limit]:
             version_rows.append(
                 {
                     "version": version_obj.version,
-                    "tags": [
-                        tag_name
-                        for tag_name in tags_per_version.get(version_obj.version, [])
-                        if tag_name not in reserved_tags
-                    ],
+                    "tags": tags_per_version.get(version_obj.version, []),
                     "updater": version_obj.updater,
                     "updated_at": version_obj.updated_at,
                     "deleted_at": version_obj.deleted_at,

@@ -1,7 +1,7 @@
-import { Outlet } from 'react-router-dom'
-import { TopBar } from './TopBar'
-import { Footer } from './Footer'
-import { NotificationsTray } from './NotificationsTray'
+import { Outlet } from "react-router-dom";
+import { TopBar } from "./TopBar";
+import { Footer } from "./Footer";
+import { NotificationsTray } from "./NotificationsTray";
 
 export function GlobalShell() {
   return (
@@ -13,5 +13,5 @@ export function GlobalShell() {
       <Footer />
       <NotificationsTray />
     </div>
-  )
+  );
 }

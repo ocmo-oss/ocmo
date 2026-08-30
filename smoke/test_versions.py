@@ -67,6 +67,7 @@ def test_config_version_history(
     assert len(versions) == 3
     _assert_descending_versions(versions)
     assert versions[0]["version"] == 3
+    assert body["item"]["tags"].get("latest") == 3
     assert "latest" in versions[0]["tags"]
 
 
@@ -93,6 +94,7 @@ def test_template_version_history(
     assert len(versions) == 3
     _assert_descending_versions(versions)
     assert versions[0]["version"] == 3
+    assert body["item"]["tags"].get("latest") == 3
     assert "latest" in versions[0]["tags"]
 
 
