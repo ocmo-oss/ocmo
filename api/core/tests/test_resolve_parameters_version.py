@@ -81,6 +81,50 @@ class ResolveParametersVersionTests(TestCase):
         data = yaml.safe_load(outputs[0].data_text)
         self.assertEqual(data["build"], "stable-v2")
 
+    def test_extend_chain_propagates_dynamic_parameters(self):
+        self._create_config(
+            "shared/base",
+            """\
+_ocmo:
+  parameters:
+    app_version:
+      type: dynamic
+      value: v1.0.0
+      description: Application version
+image: "myapp:{!app_version}"
+""",
+        )
+
+        self._create_config(
+            "app/root",
+            """\
+_ocmo:
+  extend:
+    configs:
+      - ../shared/base@latest
+    mode: accumulate
+label: root
+""",
+        )
+
+        root_mgr = ResolvePipelineManager(
+            self.ns,
+            "app/root",
+            "latest",
+            dynamic_params={"app_version": "v2.0.0"},
+        )
+        outputs = root_mgr.resolve()
+        self.assertEqual(len(outputs), 1)
+
+        data = yaml.safe_load(outputs[0].data_text)
+        self.assertEqual(data["image"], "myapp:v2.0.0")
+        self.assertEqual(data["label"], "root")
+
+        default_mgr = ResolvePipelineManager(self.ns, "app/root", "latest")
+        default_outputs = default_mgr.resolve()
+        default_data = yaml.safe_load(default_outputs[0].data_text)
+        self.assertEqual(default_data["image"], "myapp:v1.0.0")
+
     def test_extend_chain_uses_per_config_version_tag(self):
         self._create_config(
             "shared/base",

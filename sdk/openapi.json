@@ -1353,6 +1353,16 @@
               "type": "string"
             },
             "required": false
+          },
+          {
+            "in": "query",
+            "name": "skip_reference_validation",
+            "schema": {
+              "default": false,
+              "title": "Skip Reference Validation",
+              "type": "boolean"
+            },
+            "required": false
           }
         ],
         "responses": {
@@ -5382,7 +5392,7 @@
           "version": {
             "description": "Deployed package version",
             "examples": [
-              "0.8.19"
+              "0.8.20"
             ],
             "title": "Version",
             "type": "string"

@@ -316,6 +316,12 @@ export default function ConfigEditor({ item, namespace, permissions, mode = 'edi
     }
   }, [isJsonSchemaMode, resolveMounted, closeResolve])
 
+  useEffect(() => {
+    if (resolveMounted) {
+      closeResolve()
+    }
+  }, [item.path, namespace, closeResolve])
+
   return (
     <div className="flex h-full flex-col">
       {!creating && (

@@ -1,4 +1,6 @@
 from ._common import *
+from .config_ops import collect_ocmo_reference_paths
+from .constants import _COPY_NODE_TYPES
 
 
 class TreeMutateMixin:
@@ -15,6 +17,73 @@ class TreeMutateMixin:
             return normalized_source
         suffix = normalized_source[len(prefix) :]
         return f"{normalized_dest}/{suffix}"
+
+    @staticmethod
+    def _topological_sort_paths(nodes: list[str], prerequisites: dict[str, set[str]]) -> list[str]:
+        """Return *nodes* in an order that satisfies *prerequisites* (values must exist first)."""
+        node_set = set(nodes)
+        in_degree = {node: len(prerequisites.get(node, set()) & node_set) for node in nodes}
+        dependents: dict[str, set[str]] = {node: set() for node in nodes}
+        for node, prereqs in prerequisites.items():
+            for prereq in prereqs:
+                if prereq in dependents:
+                    dependents[prereq].add(node)
+
+        ready = sorted(node for node in nodes if in_degree[node] == 0)
+        ordered: list[str] = []
+        while ready:
+            node = ready.pop(0)
+            ordered.append(node)
+            for dependent in sorted(dependents[node]):
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    ready.append(dependent)
+            ready.sort()
+
+        if len(ordered) != len(nodes):
+            raise ValidationError("Circular _ocmo reference detected among items being copied")
+        return ordered
+
+    def _order_copy_descendants(
+        self,
+        descendants: list,
+        *,
+        source_root: str,
+        destination: str,
+        tag_to_copy: str,
+    ) -> list:
+        dest_to_item = {
+            self._copy_destination_path(source_root, el.path, destination): el for el in descendants
+        }
+        dest_paths = list(dest_to_item)
+        copy_set = set(dest_paths)
+        prerequisites: dict[str, set[str]] = {dest: set() for dest in dest_paths}
+
+        for el in descendants:
+            if el.node_type != "config":
+                continue
+            source_item = self._cast_to_specific(el)
+            dest_path = self._copy_destination_path(source_root, source_item.path, destination)
+            version_to_copy = source_item.tags.get(tag_to_copy)
+            if version_to_copy is None:
+                continue
+            version_obj = source_item.versions.filter(version=version_to_copy).first()
+            if version_obj is None:
+                continue
+            try:
+                metadata, _ = ConfigValidationManager.parse_config_yaml_document(version_obj.data)
+            except ValidationError:
+                continue
+            base_folder = "/".join(dest_path.split("/")[:-1])
+            for node_type, ref_path, _version in collect_ocmo_reference_paths(metadata, base_folder=base_folder):
+                if node_type not in _COPY_NODE_TYPES:
+                    continue
+                mapped_ref = self._copy_destination_path(source_root, ref_path, destination)
+                if mapped_ref in copy_set and mapped_ref != dest_path:
+                    prerequisites[dest_path].add(mapped_ref)
+
+        ordered_paths = self._topological_sort_paths(dest_paths, prerequisites)
+        return [dest_to_item[path] for path in ordered_paths]
 
     @staticmethod
     def _folder_content_items(manager, *, copy_targets_only: bool = False) -> list:
@@ -201,7 +270,7 @@ class TreeMutateMixin:
 
         return self.item
 
-    def copy_item(self, new_path, tag_to_copy="latest"):
+    def copy_item(self, new_path, tag_to_copy="latest", *, validate_references: bool = True):
         """Copy an item or subtree. Only the version at tag_to_copy is copied."""
         handlers = {
             "config": self.copy_config,
@@ -212,7 +281,7 @@ class TreeMutateMixin:
         node_type = self.get_or_raise().node_type
         if node_type not in handlers:
             raise ValidationError(f"Cannot copy {node_type!r}")
-        return handlers[node_type](new_path, tag_to_copy=tag_to_copy)
+        return handlers[node_type](new_path, tag_to_copy=tag_to_copy, validate_references=validate_references)
 
     @audit("config", operation=OP_COPY_ITEM)
     @require_permissions(
@@ -222,10 +291,10 @@ class TreeMutateMixin:
             resource=arg("new_path", lambda p: p.strip("/")),
         ),
     )
-    def copy_config(self, new_path, tag_to_copy="latest"):
+    def copy_config(self, new_path, tag_to_copy="latest", *, validate_references: bool = True):
         self.get_or_raise(["config"])
         self._ensure_copyable(new_path)
-        return self._generic_copy(new_path, tag_to_copy)
+        return self._generic_copy(new_path, tag_to_copy, validate_references=validate_references)
 
     @audit("template", operation=OP_COPY_ITEM)
     @require_permissions(
@@ -235,10 +304,10 @@ class TreeMutateMixin:
             resource=arg("new_path", lambda p: p.strip("/")),
         ),
     )
-    def copy_template(self, new_path, tag_to_copy="latest"):
+    def copy_template(self, new_path, tag_to_copy="latest", *, validate_references: bool = True):
         self.get_or_raise(["template"])
         self._ensure_copyable(new_path)
-        return self._generic_copy(new_path, tag_to_copy)
+        return self._generic_copy(new_path, tag_to_copy, validate_references=validate_references)
 
     @audit("folder", operation=OP_COPY_ITEM)
     @require_permissions(
@@ -248,11 +317,11 @@ class TreeMutateMixin:
             resource=arg("new_path", lambda p: p.strip("/")),
         ),
     )
-    def copy_folder(self, new_path, tag_to_copy="latest"):
+    def copy_folder(self, new_path, tag_to_copy="latest", *, validate_references: bool = True):
         self.get_or_raise(["folder"])
         self._ensure_copyable(new_path)
         self._ensure_folder_children_capable("copyable", action="copied")
-        return self._generic_copy(new_path, tag_to_copy)
+        return self._generic_copy(new_path, tag_to_copy, validate_references=validate_references)
 
     @audit("resolver", operation=OP_COPY_ITEM)
     @require_permissions(
@@ -262,12 +331,12 @@ class TreeMutateMixin:
             resource=arg("new_path", lambda p: p.strip("/")),
         ),
     )
-    def copy_resolver(self, new_path, tag_to_copy="latest"):
+    def copy_resolver(self, new_path, tag_to_copy="latest", *, validate_references: bool = True):
         self.get_or_raise(["resolver"])
         self._ensure_copyable(new_path)
-        return self._generic_copy(new_path, tag_to_copy)
+        return self._generic_copy(new_path, tag_to_copy, validate_references=validate_references)
 
-    def _generic_copy(self, new_path, tag_to_copy="latest"):
+    def _generic_copy(self, new_path, tag_to_copy="latest", *, validate_references: bool = True):
         validate_tag_name(tag_to_copy)
         destination = new_path.strip("/")
         sr_type, sr_value = self.format_subresource(
@@ -282,11 +351,18 @@ class TreeMutateMixin:
         new_items = []
 
         source_root = self.path.strip("/")
-        descendants = (
+        descendants = list(
             self.item.treeitem_ptr.descendants(include_self=True)
             .filter(node_type__in=["config", "template", "resolver"])
             .prefetch_related("config", "template", "resolver")
         )
+        if validate_references:
+            descendants = self._order_copy_descendants(
+                descendants,
+                source_root=source_root,
+                destination=destination,
+                tag_to_copy=tag_to_copy,
+            )
         with transaction.atomic():
             for el in descendants:
                 source_item = self._cast_to_specific(el)
@@ -307,7 +383,11 @@ class TreeMutateMixin:
                     doc_data = source_item.versions.filter(version=version_to_copy).first().data
                 dest_path = self._copy_destination_path(source_root, source_item.path, destination)
                 self.__class__(self.namespace, dest_path, auth=None)._ensure_writable()
-                self.__class__(self.namespace, dest_path, auth=self.auth).create_item(doc_data, source_item.node_type)
+                self.__class__(self.namespace, dest_path, auth=self.auth).create_item(
+                    doc_data,
+                    source_item.node_type,
+                    validate_references=validate_references,
+                )
                 new_items.append(dest_path)
         return {"created": new_items}
 

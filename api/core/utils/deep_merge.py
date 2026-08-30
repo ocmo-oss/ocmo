@@ -7,7 +7,7 @@ from typing import Any
 
 from ..constants.resolve import OMIT
 from ..exceptions import ConfigExtendNotPossible
-from ..shortcuts import to_plain
+from ..shortcuts import is_mapping, to_plain
 
 
 def all_int_keys(mapping: Mapping[Any, Any]) -> bool:
@@ -25,7 +25,7 @@ def all_int_keys(mapping: Mapping[Any, Any]) -> bool:
 
 
 def apply_list_directives(base_list: list, directives: Mapping[Any, Any]) -> list:
-    """Update a list by integer-keyed dict directives (replace / append / prepend)."""
+    """Update a list by integer-keyed dict directives (merge / append / prepend)."""
     result = list(base_list)
     for key, value in directives.items():
         idx = int(key)
@@ -34,7 +34,11 @@ def apply_list_directives(base_list: list, directives: Mapping[Any, Any]) -> lis
         elif idx >= len(result):
             result.append(value)
         else:
-            result[idx] = value
+            existing = result[idx]
+            if is_mapping(existing) and is_mapping(value):
+                result[idx] = deep_merge(existing, value, level=1)
+            else:
+                result[idx] = value
     return result
 
 

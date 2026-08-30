@@ -31,7 +31,7 @@ Examples:
 @click.command("draft", help=_DRAFT_HELP)
 @click.argument("address")
 @namespace_option()
-@resolve_options(include_version=False, file_required=True)
+@resolve_options(include_version=False, include_mark_stable=False, file_required=True)
 @click.pass_obj
 @sdk_command
 def resolve_draft_cmd(

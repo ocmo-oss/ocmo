@@ -61,28 +61,29 @@ def generate(sdk_ops: dict, existing_cli_ops: dict) -> dict[str, dict]:
 
     for op_id, sdk_cfg in sdk_ops.items():
         # Preserve existing CLI configuration
-        existing = existing_cli_ops.get(op_id, {})
-        if existing:
-            result[op_id] = existing
-            continue
+        existing = dict(existing_cli_ops.get(op_id, {}))
 
-        # Infer from SDK cli hints if present
-        cli_hint = sdk_cfg.get("cli", {})
-        if cli_hint.get("hand_written"):
-            result[op_id] = {"hand_written": True}
-        elif cli_hint.get("skip"):
-            result[op_id] = {"skip": cli_hint["skip"]}
-        elif sdk_cfg.get("sdk") is False:
-            result[op_id] = {"skip": "Internal SDK operation."}
-        else:
-            entry: dict = {}
-            if cli_hint.get("action"):
-                entry["action"] = cli_hint["action"]
-            if cli_hint.get("resource"):
-                entry["resource"] = cli_hint["resource"]
-            if cli_hint.get("confirm"):
-                entry["confirm"] = cli_hint["confirm"]
-            result[op_id] = entry or {"skip": "Not yet mapped."}
+        if not existing:
+            # Infer from SDK cli hints if present
+            cli_hint = sdk_cfg.get("cli", {})
+            if cli_hint.get("hand_written"):
+                existing = {"hand_written": True}
+            elif cli_hint.get("skip"):
+                existing = {"skip": cli_hint["skip"]}
+            elif sdk_cfg.get("sdk") is False:
+                existing = {"skip": "Internal SDK operation."}
+            else:
+                entry: dict = {}
+                if cli_hint.get("action"):
+                    entry["action"] = cli_hint["action"]
+                if cli_hint.get("resource"):
+                    entry["resource"] = cli_hint["resource"]
+                if cli_hint.get("confirm"):
+                    entry["confirm"] = cli_hint["confirm"]
+                existing = entry or {"skip": "Not yet mapped."}
+
+        existing["scope"] = sdk_cfg.get("scope", "namespace")
+        result[op_id] = existing
 
     return result
 
@@ -113,6 +114,8 @@ def main() -> None:
 
         # Also regenerate the static Python map for fast startup
         _write_python_map(generated)
+        if not errors:
+            print("Coverage gate: OK")
 
 
 def _write_python_map(operations: dict) -> None:
@@ -132,9 +135,6 @@ def _write_python_map(operations: dict) -> None:
     lines.append("")
     out_path.write_text("\n".join(lines))
     print(f"Wrote {out_path}")
-
-    if not errors:
-        print("Coverage gate: OK")
 
 
 if __name__ == "__main__":

@@ -142,6 +142,17 @@ Undeclared parameters are **not** substituted — they appear literally. A decla
 
 All parameter values are single-line strings. Newlines are stripped to prevent YAML corruption.
 
+### Save-time reference validation
+
+When a config is created or updated, extend, render, schema, and secret references in `_ocmo` are checked for existence. Placeholders in those reference paths (for example `../bases/{!env}` or `images/production@{!image_tag}`) are **substituted first** using the same rules as resolve:
+
+- **Dynamic** parameters use their declared `value` default (no caller overrides at save time).
+- **Projected** parameters are evaluated from this config's path, body, and version context (`latest` / next version number).
+
+After substitution, the server validates that each resolved target exists (including the `@tag` or version suffix). Caller-supplied dynamic overrides (`?param_*=` / `--param`) are **not** checked on save — only at resolve time.
+
+If a placeholder remains unresolved after substituting declared defaults, save fails with a validation error.
+
 ---
 
 ## Transformers

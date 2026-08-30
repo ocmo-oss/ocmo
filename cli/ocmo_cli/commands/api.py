@@ -80,17 +80,9 @@ def api_cmd(
 
 def _dispatch(ctx: OcmoCtx, op_id: str, namespace: str | None, kwargs: dict[str, Any]) -> Any:
     """Find the SDK method and call it."""
-    from pathlib import Path
+    from .._operations_meta import load_operations_meta
 
-    import yaml  # deferred
-
-    ops_path = Path(__file__).parent.parent.parent.parent / "sdk" / "operations.yaml"
-    scope = "namespace"
-    if ops_path.exists():
-        with ops_path.open() as f:
-            ops = yaml.safe_load(f) or {}
-        op_cfg = ops.get("operations", {}).get(op_id, {})
-        scope = op_cfg.get("scope", "namespace")
+    scope = load_operations_meta().get(op_id, {}).get("scope", "namespace")
 
     if scope == "client":
         client = ctx.client()

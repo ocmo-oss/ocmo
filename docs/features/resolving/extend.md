@@ -66,7 +66,7 @@ Each entry is either a plain path string or an object:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `path` | Yes | Config path with optional `@version` suffix. Accepts `{!param}` substitution. |
+| `path` | Yes | Config path with optional `@version` suffix. Accepts `{!param}` substitution (including in the `@tag` suffix). At save time, placeholders are resolved using declared parameter defaults before reference checks run. |
 | `key` | No | Dot-path into the resolved base data to extract a subset (e.g. `.database`). Append `?` to make it optional. |
 | `as` | No | Dot-path describing where to place the value in the merge document. |
 
@@ -233,6 +233,33 @@ b:
 tags:
   - baz
 ```
+
+### Updating list items by index
+
+When the base value is a **list** and the override uses a **dict with integer keys** (`0`, `1`, `-1`, …), OCMO applies positional directives instead of replacing the whole list:
+
+| Key | Effect |
+|-----|--------|
+| `0` … `N-1` | **Merge** into the item at that index when both sides are mappings; otherwise **replace** the item |
+| `≥ length` | Append |
+| negative | Prepend |
+
+```yaml
+# base
+containers:
+  - args: [--v=2]
+    image: quay.io/app:v1
+    name: app
+```
+
+```yaml
+# override (partial patch at index 0)
+containers:
+  0:
+    image: dummy:1.0.0
+```
+
+Merged `containers[0]` keeps `args` and `name`; only `image` changes.
 
 ---
 

@@ -10,6 +10,7 @@ OCMO is a YAML configuration management platform. Configs are stored in versione
 | Understand OCMO concepts (namespaces, trees, tags) | [Concepts](concepts/README.md) |
 | Learn about a specific feature | [Features](features/README.md) |
 | Accomplish a specific task | [How-to guides](how-to/README.md) |
+| Walk through a full scenario (Helm → cluster, …) | [Tutorials](tutorials/README.md) |
 | Look up an API route, CLI flag, or error code | [Reference](reference/README.md) |
 
 ## By audience
@@ -18,7 +19,7 @@ OCMO is a YAML configuration management platform. Configs are stored in versione
 → [Install the server](quickstart/install-server.md) · [Configuration reference](quickstart/configuration.md)
 
 **Developer integrating OCMO into a service**
-→ [Deliver a config to a host](how-to/deliver-config-to-a-host.md) · [SDK reference](reference/sdk.md) · [CI/CD guide](how-to/ci-cd.md)
+→ [Deliver a config to a host](how-to/deliver-config-to-a-host.md) · [SDK reference](reference/sdk.md) · [CI/CD guide](how-to/ci-cd.md) · [Tutorials](tutorials/README.md)
 
 **Config author (writing and managing configs)**
 → [Configs](features/configs.md) · [Templates](features/templates.md) · [Secrets](features/secrets.md) · [Resolving](features/resolving/README.md)
@@ -31,11 +32,12 @@ OCMO is a YAML configuration management platform. Configs are stored in versione
 
 ## Product overview
 
-→ [What is OCMO?](overview.md)
+→ [What is OCMO?](overview.md) · [Comparison with other products](comparison_with_other_products.md)
 
 ## Contents
 
 - [Overview](overview.md)
+- [Comparison with other products](comparison_with_other_products.md)
 - [Quick Start](quickstart/README.md)
   - [Install the server](quickstart/install-server.md)
   - [Install the web UI](quickstart/install-web-ui.md)
@@ -73,6 +75,8 @@ OCMO is a YAML configuration management platform. Configs are stored in versione
   - [Promote configs across environments](how-to/promote-across-environments.md)
   - [Export and import](how-to/export-import.md)
   - [Troubleshoot resolving](how-to/troubleshoot-resolve.md)
+- [Tutorials](tutorials/README.md)
+  - [Install a Kubernetes application](tutorials/install-k8s-application/README.md)
 - [Reference](reference/README.md)
   - [REST API](reference/rest-api.md)
   - [CLI](reference/cli.md)

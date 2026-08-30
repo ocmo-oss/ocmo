@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { treeApi } from '../../api/tree'
 import type { FolderNode } from '../../api/types'
 import type { useItemPermissions } from '../../hooks/useItemPermissions'
@@ -30,6 +30,11 @@ export default function FolderView({
   const [moveOpen, setMoveOpen] = useState(false)
   const [copyOpen, setCopyOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<Tab>('contents')
+
+  useEffect(() => {
+    setActiveTab('contents')
+  }, [item.path])
+
   const { data, isLoading } = useQuery({
     queryKey: ['tree-nav', namespace, item.path],
     queryFn: ({ signal }) => treeApi.navigate(namespace, item.path, { limit: 100 }, signal),

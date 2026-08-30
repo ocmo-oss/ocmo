@@ -2,7 +2,113 @@ from ..tree_capabilities import is_builtin_namespace_config_path
 from ._common import *
 
 
+def collect_ocmo_reference_paths(
+    metadata: ConfigOcmoMetadataSchema,
+    *,
+    base_folder: str,
+) -> list[tuple[str, str, str]]:
+    """Return ``(node_type, resolved_path, version_ref)`` pairs from ``_ocmo`` metadata."""
+    if not metadata.model_dump(exclude_none=True):
+        return []
+
+    refs: list[tuple[str, str, str]] = []
+
+    if metadata.extend:
+        for ref in metadata.extend.configs:
+            norm = normalize_extend_ref(ref)
+            path, version = parse_ref(norm.path)
+            refs.append(("config", resolve_relative_path(base_folder, path), version))
+
+    if metadata.render:
+        for ref in metadata.render.templates:
+            path, version = parse_ref(ref)
+            refs.append(("template", resolve_relative_path(base_folder, path), version))
+
+    for decl in metadata.parameters.values():
+        if decl.type != "secret":
+            continue
+        ref = decl.value.strip()
+        if ":" in ref:
+            ref, _field_path = ref.split(":", 1)
+        path, version = parse_ref(ref)
+        refs.append(("secret", resolve_relative_path(base_folder, path), version))
+
+    if metadata.validation:
+        path, version = parse_ref(metadata.validation.schema_path)
+        refs.append(("config", resolve_relative_path(base_folder, path), version))
+
+    return refs
+
+
+def _reference_strings_from_metadata(metadata: ConfigOcmoMetadataSchema) -> list[str]:
+    """Return raw reference strings that may contain ``{!param}`` placeholders."""
+    refs: list[str] = []
+    if metadata.extend:
+        for ref in metadata.extend.configs:
+            norm = normalize_extend_ref(ref)
+            refs.append(norm.path)
+    if metadata.render:
+        refs.extend(metadata.render.templates)
+    if metadata.validation is not None:
+        refs.append(metadata.validation.schema_path)
+    for decl in metadata.parameters.values():
+        if decl.type == "secret":
+            value = decl.value.strip()
+            if ":" in value:
+                value = value.split(":", 1)[0]
+            refs.append(value)
+    return refs
+
+
+def _assert_no_unresolved_reference_placeholders(metadata: ConfigOcmoMetadataSchema) -> None:
+    from ..resolve_parameters import PLACEHOLDER_RE
+
+    for ref in _reference_strings_from_metadata(metadata):
+        if PLACEHOLDER_RE.search(ref):
+            raise ValidationError(
+                f"Cannot validate _ocmo reference {ref!r}: unresolved parameter placeholder(s) remain "
+                "after substituting declared defaults"
+            )
+
+
 class TreeConfigOpsMixin:
+    def _metadata_for_reference_validation(
+        self,
+        metadata: ConfigOcmoMetadataSchema,
+        body: Any,
+    ) -> ConfigOcmoMetadataSchema:
+        """Substitute parameter defaults into reference-bearing ``_ocmo`` fields for save checks."""
+        from ..resolve_parameters import ParameterError, ResolveParametersManager
+
+        if not metadata.model_dump(exclude_none=True):
+            return metadata
+
+        metadata = metadata.model_copy(deep=True)
+        name = self.path.strip("/").split("/")[-1]
+        config_stub = Config(namespace=self.namespace, path=self.path, name=name)
+        version_number = 1
+        if self.item is not None and getattr(self.item, "tags", None):
+            version_number = self.item.tags.get("latest", 1)
+
+        params_mgr = ResolveParametersManager(
+            self.namespace,
+            config_stub,
+            base_folder="/".join(self.path.split("/")[:-1]),
+            version_tag="latest",
+            version_number=version_number,
+            dynamic_params={},
+            auth=self.auth,
+            no_creds=True,
+        )
+        try:
+            params_mgr.evaluate(body, metadata)
+            metadata = params_mgr._substitute_metadata(metadata)
+        except ParameterError as exc:
+            raise ValidationError(str(exc)) from exc
+
+        _assert_no_unresolved_reference_placeholders(metadata)
+        return metadata
+
     def _validate_config_ocmo_references(self, metadata: ConfigOcmoMetadataSchema) -> None:
         """Ensure extend/render/secret paths referenced in ``_ocmo`` exist."""
         if not metadata.model_dump(exclude_none=True):
@@ -81,21 +187,23 @@ class TreeConfigOpsMixin:
                 )
             del item
 
-    def _validate_config_on_save(self, data_yaml: str) -> ConfigDocumentParts:
+    def _validate_config_on_save(self, data_yaml: str, *, validate_references: bool = True) -> ConfigDocumentParts:
         validator = ConfigValidationManager(config_path=self.path, data_yaml=data_yaml)
 
         validator.parse()
         validator.validate_document_structure()
 
-        self._validate_config_ocmo_references(validator.metadata)
+        if validate_references:
+            ref_metadata = self._metadata_for_reference_validation(validator.metadata, validator.parts.body)
+            self._validate_config_ocmo_references(ref_metadata)
 
-        schema_ref = validator.resolve_schema_ref()
-        if schema_ref is not None:
-            schema_path, version = schema_ref
-            schema_mgr = type(self)(self.namespace, schema_path, auth=None)
-            schema_metadata, schema_body = schema_mgr.load_config_version_document(version)
-            schema_parts = ConfigDocumentParts(metadata=schema_metadata, body=schema_body)
-            validator.validate_against_schema(schema_parts)
+            schema_ref = ConfigValidationManager.resolve_schema_ref_for_path(self.path, ref_metadata)
+            if schema_ref is not None:
+                schema_path, version = schema_ref
+                schema_mgr = type(self)(self.namespace, schema_path, auth=None)
+                schema_metadata, schema_body = schema_mgr.load_config_version_document(version)
+                schema_parts = ConfigDocumentParts(metadata=schema_metadata, body=schema_body)
+                validator.validate_against_schema(schema_parts)
 
         if normalize_tree_path(self.path) == "_permissions":
             validator.validate_permissions()

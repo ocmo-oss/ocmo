@@ -8,7 +8,7 @@ from unittest.mock import MagicMock
 import pytest
 from click.testing import CliRunner
 
-from ocmo_cli._version_output import apply_version_address_query
+from ocmo_cli._version_output import apply_version_address_query, resolve_tag_version_number
 from ocmo_cli.commands.generated import _execute_generated
 from ocmo_cli.main import cli
 
@@ -90,6 +90,108 @@ def test_get_version_help_lists_limit_and_tagged_only() -> None:
     assert "--limit" in result.output
     assert "--tagged-only" in result.output
     assert "--version" in result.output
+
+
+def test_resolve_tag_version_number_uses_numeric_ref_directly() -> None:
+    view = MagicMock()
+    assert resolve_tag_version_number(view, "app/web", "3") == 3
+    view.list_item_versions.assert_not_called()
+
+
+def test_resolve_tag_version_number_fetches_latest_when_ref_omitted() -> None:
+    view = MagicMock()
+    view.list_item_versions.return_value = SimpleNamespace(
+        to_dict=lambda: {
+            "versions": [{"version": 5, "tags": ["latest"], "updated_at": "2026-01-01T00:00:00Z"}],
+            "versions_count": 5,
+        },
+    )
+    assert resolve_tag_version_number(view, "app/web", None) == 5
+    view.list_item_versions.assert_called_once_with(path="app/web", limit=1)
+
+
+def test_resolve_tag_version_number_searches_by_tag_name() -> None:
+    view = MagicMock()
+    view.list_item_versions.return_value = SimpleNamespace(
+        to_dict=lambda: {
+            "versions": [{"version": 2, "tags": ["stable"], "updated_at": "2026-01-01T00:00:00Z"}],
+            "versions_count": 1,
+        },
+    )
+    assert resolve_tag_version_number(view, "app/web", "stable") == 2
+    view.list_item_versions.assert_called_once_with(path="app/web", limit=1, q="stable")
+
+
+def test_tag_item_without_version_tags_latest(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    view = MagicMock()
+    view.set_tag.return_value = SimpleNamespace(to_dict=lambda: {"details": ""})
+
+    def list_versions(**kwargs: object) -> SimpleNamespace:
+        if kwargs.get("limit") == 1 and "q" not in kwargs:
+            return SimpleNamespace(
+                to_dict=lambda: {
+                    "versions": [
+                        {
+                            "version": 3,
+                            "tags": [],
+                            "updated_at": "2026-08-09T15:06:42+00:00",
+                        },
+                    ],
+                    "versions_count": 3,
+                },
+            )
+        return SimpleNamespace(
+            to_dict=lambda: {
+                "versions": [
+                    {
+                        "version": 3,
+                        "tags": ["test"],
+                        "updated_at": "2026-08-09T15:06:42+00:00",
+                    },
+                ],
+                "versions_count": 3,
+            },
+        )
+
+    view.list_item_versions.side_effect = list_versions
+
+    ctx = MagicMock()
+    ctx.namespace = "prod"
+    ctx.output = None
+    ctx.no_color = True
+    ctx.require_namespace.return_value = "prod"
+    ctx.ns.return_value = view
+    ctx.namespace_view.return_value = view
+    monkeypatch.setattr(
+        "ocmo_cli.commands.generated._load_ops_yaml",
+        lambda: {
+            "set_tag": {"scope": "namespace"},
+            "list_item_versions": {"scope": "namespace"},
+        },
+    )
+
+    _execute_generated(
+        ctx=ctx,
+        op_ids=["set_tag"],
+        action="tag",
+        resource="item",
+        address="x/confT",
+        namespace="prod",
+        output_fmt="table",
+        dry_run=False,
+        yes=False,
+        file_path=None,
+        confirm_mode=None,
+        sdk_extra={"tag": "test"},
+    )
+
+    view.set_tag.assert_called_once()
+    set_tag_kwargs = view.set_tag.call_args.kwargs
+    assert set_tag_kwargs["body"] == {"tag": "test", "version": 3}
+    assert view.list_item_versions.call_count == 2
 
 
 def test_tag_item_emits_version_list_like_get_version(

@@ -238,7 +238,7 @@ class ProductVersionSchema(Schema):
     version: str = Field(
         ...,
         description="Deployed package version",
-        examples=["0.8.19"],
+        examples=["0.8.20"],
     )
     license: str = Field(
         ...,

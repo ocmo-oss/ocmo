@@ -100,9 +100,17 @@ export const treeApi = {
       .post<Parameters<typeof mapExtendedNode>[0]>(`${base(ns)}/~move/${path}`, payload)
       .then(mapExtendedNode),
 
-  copy: (ns: string, path: string, payload: LocationPayload, tag_to_copy?: string) =>
+  copy: (
+    ns: string,
+    path: string,
+    payload: LocationPayload,
+    options?: { tag_to_copy?: string; skip_reference_validation?: boolean },
+  ) =>
     api.post<CopiedItems>(`${base(ns)}/~copy/${path}`, payload, {
-      params: tag_to_copy ? { tag_to_copy } : undefined,
+      params: {
+        ...(options?.tag_to_copy ? { tag_to_copy: options.tag_to_copy } : {}),
+        ...(options?.skip_reference_validation ? { skip_reference_validation: true } : {}),
+      },
     }),
 
   setTag: (ns: string, path: string, payload: TagPayload) =>

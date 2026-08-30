@@ -52,6 +52,7 @@ export function LocationDialog({
   const configMetadataKey = useConfigMetadataKey()
   const [targetPath, setTargetPath] = useState('')
   const [tagToCopy, setTagToCopy] = useState('latest')
+  const [skipReferenceValidation, setSkipReferenceValidation] = useState(false)
 
   const normalizedSource = normalizeTreePath(path)
   const normalizedTarget = normalizeTreePath(targetPath)
@@ -62,6 +63,7 @@ export function LocationDialog({
     if (!open) return
     setTargetPath('')
     setTagToCopy('latest')
+    setSkipReferenceValidation(false)
   }, [open, path])
 
   const targetError = targetPath.trim()
@@ -89,7 +91,10 @@ export function LocationDialog({
   const copyMut = useMutation({
     mutationFn: () => {
       const tag = tagToCopy.trim() || 'latest'
-      return treeApi.copy(namespace, path, { target_path: normalizedTarget }, tag)
+      return treeApi.copy(namespace, path, { target_path: normalizedTarget }, {
+        tag_to_copy: tag,
+        skip_reference_validation: skipReferenceValidation,
+      })
     },
     onSuccess: async () => {
       await refreshAfterRelocation()
@@ -208,6 +213,24 @@ export function LocationDialog({
                 : 'Only the version at this tag is copied to the destination.'}
             </p>
           </div>
+        )}
+
+        {!isMove && (
+          <label className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <input
+              type="checkbox"
+              checked={skipReferenceValidation}
+              onChange={e => setSkipReferenceValidation(e.target.checked)}
+              className="mt-0.5 rounded"
+            />
+            <span>
+              Skip reference validation
+              <span className="mt-0.5 block text-xs text-gray-400">
+                Do not verify that extend, render, schema, or secret references exist at the
+                destination. Use when copying a folder whose configs reference each other.
+              </span>
+            </span>
+          </label>
         )}
 
         {normalizedTarget && (

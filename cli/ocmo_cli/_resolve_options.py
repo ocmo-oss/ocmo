@@ -16,6 +16,7 @@ _HOOK_TIMEOUT_DEFAULT = 60
 def resolve_options(
     *,
     include_version: bool = True,
+    include_mark_stable: bool = True,
     file_required: bool = False,
     output_command_key: str = "resolve",
 ) -> ClickDecorator:
@@ -25,6 +26,7 @@ def resolve_options(
         return add_resolve_options(
             cmd,
             include_version=include_version,
+            include_mark_stable=include_mark_stable,
             file_required=file_required,
             output_command_key=output_command_key,
         )
@@ -36,6 +38,7 @@ def add_resolve_options(
     cmd: Callable[..., Any],
     *,
     include_version: bool = True,
+    include_mark_stable: bool = True,
     file_required: bool = False,
     output_command_key: str = "resolve",
 ) -> Callable[..., Any]:
@@ -89,6 +92,17 @@ def add_resolve_options(
         default=False,
         help="Print resolve trace metadata only; perform no artifact downloads.",
     )(cmd)
+    if include_mark_stable:
+        cmd = click.option(
+            "--mark-stable",
+            "mark_stable",
+            is_flag=True,
+            default=False,
+            help=(
+                "After a successful resolve, advance the reserved stable tag on "
+                "the resolved config(s). Requires config:write."
+            ),
+        )(cmd)
     cmd = click.option(
         "--skip-existing",
         is_flag=True,

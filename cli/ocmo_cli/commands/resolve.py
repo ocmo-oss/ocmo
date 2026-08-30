@@ -82,6 +82,7 @@ Examples:
   ocmo -n prod resolve app/web --cast json --param replicas=5
   ocmo -n prod resolve app/web -O ./app.json
   ocmo -n prod resolve app/ --trace-only -o json
+  ocmo -n prod resolve app/web --mark-stable
   ocmo -n prod resolve app/web --property database.host
   ocmo -n prod resolve app/web@stable
 """
@@ -114,6 +115,7 @@ def resolve_cmd(
     rewrite: bool,
     skip_existing: bool,
     trace_only: bool,
+    mark_stable: bool,
     prop_path: str | None,
     version_flag: str | None,
     exec_hooks: bool,
@@ -149,6 +151,8 @@ def resolve_cmd(
         resolve_kwargs["version"] = version
     if trace_only:
         resolve_kwargs["trace_only"] = True
+    if mark_stable:
+        resolve_kwargs["mark_stable"] = True
     if params_dict:
         resolve_kwargs["params"] = params_dict
     if cast_options_dict:
@@ -163,6 +167,7 @@ def resolve_cmd(
                 namespace=ns,
                 cast=cast,
                 parameters=params_dict or None,
+                mark_stable=mark_stable,
             )
         )
         return

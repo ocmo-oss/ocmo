@@ -238,12 +238,17 @@ def copy_item(
     path: str,
     payload: LocationPayload,
     tag_to_copy: str = Query("latest"),
+    skip_reference_validation: bool = Query(False),
 ):
     """Copy an item or subtree. Only the version at tag_to_copy is copied."""
     auth = AuthManager.from_request(request)
     ns = NamespaceManager(namespace, auth=auth).get_or_raise()
     AuditManager.bind(request, auth, namespace=ns)
-    return TreeManager(ns, path, auth=auth).copy_item(payload.target_path.strip("/"), tag_to_copy)
+    return TreeManager(ns, path, auth=auth).copy_item(
+        payload.target_path.strip("/"),
+        tag_to_copy,
+        validate_references=not skip_reference_validation,
+    )
 
 
 @router.post(

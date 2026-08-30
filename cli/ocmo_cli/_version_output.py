@@ -5,6 +5,45 @@ from __future__ import annotations
 from typing import Any
 
 
+def resolve_tag_version_number(
+    view: Any,
+    path: str,
+    version_ref: str | None,
+) -> int:
+    """Resolve a version reference to a concrete version number for ``set_tag``.
+
+    When *version_ref* is omitted or ``latest``, the highest version number is
+    returned. Numeric refs are returned as-is; tag names (``stable``, custom tags)
+    are looked up via ``list_item_versions``.
+    """
+    from ._exit import NOT_FOUND
+    from ._output import as_dict, err
+
+    if version_ref and version_ref.isdigit():
+        return int(version_ref)
+
+    list_kwargs: dict[str, Any] = {"limit": 1}
+    if version_ref and version_ref != "latest":
+        list_kwargs["q"] = version_ref
+
+    result = view.list_item_versions(path=path, **list_kwargs)
+    data = as_dict(result) or {}
+    versions = data.get("versions")
+    if not isinstance(versions, list) or not versions:
+        if version_ref:
+            err(f"Version or tag {version_ref!r} not found for item {path!r}.")
+        else:
+            err(f"Item {path!r} has no versions.")
+        raise SystemExit(NOT_FOUND)
+
+    first = versions[0]
+    version_number = first.get("version") if isinstance(first, dict) else getattr(first, "version", None)
+    if version_number is None:
+        err(f"Could not determine version number for item {path!r}.")
+        raise SystemExit(NOT_FOUND)
+    return int(version_number)
+
+
 def apply_version_address_query(extra: dict[str, Any], version: str | None) -> None:
     """Map ADDRESS@VER suffix to list_item_versions query parameters.
 
