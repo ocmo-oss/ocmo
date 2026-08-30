@@ -26,6 +26,9 @@ Move a tree item or folder subtree to a new path.
 TARGET uses Unix-style semantics: a trailing ``/`` places the source inside that
 directory (keeping its leaf name); otherwise TARGET is the exact destination path.
 
+By default, configs are checked so ``_ocmo`` references would still resolve at the
+destination. Use ``--skip-reference-validation`` to bypass that check.
+
 \b
 Examples:
   ocmo -n prod move item app/web app/archive/web
@@ -40,6 +43,10 @@ the API default tag (``latest``) is used.
 
 TARGET uses Unix-style semantics: a trailing ``/`` places the source inside that
 directory (keeping its leaf name); otherwise TARGET is the exact destination path.
+
+By default, copied configs are validated for ``_ocmo`` reference existence. Use
+``--skip-reference-validation`` to skip validation (folder copies still use
+topological create order when validation is enabled).
 
 \b
 Examples:
@@ -88,6 +95,7 @@ def _run_item_relocate(
     dry_run: bool,
     yes: bool,
     allow_source_version: bool,
+    skip_reference_validation: bool,
 ) -> None:
     source_path, source_version, target_path = _parse_source_target(
         source,
@@ -99,6 +107,8 @@ def _run_item_relocate(
     sdk_kwargs: dict[str, Any] = {"target_path": destination_path}
     if op_id == "copy_item" and source_version:
         sdk_kwargs["tag_to_copy"] = source_version
+    if skip_reference_validation:
+        sdk_kwargs["skip_reference_validation"] = True
 
     ns = ctx.require_namespace(namespace)
 
@@ -138,6 +148,12 @@ def _build_relocate_command(action: str) -> click.Command:
     @click.command("item", help=help_text)
     @click.argument("source")
     @click.argument("target")
+    @click.option(
+        "--skip-reference-validation",
+        is_flag=True,
+        default=False,
+        help="Skip _ocmo reference validation for configs in the moved/copied subtree.",
+    )
     @namespace_option()
     @yes_option()
     @dry_run_option()
@@ -147,6 +163,7 @@ def _build_relocate_command(action: str) -> click.Command:
         ctx: OcmoCtx,
         source: str,
         target: str,
+        skip_reference_validation: bool,
         namespace: str | None,
         dry_run: bool,
         yes: bool,
@@ -161,6 +178,7 @@ def _build_relocate_command(action: str) -> click.Command:
             dry_run=dry_run,
             yes=yes,
             allow_source_version=allow_source_version,
+            skip_reference_validation=skip_reference_validation,
         )
 
     return relocate_cmd

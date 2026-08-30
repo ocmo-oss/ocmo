@@ -4,79 +4,82 @@
  */
 
 export interface IRange {
-  startLineNumber: number
-  startColumn: number
-  endLineNumber: number
-  endColumn: number
+  startLineNumber: number;
+  startColumn: number;
+  endLineNumber: number;
+  endColumn: number;
 }
 
 export interface IPosition {
-  lineNumber: number
-  column: number
+  lineNumber: number;
+  column: number;
 }
 
 export interface IWordAtPosition {
-  word: string
-  startColumn: number
-  endColumn: number
+  word: string;
+  startColumn: number;
+  endColumn: number;
 }
 
 /** Create a stub ITextModel from a YAML string. */
 export function textModel(yaml: string) {
-  const lines = yaml.split('\n')
+  const lines = yaml.split("\n");
 
   function getLineContent(lineNumber: number): string {
-    return lines[lineNumber - 1] ?? ''
+    return lines[lineNumber - 1] ?? "";
   }
 
   function getLineCount(): number {
-    return lines.length
+    return lines.length;
   }
 
   function getValueInRange(range: IRange): string {
-    const { startLineNumber, startColumn, endLineNumber, endColumn } = range
+    const { startLineNumber, startColumn, endLineNumber, endColumn } = range;
     if (startLineNumber === endLineNumber) {
-      return getLineContent(startLineNumber).slice(startColumn - 1, endColumn - 1)
+      return getLineContent(startLineNumber).slice(
+        startColumn - 1,
+        endColumn - 1,
+      );
     }
-    const parts: string[] = []
+    const parts: string[] = [];
     for (let ln = startLineNumber; ln <= endLineNumber; ln++) {
-      const line = getLineContent(ln)
+      const line = getLineContent(ln);
       if (ln === startLineNumber) {
-        parts.push(line.slice(startColumn - 1))
+        parts.push(line.slice(startColumn - 1));
       } else if (ln === endLineNumber) {
-        parts.push(line.slice(0, endColumn - 1))
+        parts.push(line.slice(0, endColumn - 1));
       } else {
-        parts.push(line)
+        parts.push(line);
       }
     }
-    return parts.join('\n')
+    return parts.join("\n");
   }
 
   function getWordUntilPosition(pos: IPosition): IWordAtPosition {
-    const line = getLineContent(pos.lineNumber)
-    const before = line.slice(0, pos.column - 1)
-    const match = before.match(/(\w+)$/)
+    const line = getLineContent(pos.lineNumber);
+    const before = line.slice(0, pos.column - 1);
+    const match = before.match(/(\w+)$/);
     if (!match) {
-      return { word: '', startColumn: pos.column, endColumn: pos.column }
+      return { word: "", startColumn: pos.column, endColumn: pos.column };
     }
-    const word = match[1]
+    const word = match[1];
     return {
       word,
       startColumn: pos.column - word.length,
       endColumn: pos.column,
-    }
+    };
   }
 
   function getValue(): string {
-    return yaml
+    return yaml;
   }
 
   function getVersionId(): number {
-    return 1
+    return 1;
   }
 
   function getLanguageId(): string {
-    return 'yaml'
+    return "yaml";
   }
 
   return {
@@ -87,11 +90,11 @@ export function textModel(yaml: string) {
     getValue,
     getVersionId,
     getLanguageId,
-  }
+  };
 }
 
 export function makePosition(lineNumber: number, column: number): IPosition {
-  return { lineNumber, column }
+  return { lineNumber, column };
 }
 
 /** Monaco enum stubs matching the numeric values in monaco.d.ts. */
@@ -130,4 +133,4 @@ export const monacoStub = {
       InsertAsSnippet: 4,
     },
   },
-} as const
+} as const;

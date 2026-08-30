@@ -96,6 +96,16 @@ _ocmo:
 key: "{!cred}"
 """
 
+_MISSING_SECRET_PARAM_YAML = """\
+_ocmo:
+  parameters:
+    cred:
+      type: secret
+      value: shared/missing-secret@latest
+      description: Reference to a secret that does not exist
+key: "{!cred}"
+"""
+
 
 from core.utils.namespace_special_configs import init_namespace_special_configs
 
@@ -256,6 +266,15 @@ class ResolvePermissionsTestCase(TestCase):
         with self._patch_client_auth(self._user_auth("reader@example.com")):
             resp = self._resolve("app/cfg")
         self.assertEqual(resp.status_code, 403, resp.content)
+
+    def test_resolve_missing_secret_param_returns_422(self):
+        ConfigVersion.objects.filter(config__namespace=self.ns, config__path="app/cfg", version=1).update(
+            data=_MISSING_SECRET_PARAM_YAML
+        )
+        with self._patch_client_auth(self._user_auth("writer@example.com")):
+            resp = self._resolve("app/cfg")
+        self.assertEqual(resp.status_code, 422, resp.content)
+        self.assertIn("Secret", resp.json()["error"])
 
     def test_resolve_no_creds_bypasses_secret_resolve(self):
         ConfigVersion.objects.filter(config__namespace=self.ns, config__path="app/cfg", version=1).update(

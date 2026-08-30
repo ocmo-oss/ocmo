@@ -3,6 +3,7 @@ _ocmo:
     title:
       type: projected
       value: .Name
+      description: Item name with transformer chain applied
       transformers:
         - slug
         - upper

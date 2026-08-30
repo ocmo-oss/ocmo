@@ -624,9 +624,7 @@ def _execute_generated(
                     address=path,
                     content=content,
                     extra=merged_extra,
-                    address_version=(
-                        tag_body_version if op_id == "set_tag" and action == "tag" else version
-                    ),
+                    address_version=(tag_body_version if op_id == "set_tag" and action == "tag" else version),
                 )
             except ValueError as exc:
                 print(f"Error: {format_usage_error(exc)}", file=sys.stderr)

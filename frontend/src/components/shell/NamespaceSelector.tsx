@@ -1,48 +1,52 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, House, LayoutGrid, Search } from 'lucide-react'
-import { namespacesApi } from '../../api/namespaces'
-import { useDefaultNamespace } from '../../store/defaultNamespace'
-import { cn } from '../ui/cn'
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { ChevronDown, House, LayoutGrid, Search } from "lucide-react";
+import { namespacesApi } from "../../api/namespaces";
+import { useDefaultNamespace } from "../../store/defaultNamespace";
+import { cn } from "../ui/cn";
 
 export function NamespaceSelector() {
-  const { namespace } = useParams<{ namespace: string }>()
-  const navigate = useNavigate()
-  const { namespace: defaultNamespace } = useDefaultNamespace()
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState('')
-  const inputRef = useRef<HTMLInputElement>(null)
+  const { namespace } = useParams<{ namespace: string }>();
+  const navigate = useNavigate();
+  const { namespace: defaultNamespace } = useDefaultNamespace();
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['namespaces', query],
-    queryFn: ({ signal }) => namespacesApi.list({ name_filter: query || undefined, limit: 50 }, signal),
+    queryKey: ["namespaces", query],
+    queryFn: ({ signal }) =>
+      namespacesApi.list(
+        { name_filter: query || undefined, limit: 50 },
+        signal,
+      ),
     enabled: open,
     staleTime: 30_000,
-  })
+  });
 
-  const namespaces = useMemo(() => data?.items ?? [], [data])
+  const namespaces = useMemo(() => data?.items ?? [], [data]);
 
   useEffect(() => {
     if (open) {
-      const t = setTimeout(() => inputRef.current?.focus(), 0)
-      return () => clearTimeout(t)
+      const t = setTimeout(() => inputRef.current?.focus(), 0);
+      return () => clearTimeout(t);
     }
-    setQuery('')
-  }, [open])
+    setQuery("");
+  }, [open]);
 
-  if (!namespace) return null
+  if (!namespace) return null;
 
   const selectNamespace = (name: string) => {
-    navigate(`/ns/${name}/configs`)
-    setOpen(false)
-  }
+    navigate(`/ns/${name}/configs`);
+    setOpen(false);
+  };
 
   return (
     <div className="relative">
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1 rounded-md px-2 py-1 text-sm font-medium text-gray-700 hover:bg-slate-200 dark:text-gray-200 dark:hover:bg-gray-800"
         aria-expanded={open}
         aria-haspopup="listbox"
@@ -50,7 +54,12 @@ export function NamespaceSelector() {
         <span className="font-mono text-xs bg-slate-200 dark:bg-gray-800 px-1.5 py-0.5 rounded text-brand-700 dark:text-brand-300">
           {namespace}
         </span>
-        <ChevronDown className={cn('h-3.5 w-3.5 text-gray-400 transition-transform', open && 'rotate-180')} />
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 text-gray-400 transition-transform",
+            open && "rotate-180",
+          )}
+        />
       </button>
 
       {open && (
@@ -64,7 +73,7 @@ export function NamespaceSelector() {
                   ref={inputRef}
                   type="search"
                   value={query}
-                  onChange={e => setQuery(e.target.value)}
+                  onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search namespaces…"
                   className="w-full rounded-md border border-slate-300 bg-surface-elevated py-1.5 pl-8 pr-2 text-sm text-gray-800 placeholder-gray-400 focus:border-brand-400 focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                 />
@@ -75,9 +84,11 @@ export function NamespaceSelector() {
                 <li className="px-3 py-2 text-xs text-gray-400">Loading…</li>
               )}
               {!isLoading && namespaces.length === 0 && (
-                <li className="px-3 py-2 text-xs text-gray-400">No namespaces found</li>
+                <li className="px-3 py-2 text-xs text-gray-400">
+                  No namespaces found
+                </li>
               )}
-              {namespaces.map(ns => (
+              {namespaces.map((ns) => (
                 <li key={ns.name}>
                   <button
                     type="button"
@@ -85,10 +96,10 @@ export function NamespaceSelector() {
                     aria-selected={ns.name === namespace}
                     onClick={() => selectNamespace(ns.name)}
                     className={cn(
-                      'flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-800',
+                      "flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-gray-800",
                       ns.name === namespace
-                        ? 'font-medium text-brand-700 dark:text-brand-300'
-                        : 'text-gray-700 dark:text-gray-200',
+                        ? "font-medium text-brand-700 dark:text-brand-300"
+                        : "text-gray-700 dark:text-gray-200",
                     )}
                   >
                     <span className="flex h-3.5 w-3.5 shrink-0 items-center justify-center">
@@ -118,5 +129,5 @@ export function NamespaceSelector() {
         </>
       )}
     </div>
-  )
+  );
 }

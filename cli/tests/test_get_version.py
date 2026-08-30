@@ -136,7 +136,7 @@ def test_tag_item_without_version_tags_latest(
                     "versions": [
                         {
                             "version": 3,
-                            "tags": [],
+                            "tags": ["latest"],
                             "updated_at": "2026-08-09T15:06:42+00:00",
                         },
                     ],

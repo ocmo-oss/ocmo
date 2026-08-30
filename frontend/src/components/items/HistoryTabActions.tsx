@@ -1,25 +1,25 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { GitCompare, Tag, Trash2 } from 'lucide-react'
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { GitCompare, Tag, Trash2 } from "lucide-react";
 
-import { treeApi } from '../../api/tree'
-import type { HistorySelectionItem } from '../../hooks/useHistorySelection'
-import { Button } from '../ui/Button'
-import { invalidateItemDetailQueries } from '../../lib/treeQuery'
-import { pushApiError } from '../../store/notifications'
-import { showToast } from '../ui/Toast'
+import { treeApi } from "../../api/tree";
+import type { HistorySelectionItem } from "../../hooks/useHistorySelection";
+import { Button } from "../ui/Button";
+import { invalidateItemDetailQueries } from "../../lib/treeQuery";
+import { pushApiError } from "../../store/notifications";
+import { showToast } from "../ui/Toast";
 
 interface HistoryTabActionsProps {
-  namespace: string
-  path: string
-  selected: HistorySelectionItem[]
-  canDiff: boolean
-  canUntag: boolean
-  canRemove: boolean
-  canTag: boolean
-  canDelete: boolean
-  diffOpen: boolean
-  onDiff: () => void
-  onClearSelection: () => void
+  namespace: string;
+  path: string;
+  selected: HistorySelectionItem[];
+  canDiff: boolean;
+  canUntag: boolean;
+  canRemove: boolean;
+  canTag: boolean;
+  canDelete: boolean;
+  diffOpen: boolean;
+  onDiff: () => void;
+  onClearSelection: () => void;
 }
 
 export function HistoryTabActions({
@@ -35,35 +35,42 @@ export function HistoryTabActions({
   onDiff,
   onClearSelection,
 }: HistoryTabActionsProps) {
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   const untagMut = useMutation({
     mutationFn: async () => {
-      const tags = selected.filter(s => s.kind === 'tag' && s.tagName)
-      await Promise.all(tags.map(s => treeApi.deleteTag(namespace, path, s.tagName!)))
+      const tags = selected.filter((s) => s.kind === "tag" && s.tagName);
+      await Promise.all(
+        tags.map((s) => treeApi.deleteTag(namespace, path, s.tagName!)),
+      );
     },
     onSuccess: () => {
-      invalidateItemDetailQueries(qc, namespace, path)
-      showToast('Tag(s) removed')
-      onClearSelection()
+      invalidateItemDetailQueries(qc, namespace, path);
+      showToast("Tag(s) removed");
+      onClearSelection();
     },
-    onError: (e: Error) => pushApiError('Untag failed', e),
-  })
+    onError: (e: Error) => pushApiError("Untag failed", e),
+  });
 
   const removeMut = useMutation({
     mutationFn: async () => {
-      const versions = selected.filter(s => s.kind === 'version')
+      const versions = selected.filter((s) => s.kind === "version");
       await Promise.all(
-        versions.map(s => treeApi.delete(namespace, path, { preview: false, version: s.version })),
-      )
+        versions.map((s) =>
+          treeApi.delete(namespace, path, {
+            preview: false,
+            version: s.version,
+          }),
+        ),
+      );
     },
     onSuccess: () => {
-      invalidateItemDetailQueries(qc, namespace, path)
-      showToast('Version(s) removed')
-      onClearSelection()
+      invalidateItemDetailQueries(qc, namespace, path);
+      showToast("Version(s) removed");
+      onClearSelection();
     },
-    onError: (e: Error) => pushApiError('Remove failed', e),
-  })
+    onError: (e: Error) => pushApiError("Remove failed", e),
+  });
 
   return (
     <div className="flex items-center gap-1">
@@ -104,5 +111,5 @@ export function HistoryTabActions({
         Diff
       </Button>
     </div>
-  )
+  );
 }

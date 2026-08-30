@@ -1239,6 +1239,16 @@
               "type": "string"
             },
             "required": true
+          },
+          {
+            "in": "query",
+            "name": "skip_reference_validation",
+            "schema": {
+              "default": false,
+              "title": "Skip Reference Validation",
+              "type": "boolean"
+            },
+            "required": false
           }
         ],
         "responses": {

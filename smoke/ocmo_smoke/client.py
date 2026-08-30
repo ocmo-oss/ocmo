@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass
 from typing import Any, Optional
 from urllib.parse import urlencode
@@ -31,6 +32,9 @@ class OcmoApiClient:
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self._session = requests.Session()
+        token = os.environ.get("OCMO_SMOKE_TOKEN")
+        if token:
+            self._session.headers["Authorization"] = f"Bearer {token}"
 
     def _url(self, path: str) -> str:
         if not path.startswith("/"):
@@ -351,10 +355,19 @@ class OcmoApiClient:
             f"/api/v1/ns/{namespace}/~propagate/{path}{suffix}",
         )
 
-    def move_item(self, namespace: str, path: str, target_path: str) -> ApiResponse:
+    def move_item(
+        self,
+        namespace: str,
+        path: str,
+        target_path: str,
+        *,
+        skip_reference_validation: bool = False,
+    ) -> ApiResponse:
+        qs = urlencode({"skip_reference_validation": "true"}) if skip_reference_validation else ""
+        suffix = f"?{qs}" if qs else ""
         return self.request(
             "POST",
-            f"/api/v1/ns/{namespace}/~move/{path}",
+            f"/api/v1/ns/{namespace}/~move/{path}{suffix}",
             data=json.dumps({"target_path": target_path}),
             content_type="application/json",
         )

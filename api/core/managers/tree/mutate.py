@@ -52,9 +52,7 @@ class TreeMutateMixin:
         destination: str,
         tag_to_copy: str,
     ) -> list:
-        dest_to_item = {
-            self._copy_destination_path(source_root, el.path, destination): el for el in descendants
-        }
+        dest_to_item = {self._copy_destination_path(source_root, el.path, destination): el for el in descendants}
         dest_paths = list(dest_to_item)
         copy_set = set(dest_paths)
         prerequisites: dict[str, set[str]] = {dest: set() for dest in dest_paths}
@@ -132,7 +130,7 @@ class TreeMutateMixin:
             ]
         return f"{item.node_type}:write"
 
-    def move_item(self, new_path):
+    def move_item(self, new_path, *, validate_references: bool = True):
         """Move an item or folder subtree to a new path."""
         handlers = {
             "config": self.move_config,
@@ -144,7 +142,7 @@ class TreeMutateMixin:
         node_type = self.get_or_raise().node_type
         if node_type not in handlers:
             raise ValidationError(f"Cannot move {node_type!r}")
-        return handlers[node_type](new_path)
+        return handlers[node_type](new_path, validate_references=validate_references)
 
     @audit("config", operation=OP_MOVE_ITEM, subresource_type="path")
     @require_permissions(
@@ -155,10 +153,10 @@ class TreeMutateMixin:
             resource=arg("new_path", lambda p: p.strip("/")),
         ),
     )
-    def move_config(self, new_path):
+    def move_config(self, new_path, *, validate_references: bool = True):
         self.get_or_raise(["config"])
         self._ensure_movable(new_path)
-        return self._generic_move(new_path)
+        return self._generic_move(new_path, validate_references=validate_references)
 
     @audit("template", operation=OP_MOVE_ITEM, subresource_type="path")
     @require_permissions(
@@ -169,10 +167,10 @@ class TreeMutateMixin:
             resource=arg("new_path", lambda p: p.strip("/")),
         ),
     )
-    def move_template(self, new_path):
+    def move_template(self, new_path, *, validate_references: bool = True):
         self.get_or_raise(["template"])
         self._ensure_movable(new_path)
-        return self._generic_move(new_path)
+        return self._generic_move(new_path, validate_references=validate_references)
 
     @audit("folder", operation=OP_MOVE_ITEM, subresource_type="path")
     @require_permissions(
@@ -183,12 +181,12 @@ class TreeMutateMixin:
             resource=arg("new_path", lambda p: p.strip("/")),
         ),
     )
-    def move_folder(self, new_path):
+    def move_folder(self, new_path, *, validate_references: bool = True):
         self.get_or_raise(["folder"])
         self._ensure_movable(new_path)
         self._ensure_folder_children_capable("movable", action="moved")
         LockManager.ensure_subtree_writable(self.namespace, self.path)
-        return self._generic_move(new_path)
+        return self._generic_move(new_path, validate_references=validate_references)
 
     @audit("resolver", operation=OP_MOVE_ITEM, subresource_type="path")
     @require_permissions(
@@ -199,10 +197,10 @@ class TreeMutateMixin:
             resource=arg("new_path", lambda p: p.strip("/")),
         ),
     )
-    def move_resolver(self, new_path):
+    def move_resolver(self, new_path, *, validate_references: bool = True):
         self.get_or_raise(["resolver"])
         self._ensure_movable(new_path)
-        return self._generic_move(new_path)
+        return self._generic_move(new_path, validate_references=validate_references)
 
     @audit("secret", operation=OP_MOVE_ITEM, subresource_type="path")
     @require_permissions(
@@ -213,12 +211,62 @@ class TreeMutateMixin:
             resource=arg("new_path", lambda p: p.strip("/")),
         ),
     )
-    def move_secret(self, new_path):
+    def move_secret(self, new_path, *, validate_references: bool = True):
         self.get_or_raise(["secret"])
         self._ensure_movable(new_path)
-        return self._generic_move(new_path)
+        return self._generic_move(new_path, validate_references=validate_references)
 
-    def _generic_move(self, new_path):
+    def _validate_move_references(self, destination: str) -> None:
+        """Ensure config ``_ocmo`` references would still resolve after a move."""
+        source_root = self.path.strip("/")
+        destination = destination.strip("/")
+        item = self.get_or_raise()
+
+        if item.node_type == "config":
+            configs = [self._cast_to_specific(item)]
+        elif item.node_type == "folder":
+            configs = [
+                self._cast_to_specific(el)
+                for el in item.treeitem_ptr.descendants(include_self=False).filter(node_type="config")
+            ]
+        else:
+            return
+
+        if not configs:
+            return
+
+        old_to_new = {
+            cfg.path.strip("/"): self._copy_destination_path(source_root, cfg.path, destination) for cfg in configs
+        }
+        new_to_old = {new: old for old, new in old_to_new.items()}
+
+        def resolve_db_path(resolved: str) -> str:
+            return new_to_old.get(resolved, resolved)
+
+        for cfg in configs:
+            old_path = cfg.path.strip("/")
+            new_path = old_to_new[old_path]
+            latest_version = cfg.tags.get("latest")
+            if latest_version is None:
+                continue
+            version_obj = cfg.versions.filter(version=latest_version).first()
+            if version_obj is None:
+                continue
+            try:
+                metadata, body = ConfigValidationManager.parse_config_yaml_document(version_obj.data)
+            except ValidationError:
+                continue
+
+            mgr = type(self)(self.namespace, cfg.path, auth=self.auth)
+            mgr.item = cfg
+            ref_metadata = mgr._metadata_for_reference_validation(metadata, body, config_path=new_path)
+            mgr._validate_config_ocmo_references(
+                ref_metadata,
+                config_path=new_path,
+                resolve_db_path=resolve_db_path,
+            )
+
+    def _generic_move(self, new_path, *, validate_references: bool = True):
         destination = new_path.strip("/")
         enrich_audit(subresource=destination)
         self._ensure_writable(destination)
@@ -228,6 +276,9 @@ class TreeMutateMixin:
 
         if destination.startswith(f"{old_path}/"):
             raise WrongMoveTargetException("It is not possible to move folder into itself")
+
+        if validate_references:
+            self._validate_move_references(destination)
 
         old_parent = self.item.treeitem_ptr.parent
         self.path = new_path.strip("/")

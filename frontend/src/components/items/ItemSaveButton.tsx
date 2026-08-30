@@ -1,7 +1,7 @@
-import type { Ref, KeyboardEvent } from 'react'
-import { Save } from 'lucide-react'
-import { Button } from '../ui/Button'
-import { Tooltip } from '../ui/Tooltip'
+import type { Ref, KeyboardEvent } from "react";
+import { Save } from "lucide-react";
+import { Button } from "../ui/Button";
+import { Tooltip } from "../ui/Tooltip";
 
 export function ItemSaveButton({
   label,
@@ -14,15 +14,15 @@ export function ItemSaveButton({
   onKeyDown,
   className,
 }: {
-  label: string
-  loading?: boolean
-  disabled?: boolean
-  onClick: () => void
-  buttonRef: Ref<HTMLButtonElement>
-  showEnterHint: boolean
-  enterHint: string
-  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void
-  className?: string
+  label: string;
+  loading?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  buttonRef: Ref<HTMLButtonElement>;
+  showEnterHint: boolean;
+  enterHint: string;
+  onKeyDown: (event: KeyboardEvent<HTMLButtonElement>) => void;
+  className?: string;
 }) {
   return (
     <Tooltip
@@ -46,5 +46,5 @@ export function ItemSaveButton({
         {label}
       </Button>
     </Tooltip>
-  )
+  );
 }

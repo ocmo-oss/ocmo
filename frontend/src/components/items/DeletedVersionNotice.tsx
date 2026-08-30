@@ -1,13 +1,17 @@
-import { formatUserDateTimeLong } from '../../lib/datetime'
-import { Trash2 } from 'lucide-react'
+import { formatUserDateTimeLong } from "../../lib/datetime";
+import { Trash2 } from "lucide-react";
 
 interface DeletedVersionNoticeProps {
-  version: number
-  deletedAt: string
-  deletedBy: string
+  version: number;
+  deletedAt: string;
+  deletedBy: string;
 }
 
-export function DeletedVersionNotice({ version, deletedAt, deletedBy }: DeletedVersionNoticeProps) {
+export function DeletedVersionNotice({
+  version,
+  deletedAt,
+  deletedBy,
+}: DeletedVersionNoticeProps) {
   return (
     <div className="flex flex-1 items-center justify-center p-8">
       <div className="max-w-md text-center">
@@ -18,9 +22,15 @@ export function DeletedVersionNotice({ version, deletedAt, deletedBy }: DeletedV
           Version {version} was deleted
         </h2>
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-          Deleted by <span className="font-mono text-gray-700 dark:text-gray-300">{deletedBy}</span>
-          {' '}on{' '}
-          <time dateTime={deletedAt} className="text-gray-700 dark:text-gray-300">
+          Deleted by{" "}
+          <span className="font-mono text-gray-700 dark:text-gray-300">
+            {deletedBy}
+          </span>{" "}
+          on{" "}
+          <time
+            dateTime={deletedAt}
+            className="text-gray-700 dark:text-gray-300"
+          >
             {formatUserDateTimeLong(deletedAt)}
           </time>
         </p>
@@ -29,5 +39,5 @@ export function DeletedVersionNotice({ version, deletedAt, deletedBy }: DeletedV
         </p>
       </div>
     </div>
-  )
+  );
 }

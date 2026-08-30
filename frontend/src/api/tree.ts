@@ -1,5 +1,5 @@
-import { api, rawPost, rawPut } from './client'
-import { fetchConfigDataSchema } from './schema'
+import { api, rawPost, rawPut } from "./client";
+import { fetchConfigDataSchema } from "./schema";
 import {
   mapDiffResponse,
   mapExtendedNode,
@@ -9,7 +9,7 @@ import {
   unwrapPaginatedItems,
   mapResolveResponse,
   mapResolverCreateResponse,
-} from './treeMappers'
+} from "./treeMappers";
 import type {
   DeleteResult,
   CopiedItems,
@@ -20,14 +20,14 @@ import type {
   PropagationResult,
   ResolveParametersResponse,
   ResolverTokenRotationResponse,
-} from './types'
+} from "./types";
 
-const base = (ns: string) => `/ns/${ns}`
+const base = (ns: string) => `/ns/${ns}`;
 
 /** Tag POST endpoints need a trailing slash on the item path so the last segment is not parsed as a tag name. */
 function tagItemBase(ns: string, path: string): string {
-  const normalized = path.replace(/^\/+|\/+$/g, '')
-  return `${base(ns)}/~tag/${normalized}/`
+  const normalized = path.replace(/^\/+|\/+$/g, "");
+  return `${base(ns)}/~tag/${normalized}/`;
 }
 
 export const treeApi = {
@@ -37,10 +37,15 @@ export const treeApi = {
     params?: { recursive?: boolean; limit?: number; offset?: number },
     signal?: AbortSignal,
   ) => {
-    const endpoint = path ? `${base(ns)}/~navigate/${path}` : `${base(ns)}/~navigate/`
+    const endpoint = path
+      ? `${base(ns)}/~navigate/${path}`
+      : `${base(ns)}/~navigate/`;
     return api
-      .get<Parameters<typeof mapNavigationResponse>[0]>(endpoint, { params, signal })
-      .then(mapNavigationResponse)
+      .get<Parameters<typeof mapNavigationResponse>[0]>(endpoint, {
+        params,
+        signal,
+      })
+      .then(mapNavigationResponse);
   },
 
   search: (
@@ -49,13 +54,15 @@ export const treeApi = {
     params?: { q?: string; types?: string; limit?: number; offset?: number },
     signal?: AbortSignal,
   ) => {
-    const endpoint = path ? `${base(ns)}/~search/${path}` : `${base(ns)}/~search/`
+    const endpoint = path
+      ? `${base(ns)}/~search/${path}`
+      : `${base(ns)}/~search/`;
     return api
-      .get<Parameters<typeof mapNavigationNode>[0][] | { items: Parameters<typeof mapNavigationNode>[0][] }>(
-        endpoint,
-        { params, signal },
-      )
-      .then(raw => unwrapPaginatedItems(raw).map(mapNavigationNode))
+      .get<
+        | Parameters<typeof mapNavigationNode>[0][]
+        | { items: Parameters<typeof mapNavigationNode>[0][] }
+      >(endpoint, { params, signal })
+      .then((raw) => unwrapPaginatedItems(raw).map(mapNavigationNode));
   },
 
   get: (
@@ -63,41 +70,66 @@ export const treeApi = {
     path: string,
     params?: { version?: string; reveal?: boolean },
     signal?: AbortSignal,
-  ) => api
-    .get<Parameters<typeof mapExtendedNode>[0]>(`${base(ns)}/~get/${path}`, { params, signal })
-    .then(mapExtendedNode),
+  ) =>
+    api
+      .get<Parameters<typeof mapExtendedNode>[0]>(`${base(ns)}/~get/${path}`, {
+        params,
+        signal,
+      })
+      .then(mapExtendedNode),
 
   versions: (
     ns: string,
     path: string,
     params?: { limit?: number; offset?: number; q?: string },
     signal?: AbortSignal,
-  ) => api
-    .get<Parameters<typeof mapVersionHistoryResponse>[0]>(
-      `${base(ns)}/~versions/${path}`,
-      { params, signal },
-    )
-    .then(mapVersionHistoryResponse),
+  ) =>
+    api
+      .get<Parameters<typeof mapVersionHistoryResponse>[0]>(
+        `${base(ns)}/~versions/${path}`,
+        { params, signal },
+      )
+      .then(mapVersionHistoryResponse),
 
   diff: (
     ns: string,
     path: string,
     params?: { from?: string; to?: string; to_path?: string; reveal?: boolean },
     signal?: AbortSignal,
-  ) => api
-    .get<Parameters<typeof mapDiffResponse>[0]>(`${base(ns)}/~diff/${path}`, { params, signal })
-    .then(mapDiffResponse),
+  ) =>
+    api
+      .get<Parameters<typeof mapDiffResponse>[0]>(`${base(ns)}/~diff/${path}`, {
+        params,
+        signal,
+      })
+      .then(mapDiffResponse),
 
   delete: (
     ns: string,
     path: string,
     params?: { preview?: boolean; version?: number },
     signal?: AbortSignal,
-  ) => api.delete<DeleteResult>(`${base(ns)}/~delete/${path}`, { params, signal }),
+  ) =>
+    api.delete<DeleteResult>(`${base(ns)}/~delete/${path}`, { params, signal }),
 
-  move: (ns: string, path: string, payload: LocationPayload) =>
+  move: (
+    ns: string,
+    path: string,
+    payload: LocationPayload,
+    options?: { skip_reference_validation?: boolean },
+  ) =>
     api
-      .post<Parameters<typeof mapExtendedNode>[0]>(`${base(ns)}/~move/${path}`, payload)
+      .post<Parameters<typeof mapExtendedNode>[0]>(
+        `${base(ns)}/~move/${path}`,
+        payload,
+        {
+          params: {
+            ...(options?.skip_reference_validation
+              ? { skip_reference_validation: true }
+              : {}),
+          },
+        },
+      )
       .then(mapExtendedNode),
 
   copy: (
@@ -109,23 +141,38 @@ export const treeApi = {
     api.post<CopiedItems>(`${base(ns)}/~copy/${path}`, payload, {
       params: {
         ...(options?.tag_to_copy ? { tag_to_copy: options.tag_to_copy } : {}),
-        ...(options?.skip_reference_validation ? { skip_reference_validation: true } : {}),
+        ...(options?.skip_reference_validation
+          ? { skip_reference_validation: true }
+          : {}),
       },
     }),
 
   setTag: (ns: string, path: string, payload: TagPayload) =>
     api
-      .post<Parameters<typeof mapExtendedNode>[0]>(tagItemBase(ns, path), payload)
-      .then(node => (node ? mapExtendedNode(node) as ConfigNode : undefined)),
+      .post<Parameters<typeof mapExtendedNode>[0]>(
+        tagItemBase(ns, path),
+        payload,
+      )
+      .then((node) =>
+        node ? (mapExtendedNode(node) as ConfigNode) : undefined,
+      ),
 
   deleteTag: (ns: string, path: string, tag: string) =>
     api
-      .post<Parameters<typeof mapExtendedNode>[0]>(tagItemBase(ns, path), { tag, version: null })
-      .then(node => (node ? mapExtendedNode(node) as ConfigNode : undefined)),
+      .post<Parameters<typeof mapExtendedNode>[0]>(tagItemBase(ns, path), {
+        tag,
+        version: null,
+      })
+      .then((node) =>
+        node ? (mapExtendedNode(node) as ConfigNode) : undefined,
+      ),
 
   describe: (ns: string, path: string, payload: DescribePayload) =>
     api
-      .post<Parameters<typeof mapExtendedNode>[0]>(`${base(ns)}/~describe/${path}`, payload)
+      .post<Parameters<typeof mapExtendedNode>[0]>(
+        `${base(ns)}/~describe/${path}`,
+        payload,
+      )
       .then(mapExtendedNode),
 
   // Config
@@ -133,8 +180,11 @@ export const treeApi = {
     rawPost(`/ns/${ns}/~config/~create/${path}`, content),
 
   updateConfig: (ns: string, path: string, content: string) =>
-    rawPut(`/ns/${ns}/~config/~update/${path}`, content).then(raw =>
-      mapExtendedNode(raw as Parameters<typeof mapExtendedNode>[0]) as ConfigNode,
+    rawPut(`/ns/${ns}/~config/~update/${path}`, content).then(
+      (raw) =>
+        mapExtendedNode(
+          raw as Parameters<typeof mapExtendedNode>[0],
+        ) as ConfigNode,
     ),
 
   // Template
@@ -153,8 +203,10 @@ export const treeApi = {
 
   // Resolver
   createResolver: (ns: string, path: string, content: string) =>
-    rawPost(`/ns/${ns}/~resolver/~create/${path}`, content).then(raw =>
-      mapResolverCreateResponse(raw as { path: string; token1?: string | null }),
+    rawPost(`/ns/${ns}/~resolver/~create/${path}`, content).then((raw) =>
+      mapResolverCreateResponse(
+        raw as { path: string; token1?: string | null },
+      ),
     ),
 
   updateResolver: (ns: string, path: string, content: string) =>
@@ -172,16 +224,24 @@ export const treeApi = {
     path: string,
     params?: Record<string, string | number | boolean | undefined | null>,
     signal?: AbortSignal,
-  ) => api
-    .get<Parameters<typeof mapResolveResponse>[0]>(`${base(ns)}/~resolve/${path}`, { params, signal })
-    .then(mapResolveResponse),
+  ) =>
+    api
+      .get<Parameters<typeof mapResolveResponse>[0]>(
+        `${base(ns)}/~resolve/${path}`,
+        { params, signal },
+      )
+      .then(mapResolveResponse),
 
   resolveParameters: (
     ns: string,
     path: string,
     params?: Record<string, string | boolean | undefined | null>,
     signal?: AbortSignal,
-  ) => api.get<ResolveParametersResponse>(`${base(ns)}/~resolve-parameters/${path}`, { params, signal }),
+  ) =>
+    api.get<ResolveParametersResponse>(
+      `${base(ns)}/~resolve-parameters/${path}`,
+      { params, signal },
+    ),
 
   resolveDraft: (
     ns: string,
@@ -189,17 +249,19 @@ export const treeApi = {
     content: string,
     params?: Record<string, string | boolean | undefined | null>,
   ) => {
-    const qs = new URLSearchParams()
+    const qs = new URLSearchParams();
     if (params) {
       for (const [k, v] of Object.entries(params)) {
-        if (v !== undefined && v !== null) qs.set(k, String(v))
+        if (v !== undefined && v !== null) qs.set(k, String(v));
       }
     }
-    const query = qs.toString()
+    const query = qs.toString();
     return rawPost(
-      `/ns/${ns}/~resolve-draft/${path}${query ? `?${query}` : ''}`,
+      `/ns/${ns}/~resolve-draft/${path}${query ? `?${query}` : ""}`,
       content,
-    ).then(raw => mapResolveResponse(raw as Parameters<typeof mapResolveResponse>[0]))
+    ).then((raw) =>
+      mapResolveResponse(raw as Parameters<typeof mapResolveResponse>[0]),
+    );
   },
 
   // Propagation
@@ -214,4 +276,4 @@ export const treeApi = {
     params?: { version?: string },
     signal?: AbortSignal,
   ) => fetchConfigDataSchema(ns, path, params, signal),
-}
+};

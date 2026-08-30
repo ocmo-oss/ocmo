@@ -1,23 +1,29 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { authApi } from '../api/auth'
-import type { ItemType } from '../api/types'
-import { allPermissionOps, permissionOpsForType } from '../lib/itemPermissions'
-import { usePermissionActions } from './usePermissionActions'
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { authApi } from "../api/auth";
+import type { ItemType } from "../api/types";
+import { allPermissionOps, permissionOpsForType } from "../lib/itemPermissions";
+import { usePermissionActions } from "./usePermissionActions";
 
-export function useItemPermissions(namespace: string, path: string, type: ItemType, enabled = true) {
-  const { actions } = usePermissionActions(namespace, enabled)
-  const ops = allPermissionOps(type, actions)
-  const opMap = permissionOpsForType(type, actions)
+export function useItemPermissions(
+  namespace: string,
+  path: string,
+  type: ItemType,
+  enabled = true,
+) {
+  const { actions } = usePermissionActions(namespace, enabled);
+  const ops = allPermissionOps(type, actions);
+  const opMap = permissionOpsForType(type, actions);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['can-i', namespace, path, type, ops],
-    queryFn: ({ signal }) => authApi.canI({ namespace, resource: path, operations: ops }, signal),
+    queryKey: ["can-i", namespace, path, type, ops],
+    queryFn: ({ signal }) =>
+      authApi.canI({ namespace, resource: path, operations: ops }, signal),
     enabled: enabled && !!namespace && !!path,
     staleTime: 30_000,
     placeholderData: keepPreviousData,
-  })
+  });
 
-  const allowed = data?.allowed ?? {}
+  const allowed = data?.allowed ?? {};
 
   return {
     isLoading,
@@ -30,5 +36,5 @@ export function useItemPermissions(namespace: string, path: string, type: ItemTy
     canTag: allowed[opMap.tag] ?? false,
     canAudit: allowed[opMap.audit] ?? false,
     canResolve: opMap.resolve ? (allowed[opMap.resolve] ?? false) : false,
-  }
+  };
 }

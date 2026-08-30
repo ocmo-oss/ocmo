@@ -11,8 +11,8 @@ import json
 import os
 import subprocess
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 import click
 
@@ -142,10 +142,8 @@ def main() -> int:
         Case("ls missing ns", ["ls"], expect_code=2, env={"OCMO_NAMESPACE": ""}),
         Case("api-health", ["api-health"]),
         Case("get cast name", ["get", "cast", "-o", "name"]),
-        Case("get namespace list name", ["get", "namespace", "-o", "name"],
-             check_stdout=lambda s: ns in s),
-        Case("get namespace show", ["get", "namespace", ns, "-o", "yaml"],
-             check_stdout=lambda s: ns in s),
+        Case("get namespace list name", ["get", "namespace", "-o", "name"], check_stdout=lambda s: ns in s),
+        Case("get namespace show", ["get", "namespace", ns, "-o", "yaml"], check_stdout=lambda s: ns in s),
         Case("ls root table", ["-n", ns, "ls"]),
         Case("ls name", ["-n", ns, "ls", "-o", "name"]),
         Case("ls path", ["-n", ns, "ls", "-o", "path"]),
@@ -166,30 +164,53 @@ def main() -> int:
         Case("create config dry-run", ["-n", ns, "create", "config", "cli-val/test", "--dry-run"]),
         Case("tag dry-run", ["-n", ns, "tag", "item", "_permissions", "--tag", "cli-test-tag", "--dry-run"]),
         Case("propagate dry-run", ["-n", ns, "propagate", "config", "_permissions", "--dry-run"]),
-        Case("get namespace help has -o", ["get", "namespace", "--help"],
-             check_stdout=lambda s: help_has_option(s, "--output")),
-        Case("get item help has --field", ["get", "item", "--help"],
-             check_stdout=lambda s: help_has_option(s, "--field")),
-        Case("search tree help has --q", ["search", "tree", "--help"],
-             check_stdout=lambda s: help_has_option(s, "--q")),
-        Case("create config help has -f", ["create", "config", "--help"],
-             check_stdout=lambda s: help_has_option(s, "--file")),
+        Case(
+            "get namespace help has -o",
+            ["get", "namespace", "--help"],
+            check_stdout=lambda s: help_has_option(s, "--output"),
+        ),
+        Case(
+            "get item help has --field", ["get", "item", "--help"], check_stdout=lambda s: help_has_option(s, "--field")
+        ),
+        Case(
+            "search tree help has --q", ["search", "tree", "--help"], check_stdout=lambda s: help_has_option(s, "--q")
+        ),
+        Case(
+            "create config help has -f",
+            ["create", "config", "--help"],
+            check_stdout=lambda s: help_has_option(s, "--file"),
+        ),
     ]
 
     if audit_obj:
         oid, otype = audit_obj
-        cases.append(Case(
-            "timeline audit",
-            ["-n", ns, "timeline", "audit", oid],
-        ))
+        cases.append(
+            Case(
+                "timeline audit",
+                ["-n", ns, "timeline", "audit", oid],
+            )
+        )
     else:
         print("SKIP timeline audit (no audit events in namespace)")
 
     for case in cases:
         record(case)
 
-    for action in ("get", "create", "update", "delete", "move", "copy", "tag", "untag",
-                   "rotate", "propagate", "search", "timeline", "resolve-series"):
+    for action in (
+        "get",
+        "create",
+        "update",
+        "delete",
+        "move",
+        "copy",
+        "tag",
+        "untag",
+        "rotate",
+        "propagate",
+        "search",
+        "timeline",
+        "resolve-series",
+    ):
         record(Case(f"group {action} help", [action, "--help"]))
 
     record(Case("resolve group help", ["resolve", "--help"]))

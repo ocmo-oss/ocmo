@@ -1,22 +1,25 @@
-import { Link } from 'react-router-dom'
-import { Settings, Shield, Trash2 } from 'lucide-react'
-import { useNamespacePermissions } from '../../hooks/useNamespacePermissions'
-import { permissionsConfigPath } from '../../lib/builtinPaths'
+import { Link } from "react-router-dom";
+import { Settings, Shield, Trash2 } from "lucide-react";
+import { useNamespacePermissions } from "../../hooks/useNamespacePermissions";
+import { permissionsConfigPath } from "../../lib/builtinPaths";
 
 interface NamespaceRowActionsProps {
-  namespace: string
-  onDelete: () => void
+  namespace: string;
+  onDelete: () => void;
 }
 
-export function NamespaceRowActions({ namespace, onDelete }: NamespaceRowActionsProps) {
-  const { isLoading, canWrite, canDelete } = useNamespacePermissions(namespace)
+export function NamespaceRowActions({
+  namespace,
+  onDelete,
+}: NamespaceRowActionsProps) {
+  const { isLoading, canWrite, canDelete } = useNamespacePermissions(namespace);
 
   if (isLoading) {
-    return <span className="inline-block h-7 w-20" />
+    return <span className="inline-block h-7 w-20" />;
   }
 
   if (!canWrite && !canDelete) {
-    return null
+    return null;
   }
 
   return (
@@ -50,5 +53,5 @@ export function NamespaceRowActions({ namespace, onDelete }: NamespaceRowActions
         </button>
       )}
     </div>
-  )
+  );
 }

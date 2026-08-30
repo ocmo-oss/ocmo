@@ -1,20 +1,20 @@
-import { useQuery } from '@tanstack/react-query'
-import { namespacesApi } from '../../api/namespaces'
-import { DescriptionMarkdown } from '../ui/DescriptionMarkdown'
-import { Skeleton } from '../ui/Skeleton'
+import { useQuery } from "@tanstack/react-query";
+import { namespacesApi } from "../../api/namespaces";
+import { DescriptionMarkdown } from "../ui/DescriptionMarkdown";
+import { Skeleton } from "../ui/Skeleton";
 
 interface NamespaceWelcomeProps {
-  namespace: string
+  namespace: string;
 }
 
 export function NamespaceWelcome({ namespace }: NamespaceWelcomeProps) {
   const { data, isLoading } = useQuery({
-    queryKey: ['namespace', namespace],
+    queryKey: ["namespace", namespace],
     queryFn: ({ signal }) => namespacesApi.get(namespace, signal),
     staleTime: 30_000,
-  })
+  });
 
-  const hasDescription = Boolean(data?.description?.trim())
+  const hasDescription = Boolean(data?.description?.trim());
 
   if (isLoading) {
     return (
@@ -28,7 +28,7 @@ export function NamespaceWelcome({ namespace }: NamespaceWelcomeProps) {
           <Skeleton className="h-12 w-full rounded-md" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -52,5 +52,5 @@ export function NamespaceWelcome({ namespace }: NamespaceWelcomeProps) {
         </p>
       </div>
     </div>
-  )
+  );
 }

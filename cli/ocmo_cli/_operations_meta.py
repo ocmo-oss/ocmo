@@ -20,10 +20,7 @@ def load_operations_meta() -> dict[str, dict[str, Any]]:
 
     from ocmo_cli._commands_map import OPERATIONS
 
-    return {
-        op_id: {"scope": cfg.get("scope", "namespace")}
-        for op_id, cfg in OPERATIONS.items()
-    }
+    return {op_id: {"scope": cfg.get("scope", "namespace")} for op_id, cfg in OPERATIONS.items()}
 
 
 def _try_load_monorepo_yaml() -> dict[str, dict[str, Any]] | None:

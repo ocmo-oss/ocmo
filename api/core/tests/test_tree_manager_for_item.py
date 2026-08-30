@@ -138,6 +138,82 @@ class TreeManagerForItemTests(TestCase):
         with self.assertRaises(WrongMoveTargetException):
             TreeManager(self.ns, "app", auth=None).move_item("app/sub")
 
+    def test_move_folder_preserves_internal_extend_refs(self):
+        TreeManager(self.ns, "env/overrides/item", auth=None).create_item("leaf: true\n", "config")
+        TreeManager(self.ns, "env/app", auth=None).create_item(
+            """\
+_ocmo:
+  extend:
+    configs:
+      - ./overrides/item
+    mode: accumulate
+aggregated: true
+""",
+            "config",
+        )
+
+        moved = TreeManager(self.ns, "env", auth=None).move_item("moved/env")
+
+        self.assertEqual(moved.path, "moved/env")
+        self.assertTrue(Config.objects.filter(namespace=self.ns, path="moved/env/app").exists())
+        self.assertTrue(Config.objects.filter(namespace=self.ns, path="moved/env/overrides/item").exists())
+
+    def test_move_folder_rejects_broken_external_refs_by_default(self):
+        TreeManager(self.ns, "env/app", auth=None).create_item(
+            """\
+_ocmo:
+  extend:
+    configs:
+      - ../missing/external
+    mode: accumulate
+value: ok
+""",
+            "config",
+            validate_references=False,
+        )
+
+        with self.assertRaises(ValidationError):
+            TreeManager(self.ns, "env", auth=None).move_item("moved/env")
+
+    def test_move_folder_skip_reference_validation_allows_broken_refs(self):
+        TreeManager(self.ns, "env/app", auth=None).create_item(
+            """\
+_ocmo:
+  extend:
+    configs:
+      - ../missing/external
+    mode: accumulate
+value: ok
+""",
+            "config",
+            validate_references=False,
+        )
+
+        moved = TreeManager(self.ns, "env", auth=None).move_item(
+            "moved/env",
+            validate_references=False,
+        )
+
+        self.assertEqual(moved.path, "moved/env")
+        self.assertTrue(Config.objects.filter(namespace=self.ns, path="moved/env/app").exists())
+
+    def test_move_single_config_rejects_broken_external_ref(self):
+        TreeManager(self.ns, "app/cfg-sibling", auth=None).create_item("key: sibling\n", "config")
+        TreeManager(self.ns, "app/cfg-ref", auth=None).create_item(
+            """\
+_ocmo:
+  extend:
+    configs:
+      - ./cfg-sibling
+    mode: accumulate
+value: ok
+""",
+            "config",
+        )
+
+        with self.assertRaises(ValidationError):
+            TreeManager(self.ns, "app/cfg-ref", auth=None).move_item("other/cfg-ref")
+
     def test_copy_config_to_full_destination_path(self):
         result = TreeManager(self.ns, "app/cfg1", auth=None).copy_item("moved/cfg1")
 

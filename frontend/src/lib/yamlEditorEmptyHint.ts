@@ -1,12 +1,12 @@
-import type { editor } from 'monaco-editor'
-import type * as Monaco from 'monaco-editor'
-import { installEditorEmptyHint } from './editorEmptyHint'
+import type { editor } from "monaco-editor";
+import type * as Monaco from "monaco-editor";
+import { installEditorEmptyHint } from "./editorEmptyHint";
 
-const HINT_TEXT = 'Press Ctrl+Space to show input suggestions'
+const HINT_TEXT = "Press Ctrl+Space to show input suggestions";
 
 export interface YamlEditorEmptyHintOptions {
   /** When false the hint is never shown (e.g. schema not loaded yet). */
-  hasSuggestions?: () => boolean
+  hasSuggestions?: () => boolean;
 }
 
 export function installYamlEditorEmptyHint(
@@ -17,5 +17,5 @@ export function installYamlEditorEmptyHint(
   return installEditorEmptyHint(editorInstance, monaco, {
     text: HINT_TEXT,
     enabled: () => options.hasSuggestions?.() ?? true,
-  })
+  });
 }

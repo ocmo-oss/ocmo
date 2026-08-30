@@ -136,7 +136,7 @@ class ResolveResolverResponseTests(TestCase):
         self.assertEqual(mgr.cast, "yaml")
         self.assertEqual(
             mgr.cast_options,
-            {"explicit_start": True, "trailing_newline": True},
+            {"explicit_start": True},
         )
 
     def test_resolver_cast_trace_only_resolve(self):

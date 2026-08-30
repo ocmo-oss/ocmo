@@ -55,7 +55,7 @@ def record_case(client: OcmoApiClient, case_dir: Path, base_url: str) -> None:
                 json.dumps(trace, indent=2, sort_keys=True) + "\n",
                 encoding="utf-8",
             )
-            print(f"  wrote expected/trace.json")
+            print("  wrote expected/trace.json")
             return
 
         items = body.get("items") or []

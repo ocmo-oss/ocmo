@@ -18,11 +18,9 @@ rely on downloading a resolved artifact via the returned URL.
 
 from __future__ import annotations
 
-import time
 import uuid
 
 import pytest
-import requests as requests_lib
 
 from ocmo_smoke.bootstrap import bootstrap_case, grant_smoke_permissions
 from ocmo_smoke.case import load_case

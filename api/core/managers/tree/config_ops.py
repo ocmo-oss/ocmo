@@ -1,3 +1,5 @@
+from collections.abc import Callable
+
 from ..tree_capabilities import is_builtin_namespace_config_path
 from ._common import *
 
@@ -76,6 +78,8 @@ class TreeConfigOpsMixin:
         self,
         metadata: ConfigOcmoMetadataSchema,
         body: Any,
+        *,
+        config_path: str | None = None,
     ) -> ConfigOcmoMetadataSchema:
         """Substitute parameter defaults into reference-bearing ``_ocmo`` fields for save checks."""
         from ..resolve_parameters import ParameterError, ResolveParametersManager
@@ -83,9 +87,10 @@ class TreeConfigOpsMixin:
         if not metadata.model_dump(exclude_none=True):
             return metadata
 
+        effective_path = config_path if config_path is not None else self.path
         metadata = metadata.model_copy(deep=True)
-        name = self.path.strip("/").split("/")[-1]
-        config_stub = Config(namespace=self.namespace, path=self.path, name=name)
+        name = effective_path.strip("/").split("/")[-1]
+        config_stub = Config(namespace=self.namespace, path=effective_path, name=name)
         version_number = 1
         if self.item is not None and getattr(self.item, "tags", None):
             version_number = self.item.tags.get("latest", 1)
@@ -93,7 +98,7 @@ class TreeConfigOpsMixin:
         params_mgr = ResolveParametersManager(
             self.namespace,
             config_stub,
-            base_folder="/".join(self.path.split("/")[:-1]),
+            base_folder="/".join(effective_path.split("/")[:-1]),
             version_tag="latest",
             version_number=version_number,
             dynamic_params={},
@@ -109,12 +114,24 @@ class TreeConfigOpsMixin:
         _assert_no_unresolved_reference_placeholders(metadata)
         return metadata
 
-    def _validate_config_ocmo_references(self, metadata: ConfigOcmoMetadataSchema) -> None:
+    def _validate_config_ocmo_references(
+        self,
+        metadata: ConfigOcmoMetadataSchema,
+        *,
+        config_path: str | None = None,
+        resolve_db_path: Callable[[str], str] | None = None,
+    ) -> None:
         """Ensure extend/render/secret paths referenced in ``_ocmo`` exist."""
         if not metadata.model_dump(exclude_none=True):
             return
 
-        base_folder = "/".join(self.path.split("/")[:-1])
+        effective_path = config_path if config_path is not None else self.path
+        base_folder = "/".join(effective_path.split("/")[:-1])
+
+        def _db_path(resolved: str) -> str:
+            if resolve_db_path is not None:
+                return resolve_db_path(resolved)
+            return resolved
 
         def _require_version(item, version: str) -> None:
             try:
@@ -127,14 +144,14 @@ class TreeConfigOpsMixin:
                 norm = normalize_extend_ref(ref)
                 path, version = parse_ref(norm.path)
                 resolved = resolve_relative_path(base_folder, path)
-                if resolved == self.path:
+                if resolved == effective_path:
                     raise ValidationError(
-                        f"Config {self.path!r} cannot reference itself in _ocmo.extend (reference {norm.path!r})"
+                        f"Config {effective_path!r} cannot reference itself in _ocmo.extend (reference {norm.path!r})"
                     )
                 if not self._capabilities_for(resolved).is_extend_target:
                     raise CapabilityDenied(f"Config '{normalize_tree_path(resolved)}' cannot be used in extend")
                 try:
-                    item = type(self)(self.namespace, resolved, auth=None).get_or_raise(["config"])
+                    item = type(self)(self.namespace, _db_path(resolved), auth=None).get_or_raise(["config"])
                 except (TreeItem.DoesNotExist, NotFound):
                     raise ValidationError(f"Config {resolved!r} not found")
                 _require_version(item, version)
@@ -145,7 +162,7 @@ class TreeConfigOpsMixin:
                 path, version = parse_ref(ref)
                 resolved = resolve_relative_path(base_folder, path)
                 try:
-                    item = type(self)(self.namespace, resolved, auth=None).get_or_raise(["template"])
+                    item = type(self)(self.namespace, _db_path(resolved), auth=None).get_or_raise(["template"])
                 except (TreeItem.DoesNotExist, NotFound):
                     raise ValidationError(f"Template {resolved!r} not found")
                 _require_version(item, version)
@@ -159,12 +176,15 @@ class TreeConfigOpsMixin:
                 ref, _field_path = ref.split(":", 1)
             path, version = parse_ref(ref)
             resolved = resolve_relative_path(base_folder, path)
-            if not self._capabilities_for(resolved, referencing_config_path=self.path).is_available_for_param:
+            if not self._capabilities_for(
+                resolved,
+                referencing_config_path=effective_path,
+            ).is_available_for_param:
                 raise CapabilityDenied(
-                    f"Secret '{normalize_tree_path(resolved)}' cannot be referenced from config '{self.path}'"
+                    f"Secret '{normalize_tree_path(resolved)}' cannot be referenced from config '{effective_path}'"
                 )
             try:
-                item = type(self)(self.namespace, resolved, auth=None).get_or_raise(["secret"])
+                item = type(self)(self.namespace, _db_path(resolved), auth=None).get_or_raise(["secret"])
             except (TreeItem.DoesNotExist, NotFound):
                 raise ValidationError(f"Secret {resolved!r} not found")
             _require_version(item, version)
@@ -174,12 +194,13 @@ class TreeConfigOpsMixin:
             ref = metadata.validation.schema_path
             path, version = parse_ref(ref)
             resolved = resolve_relative_path(base_folder, path)
+            db_path = _db_path(resolved)
             try:
-                item = type(self)(self.namespace, resolved, auth=None).get_or_raise(["config"])
+                item = type(self)(self.namespace, db_path, auth=None).get_or_raise(["config"])
             except (TreeItem.DoesNotExist, NotFound):
                 raise ValidationError(f"Schema config {resolved!r} not found")
             _require_version(item, version)
-            schema_mgr = type(self)(self.namespace, resolved, auth=None)
+            schema_mgr = type(self)(self.namespace, db_path, auth=None)
             schema_metadata = schema_mgr.get_config_ocmo_metadata(version)
             if not schema_metadata.is_json_schema:
                 raise ValidationError(

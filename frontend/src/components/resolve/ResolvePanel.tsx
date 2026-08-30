@@ -1,49 +1,64 @@
-import { useEffect, useMemo, useState } from 'react'
-import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
-import MonacoEditor from '@monaco-editor/react'
-import { ChevronDown, ChevronRight, Copy, Download, FileText, Info, Play } from 'lucide-react'
-import { treeApi } from '../../api/tree'
-import { resolveApi } from '../../api/resolve'
-import { fetchAuthenticatedText } from '../../api/client'
-import type { ResolveResponse, ResolveArtifact, ResolvedParameter } from '../../api/types'
-import { Button } from '../ui/Button'
-import { Badge } from '../ui/Badge'
-import { Skeleton } from '../ui/Skeleton'
-import { pushApiError, pushNotification } from '../../store/notifications'
-import { showToast } from '../ui/Toast'
-import { CastFormatSelector } from './CastFormatSelector'
-import { CastOptionsForm } from './CastOptionsForm'
-import { VyshyvankaPatternBand } from './VyshyvankaPatternBand'
-import { useMonacoEditorTheme } from '../../hooks/useMonacoEditorTheme'
-import { hasOcmoRenderConfiguration } from '../../lib/ocmoMetadata'
-import { validateDynamicParams } from '../../lib/resolveParameterValidation'
-import { buildResolveQueryParams } from '../../lib/resolveQueryParams'
+import { useEffect, useMemo, useState } from "react";
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import MonacoEditor from "@monaco-editor/react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Copy,
+  Download,
+  FileText,
+  Info,
+  Play,
+} from "lucide-react";
+import { treeApi } from "../../api/tree";
+import { resolveApi } from "../../api/resolve";
+import { fetchAuthenticatedText } from "../../api/client";
+import type {
+  ResolveResponse,
+  ResolveArtifact,
+  ResolvedParameter,
+} from "../../api/types";
+import { Button } from "../ui/Button";
+import { Badge } from "../ui/Badge";
+import { Skeleton } from "../ui/Skeleton";
+import { pushApiError, pushNotification } from "../../store/notifications";
+import { showToast } from "../ui/Toast";
+import { CastFormatSelector } from "./CastFormatSelector";
+import { CastOptionsForm } from "./CastOptionsForm";
+import { VyshyvankaPatternBand } from "./VyshyvankaPatternBand";
+import { useMonacoEditorTheme } from "../../hooks/useMonacoEditorTheme";
+import { hasOcmoRenderConfiguration } from "../../lib/ocmoMetadata";
+import { validateDynamicParams } from "../../lib/resolveParameterValidation";
+import { buildResolveQueryParams } from "../../lib/resolveQueryParams";
 import {
   buildResolveCliCommand,
   buildResolveCurlCommand,
   buildResolveSdkCommand,
   type ResolveCommandConfig,
-} from '../../lib/resolveCommands'
-import { resolveActionLabel, emptyResolveArtifactsMessage } from '../../lib/resolveTargetLabel'
-import { env } from '../../env'
-import { useConfigMetadataKey } from '../../store/health'
-import { cn } from '../ui/cn'
+} from "../../lib/resolveCommands";
+import {
+  resolveActionLabel,
+  emptyResolveArtifactsMessage,
+} from "../../lib/resolveTargetLabel";
+import { env } from "../../env";
+import { useConfigMetadataKey } from "../../store/health";
+import { cn } from "../ui/cn";
 
 interface ResolvedArtifact extends ResolveArtifact {
-  content: string
+  content: string;
 }
 
 function monacoLanguage(cast: string): string {
   switch (cast.toLowerCase()) {
-    case 'yaml':
-    case 'yml':
-      return 'yaml'
-    case 'json':
-      return 'json'
-    case 'python':
-      return 'python'
+    case "yaml":
+    case "yml":
+      return "yaml";
+    case "json":
+      return "json";
+    case "python":
+      return "python";
     default:
-      return 'plaintext'
+      return "plaintext";
   }
 }
 
@@ -56,13 +71,13 @@ function buildResolveParams({
   castOptions,
   ignoreConfigsWithMissingTags,
 }: {
-  versionRef?: string
-  cast: string
-  markStable: boolean
-  noCreds: boolean
-  dynamicParams: Record<string, string>
-  castOptions: Record<string, string | boolean>
-  ignoreConfigsWithMissingTags?: boolean
+  versionRef?: string;
+  cast: string;
+  markStable: boolean;
+  noCreds: boolean;
+  dynamicParams: Record<string, string>;
+  castOptions: Record<string, string | boolean>;
+  ignoreConfigsWithMissingTags?: boolean;
 }) {
   return buildResolveQueryParams({
     versionRef,
@@ -72,7 +87,7 @@ function buildResolveParams({
     markStable,
     castOptions,
     ignoreConfigsWithMissingTags,
-  })
+  });
 }
 
 function ParameterField({
@@ -82,41 +97,50 @@ function ParameterField({
   error,
   onChange,
 }: {
-  name: string
-  param: ResolvedParameter
-  value: string
-  error?: string
-  onChange: (v: string) => void
+  name: string;
+  param: ResolvedParameter;
+  value: string;
+  error?: string;
+  onChange: (v: string) => void;
 }) {
-  const typeLabel = param.type === 'projected'
-    ? 'Auto-computed'
-    : param.type === 'secret'
-      ? 'Secret reference'
-      : param.type === 'dynamic'
-        ? 'User input'
-        : param.type
+  const typeLabel =
+    param.type === "projected"
+      ? "Auto-computed"
+      : param.type === "secret"
+        ? "Secret reference"
+        : param.type === "dynamic"
+          ? "User input"
+          : param.type;
 
   return (
     <div className="space-y-1">
       <div className="flex items-center gap-2">
-        <span className="font-mono text-xs text-gray-700 dark:text-gray-200">{name}</span>
+        <span className="font-mono text-xs text-gray-700 dark:text-gray-200">
+          {name}
+        </span>
         <Badge variant="default">{typeLabel}</Badge>
       </div>
       {param.description && (
-        <p className="text-[10px] leading-snug text-gray-400">{param.description}</p>
+        <p className="text-[10px] leading-snug text-gray-400">
+          {param.description}
+        </p>
       )}
-      {param.type === 'dynamic' ? (
+      {param.type === "dynamic" ? (
         <>
           <input
             value={value}
-            onChange={e => onChange(e.target.value)}
-            placeholder={param.declared_default != null ? String(param.declared_default) : undefined}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={
+              param.declared_default != null
+                ? String(param.declared_default)
+                : undefined
+            }
             aria-invalid={Boolean(error)}
             className={cn(
-              'w-full rounded border bg-surface-elevated px-2 py-1 font-mono text-[11px] dark:bg-gray-800 dark:text-gray-200',
+              "w-full rounded border bg-surface-elevated px-2 py-1 font-mono text-[11px] dark:bg-gray-800 dark:text-gray-200",
               error
-                ? 'border-red-400 dark:border-red-500'
-                : 'border-slate-300 dark:border-gray-700',
+                ? "border-red-400 dark:border-red-500"
+                : "border-slate-300 dark:border-gray-700",
             )}
           />
           {error && (
@@ -125,24 +149,28 @@ function ParameterField({
         </>
       ) : (
         <p className="rounded bg-surface px-2 py-1 font-mono text-[10px] text-gray-600 dark:bg-gray-900 dark:text-gray-300">
-          {String(param.effective_value ?? '—')}
+          {String(param.effective_value ?? "—")}
         </p>
       )}
     </div>
-  )
+  );
 }
 
-function TraceViewer({ trace }: { trace: ResolveResponse['trace'] }) {
-  const [open, setOpen] = useState(false)
-  if (!trace || Object.keys(trace).length === 0) return null
+function TraceViewer({ trace }: { trace: ResolveResponse["trace"] }) {
+  const [open, setOpen] = useState(false);
+  if (!trace || Object.keys(trace).length === 0) return null;
 
   return (
     <div className="shrink-0 border-t p-3 dark:border-gray-700">
       <button
-        onClick={() => setOpen(o => !o)}
+        onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400"
       >
-        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        {open ? (
+          <ChevronDown className="h-3.5 w-3.5" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5" />
+        )}
         <Info className="h-3.5 w-3.5" />
         Trace ({Object.keys(trace).length})
       </button>
@@ -150,62 +178,74 @@ function TraceViewer({ trace }: { trace: ResolveResponse['trace'] }) {
         <div className="mt-2 divide-y rounded border text-xs dark:divide-gray-700 dark:border-gray-700">
           {Object.entries(trace).map(([key, p]) => (
             <div key={key} className="flex items-center gap-2 px-2 py-1.5">
-              <span className="min-w-0 flex-1 truncate font-mono">{p.path}</span>
-              <Badge variant={p.resolve_role === 'direct' ? 'info' : 'default'}>{p.resolve_role}</Badge>
+              <span className="min-w-0 flex-1 truncate font-mono">
+                {p.path}
+              </span>
+              <Badge variant={p.resolve_role === "direct" ? "info" : "default"}>
+                {p.resolve_role}
+              </Badge>
               <span className="text-gray-400">v{p.version}</span>
             </div>
           ))}
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function ResolvedArtifactsViewer({
   result,
-  mode = 'config',
+  mode = "config",
   versionRef,
   ignoreMissingTags = false,
   onArtifactsLoadingChange,
 }: {
-  result: ResolveResponse
-  mode?: 'config' | 'folder'
-  versionRef?: string
-  ignoreMissingTags?: boolean
-  onArtifactsLoadingChange?: (loading: boolean) => void
+  result: ResolveResponse;
+  mode?: "config" | "folder";
+  versionRef?: string;
+  ignoreMissingTags?: boolean;
+  onArtifactsLoadingChange?: (loading: boolean) => void;
 }) {
-  const [selectedIndex, setSelectedIndex] = useState(0)
-  const [downloading, setDownloading] = useState(false)
-  const monacoTheme = useMonacoEditorTheme()
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [downloading, setDownloading] = useState(false);
+  const monacoTheme = useMonacoEditorTheme();
 
-  const { data: artifacts, isLoading, error } = useQuery({
-    queryKey: ['resolve-artifacts', result.artifacts.map(a => a.url)],
+  const {
+    data: artifacts,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["resolve-artifacts", result.artifacts.map((a) => a.url)],
     queryFn: async ({ signal }) => {
       const contents = await Promise.all(
-        result.artifacts.map(a => fetchAuthenticatedText(a.url, signal)),
-      )
+        result.artifacts.map((a) => fetchAuthenticatedText(a.url, signal)),
+      );
       return result.artifacts.map((artifact, index) => ({
         ...artifact,
-        content: contents[index] ?? '',
-      })) satisfies ResolvedArtifact[]
+        content: contents[index] ?? "",
+      })) satisfies ResolvedArtifact[];
     },
     enabled: result.artifacts.length > 0,
     staleTime: 0,
     gcTime: 0,
-  })
+  });
 
   useEffect(() => {
-    onArtifactsLoadingChange?.(isLoading)
-  }, [isLoading, onArtifactsLoadingChange])
+    onArtifactsLoadingChange?.(isLoading);
+  }, [isLoading, onArtifactsLoadingChange]);
 
   if (result.artifacts.length === 0) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-center">
         <p className="max-w-sm text-sm text-gray-400">
-          {emptyResolveArtifactsMessage({ mode, ignoreMissingTags, versionRef })}
+          {emptyResolveArtifactsMessage({
+            mode,
+            ignoreMissingTags,
+            versionRef,
+          })}
         </p>
       </div>
-    )
+    );
   }
 
   if (isLoading) {
@@ -214,45 +254,48 @@ function ResolvedArtifactsViewer({
         <Skeleton className="h-5 w-48" />
         <Skeleton className="h-full w-full" />
       </div>
-    )
+    );
   }
 
   if (error) {
-    const msg = error instanceof Error ? error.message : 'Failed to load resolved content'
-    return <p className="p-4 text-sm text-red-500">{msg}</p>
+    const msg =
+      error instanceof Error
+        ? error.message
+        : "Failed to load resolved content";
+    return <p className="p-4 text-sm text-red-500">{msg}</p>;
   }
 
-  if (!artifacts?.length) return null
+  if (!artifacts?.length) return null;
 
-  const selected = artifacts[selectedIndex] ?? artifacts[0]
-  const multiple = artifacts.length > 1
+  const selected = artifacts[selectedIndex] ?? artifacts[0];
+  const multiple = artifacts.length > 1;
 
   const downloadSelected = async () => {
-    setDownloading(true)
+    setDownloading(true);
     try {
-      const blob = new Blob([selected.content], { type: 'text/plain' })
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = selected.name
-      a.click()
-      URL.revokeObjectURL(url)
-      showToast(`Downloaded ${selected.name}`)
+      const blob = new Blob([selected.content], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = selected.name;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast(`Downloaded ${selected.name}`);
     } catch {
-      pushNotification('error', 'Download failed')
+      pushNotification("error", "Download failed");
     } finally {
-      setDownloading(false)
+      setDownloading(false);
     }
-  }
+  };
 
   const copySelected = async () => {
     try {
-      await navigator.clipboard.writeText(selected.content)
-      showToast('Copied to clipboard')
+      await navigator.clipboard.writeText(selected.content);
+      showToast("Copied to clipboard");
     } catch {
-      pushNotification('error', 'Copy failed')
+      pushNotification("error", "Copy failed");
     }
-  }
+  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -264,14 +307,16 @@ function ResolvedArtifactsViewer({
               type="button"
               onClick={() => setSelectedIndex(index)}
               className={cn(
-                'flex shrink-0 items-center gap-1 rounded px-2 py-1 text-left text-[11px] transition-colors',
+                "flex shrink-0 items-center gap-1 rounded px-2 py-1 text-left text-[11px] transition-colors",
                 index === selectedIndex
-                  ? 'bg-brand-50 font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-300'
-                  : 'text-gray-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-gray-900',
+                  ? "bg-brand-50 font-medium text-brand-700 dark:bg-brand-900/30 dark:text-brand-300"
+                  : "text-gray-500 hover:bg-slate-100 dark:text-gray-400 dark:hover:bg-gray-900",
               )}
             >
               <FileText className="h-3 w-3" />
-              <span className="max-w-[12rem] truncate font-mono">{artifact.name}</span>
+              <span className="max-w-[12rem] truncate font-mono">
+                {artifact.name}
+              </span>
             </button>
           ))}
         </nav>
@@ -283,10 +328,21 @@ function ResolvedArtifactsViewer({
         </p>
         <Badge>{selected.cast}</Badge>
         <span className="text-[10px] text-gray-400">v{selected.version}</span>
-        <Button variant="ghost" size="sm" onClick={() => void copySelected()} title="Copy content">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => void copySelected()}
+          title="Copy content"
+        >
           <Copy className="h-3.5 w-3.5" />
         </Button>
-        <Button variant="ghost" size="sm" loading={downloading} onClick={() => void downloadSelected()} title="Download">
+        <Button
+          variant="ghost"
+          size="sm"
+          loading={downloading}
+          onClick={() => void downloadSelected()}
+          title="Download"
+        >
           <Download className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -301,26 +357,26 @@ function ResolvedArtifactsViewer({
             readOnly: true,
             minimap: { enabled: false },
             fontSize: 13,
-            lineNumbers: 'on',
+            lineNumbers: "on",
             scrollBeyondLastLine: false,
-            wordWrap: 'on',
-            accessibilitySupport: 'on',
+            wordWrap: "on",
+            accessibilitySupport: "on",
           }}
         />
       </div>
     </div>
-  )
+  );
 }
 
 interface ResolvePanelProps {
-  namespace: string
-  path: string
-  versionRef?: string
-  content?: string
-  isDirty?: boolean
-  onClose?: () => void
-  mode?: 'config' | 'folder'
-  embedded?: boolean
+  namespace: string;
+  path: string;
+  versionRef?: string;
+  content?: string;
+  isDirty?: boolean;
+  onClose?: () => void;
+  mode?: "config" | "folder";
+  embedded?: boolean;
 }
 
 export function ResolvePanel({
@@ -330,81 +386,104 @@ export function ResolvePanel({
   content,
   isDirty = false,
   onClose,
-  mode = 'config',
+  mode = "config",
   embedded = false,
 }: ResolvePanelProps) {
-  const isFolder = mode === 'folder'
-  const useDraftResolve = !isFolder && isDirty
-  const configMetadataKey = useConfigMetadataKey()
+  const isFolder = mode === "folder";
+  const useDraftResolve = !isFolder && isDirty;
+  const configMetadataKey = useConfigMetadataKey();
   const castUnavailable = useMemo(
-    () => Boolean(content && hasOcmoRenderConfiguration(content, configMetadataKey)),
+    () =>
+      Boolean(
+        content && hasOcmoRenderConfiguration(content, configMetadataKey),
+      ),
     [content, configMetadataKey],
-  )
-  const [cast, setCast] = useState('')
-  const [castOpen, setCastOpen] = useState(false)
-  const [castOptions, setCastOptions] = useState<Record<string, string | boolean>>({})
-  const [noCreds, setNoCreds] = useState(true)
-  const [resolveMenuOpen, setResolveMenuOpen] = useState(false)
-  const [dynamicParams, setDynamicParams] = useState<Record<string, string>>({})
-  const [folderVersion, setFolderVersion] = useState('latest')
-  const [ignoreMissingTags, setIgnoreMissingTags] = useState(false)
-  const [resolveResult, setResolveResult] = useState<ResolveResponse | null>(null)
-  const [awaitingArtifacts, setAwaitingArtifacts] = useState(false)
+  );
+  const [cast, setCast] = useState("");
+  const [castOpen, setCastOpen] = useState(false);
+  const [castOptions, setCastOptions] = useState<
+    Record<string, string | boolean>
+  >({});
+  const [noCreds, setNoCreds] = useState(true);
+  const [resolveMenuOpen, setResolveMenuOpen] = useState(false);
+  const [dynamicParams, setDynamicParams] = useState<Record<string, string>>(
+    {},
+  );
+  const [folderVersion, setFolderVersion] = useState("latest");
+  const [ignoreMissingTags, setIgnoreMissingTags] = useState(false);
+  const [resolveResult, setResolveResult] = useState<ResolveResponse | null>(
+    null,
+  );
+  const [awaitingArtifacts, setAwaitingArtifacts] = useState(false);
 
-  const effectiveVersionRef = isFolder ? folderVersion : versionRef
+  const effectiveVersionRef = isFolder ? folderVersion : versionRef;
 
   const paramQueryParams = useMemo(
-    () => buildResolveQueryParams({
-      versionRef: effectiveVersionRef,
-      noCreds,
-      dynamicParams: {},
-    }),
+    () =>
+      buildResolveQueryParams({
+        versionRef: effectiveVersionRef,
+        noCreds,
+        dynamicParams: {},
+      }),
     [effectiveVersionRef, noCreds],
-  )
+  );
 
-  const { data: paramsData, isLoading: paramsLoading, isFetching: paramsFetching, isError: paramsIsError, error: paramsError } = useQuery({
-    queryKey: ['resolve-params', namespace, path, paramQueryParams],
-    queryFn: ({ signal }) => resolveApi.parameters(namespace, path, paramQueryParams, signal),
+  const {
+    data: paramsData,
+    isLoading: paramsLoading,
+    isFetching: paramsFetching,
+    isError: paramsIsError,
+    error: paramsError,
+  } = useQuery({
+    queryKey: ["resolve-params", namespace, path, paramQueryParams],
+    queryFn: ({ signal }) =>
+      resolveApi.parameters(namespace, path, paramQueryParams, signal),
     staleTime: 0,
     placeholderData: keepPreviousData,
     enabled: !isFolder,
-  })
+  });
 
   const { data: castFormatsData } = useQuery({
-    queryKey: ['cast-formats'],
+    queryKey: ["cast-formats"],
     queryFn: ({ signal }) => resolveApi.castFormats(signal),
     staleTime: 60_000,
     enabled: !castUnavailable,
-  })
+  });
 
   const castSchema = useMemo(() => {
-    if (!cast) return null
-    return castFormatsData?.formats.find(f => f.format === cast)?.options_schema ?? null
-  }, [cast, castFormatsData])
+    if (!cast) return null;
+    return (
+      castFormatsData?.formats.find((f) => f.format === cast)?.options_schema ??
+      null
+    );
+  }, [cast, castFormatsData]);
 
   useEffect(() => {
-    setCastOptions({})
-  }, [cast])
+    setCastOptions({});
+  }, [cast]);
 
   useEffect(() => {
-    if (!castUnavailable) return
-    setCast('')
-    setCastOptions({})
-    setCastOpen(false)
-  }, [castUnavailable])
+    if (!castUnavailable) return;
+    setCast("");
+    setCastOptions({});
+    setCastOpen(false);
+  }, [castUnavailable]);
 
   useEffect(() => {
-    if (!paramsData?.parameters) return
-    setDynamicParams(prev => {
-      const next = { ...prev }
+    if (!paramsData?.parameters) return;
+    setDynamicParams((prev) => {
+      const next = { ...prev };
       for (const [name, param] of Object.entries(paramsData.parameters)) {
-        if (param.type === 'dynamic' && next[name] === undefined) {
-          next[name] = param.declared_default != null ? String(param.declared_default) : ''
+        if (param.type === "dynamic" && next[name] === undefined) {
+          next[name] =
+            param.declared_default != null
+              ? String(param.declared_default)
+              : "";
         }
       }
-      return next
-    })
-  }, [paramsData])
+      return next;
+    });
+  }, [paramsData]);
 
   const resolveMut = useMutation({
     mutationFn: (markStable: boolean) => {
@@ -416,76 +495,85 @@ export function ResolvePanel({
         dynamicParams,
         castOptions,
         ignoreConfigsWithMissingTags: isFolder ? ignoreMissingTags : undefined,
-      })
+      });
       if (useDraftResolve && content !== undefined) {
-        return treeApi.resolveDraft(namespace, path, content, params)
+        return treeApi.resolveDraft(namespace, path, content, params);
       }
-      return treeApi.resolve(namespace, path, params)
+      return treeApi.resolve(namespace, path, params);
     },
-    onSuccess: result => {
-      setResolveResult(result)
-      setAwaitingArtifacts(result.artifacts.length > 0)
-      showToast(useDraftResolve ? 'Draft resolved' : 'Resolved successfully')
-      setResolveMenuOpen(false)
+    onSuccess: (result) => {
+      setResolveResult(result);
+      setAwaitingArtifacts(result.artifacts.length > 0);
+      showToast(useDraftResolve ? "Draft resolved" : "Resolved successfully");
+      setResolveMenuOpen(false);
     },
     onError: (e: Error) => {
-      setAwaitingArtifacts(false)
-      pushApiError('Resolve failed', e)
+      setAwaitingArtifacts(false);
+      pushApiError("Resolve failed", e);
     },
-  })
+  });
 
-  const parameters = paramsData?.parameters ?? {}
-  const paramEntries = Object.entries(parameters)
+  const parameters = paramsData?.parameters ?? {};
+  const paramEntries = Object.entries(parameters);
   const paramErrors = useMemo(
     () => validateDynamicParams(dynamicParams, parameters),
     [dynamicParams, parameters],
-  )
-  const hasParamErrors = Object.keys(paramErrors).length > 0
-  const showParamsLoading = !isFolder && (paramsLoading || paramsFetching) && !paramsData
-  const resolveLabel = resolveActionLabel(useDraftResolve, effectiveVersionRef)
-  const resolveMarkStableLabel = resolveActionLabel(useDraftResolve, effectiveVersionRef, { markStable: true })
-  const resolveActive = resolveMut.isPending || awaitingArtifacts
-
-  const resolveCommandConfig = useMemo<ResolveCommandConfig>(() => ({
-    namespace,
-    path,
-    mode,
-    versionRef: effectiveVersionRef,
-    noCreds,
-    cast,
-    castOptions,
-    dynamicParams,
-    ignoreConfigsWithMissingTags: isFolder ? ignoreMissingTags : undefined,
-    isDraft: useDraftResolve,
-    apiBase: env.apiBase,
-  }), [
-    namespace,
-    path,
-    mode,
-    effectiveVersionRef,
-    noCreds,
-    cast,
-    castOptions,
-    dynamicParams,
-    isFolder,
-    ignoreMissingTags,
+  );
+  const hasParamErrors = Object.keys(paramErrors).length > 0;
+  const showParamsLoading =
+    !isFolder && (paramsLoading || paramsFetching) && !paramsData;
+  const resolveLabel = resolveActionLabel(useDraftResolve, effectiveVersionRef);
+  const resolveMarkStableLabel = resolveActionLabel(
     useDraftResolve,
-  ])
+    effectiveVersionRef,
+    { markStable: true },
+  );
+  const resolveActive = resolveMut.isPending || awaitingArtifacts;
 
-  const copyResolveCommand = async (kind: 'curl' | 'cli' | 'sdk') => {
-    const text = kind === 'curl'
-      ? buildResolveCurlCommand(resolveCommandConfig)
-      : kind === 'cli'
-        ? buildResolveCliCommand(resolveCommandConfig)
-        : buildResolveSdkCommand(resolveCommandConfig)
+  const resolveCommandConfig = useMemo<ResolveCommandConfig>(
+    () => ({
+      namespace,
+      path,
+      mode,
+      versionRef: effectiveVersionRef,
+      noCreds,
+      cast,
+      castOptions,
+      dynamicParams,
+      ignoreConfigsWithMissingTags: isFolder ? ignoreMissingTags : undefined,
+      isDraft: useDraftResolve,
+      apiBase: env.apiBase,
+    }),
+    [
+      namespace,
+      path,
+      mode,
+      effectiveVersionRef,
+      noCreds,
+      cast,
+      castOptions,
+      dynamicParams,
+      isFolder,
+      ignoreMissingTags,
+      useDraftResolve,
+    ],
+  );
+
+  const copyResolveCommand = async (kind: "curl" | "cli" | "sdk") => {
+    const text =
+      kind === "curl"
+        ? buildResolveCurlCommand(resolveCommandConfig)
+        : kind === "cli"
+          ? buildResolveCliCommand(resolveCommandConfig)
+          : buildResolveSdkCommand(resolveCommandConfig);
     try {
-      await navigator.clipboard.writeText(text)
-      showToast(`Copied ${kind} command`)
-      setResolveMenuOpen(false)
+      await navigator.clipboard.writeText(text);
+      showToast(`Copied ${kind} command`);
+      setResolveMenuOpen(false);
     } catch {
-      pushNotification('error', 'Copy failed')
+      pushNotification("error", "Copy failed");
     }
-  }
+  };
 
   return (
     <div className="flex h-full w-full flex-col bg-surface-elevated dark:bg-gray-950">
@@ -501,11 +589,13 @@ export function ResolvePanel({
             <ChevronRight className="h-3.5 w-3.5" />
           </Button>
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            {useDraftResolve && (
-              <Badge variant="info">draft</Badge>
-            )}
+            {useDraftResolve && <Badge variant="info">draft</Badge>}
             <span className="truncate text-xs text-gray-400">
-              {effectiveVersionRef ? (/^\d+$/.test(effectiveVersionRef) ? `v${effectiveVersionRef}` : effectiveVersionRef) : 'latest'}
+              {effectiveVersionRef
+                ? /^\d+$/.test(effectiveVersionRef)
+                  ? `v${effectiveVersionRef}`
+                  : effectiveVersionRef
+                : "latest"}
             </span>
           </div>
         </div>
@@ -521,13 +611,13 @@ export function ResolvePanel({
           )}
           {resolveResult ? (
             <ResolvedArtifactsViewer
-              key={resolveResult.artifacts.map(a => a.url).join('|')}
+              key={resolveResult.artifacts.map((a) => a.url).join("|")}
               result={resolveResult}
               mode={mode}
               versionRef={effectiveVersionRef}
               ignoreMissingTags={isFolder ? ignoreMissingTags : false}
-              onArtifactsLoadingChange={loading => {
-                if (!loading) setAwaitingArtifacts(false)
+              onArtifactsLoadingChange={(loading) => {
+                if (!loading) setAwaitingArtifacts(false);
               }}
             />
           ) : !resolveActive ? (
@@ -552,7 +642,7 @@ export function ResolvePanel({
                   </h4>
                   <input
                     value={folderVersion}
-                    onChange={e => setFolderVersion(e.target.value)}
+                    onChange={(e) => setFolderVersion(e.target.value)}
                     placeholder="latest"
                     className="w-full rounded border border-slate-300 bg-surface-elevated px-2 py-1 font-mono text-[11px] dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                   />
@@ -564,7 +654,7 @@ export function ResolvePanel({
                   <input
                     type="checkbox"
                     checked={ignoreMissingTags}
-                    onChange={e => setIgnoreMissingTags(e.target.checked)}
+                    onChange={(e) => setIgnoreMissingTags(e.target.checked)}
                     className="rounded"
                   />
                   Ignore configs with missing tags
@@ -582,7 +672,9 @@ export function ResolvePanel({
                   </p>
                 )}
                 {!showParamsLoading && paramEntries.length === 0 && (
-                  <p className="text-[11px] text-gray-400">No parameters for this config.</p>
+                  <p className="text-[11px] text-gray-400">
+                    No parameters for this config.
+                  </p>
                 )}
                 <div className="space-y-3">
                   {paramEntries.map(([name, param]) => (
@@ -590,9 +682,11 @@ export function ResolvePanel({
                       key={name}
                       name={name}
                       param={param}
-                      value={dynamicParams[name] ?? ''}
+                      value={dynamicParams[name] ?? ""}
                       error={paramErrors[name]}
-                      onChange={v => setDynamicParams(prev => ({ ...prev, [name]: v }))}
+                      onChange={(v) =>
+                        setDynamicParams((prev) => ({ ...prev, [name]: v }))
+                      }
                     />
                   ))}
                 </div>
@@ -603,7 +697,7 @@ export function ResolvePanel({
               <input
                 type="checkbox"
                 checked={noCreds}
-                onChange={e => setNoCreds(e.target.checked)}
+                onChange={(e) => setNoCreds(e.target.checked)}
                 className="rounded"
               />
               No credentials
@@ -613,10 +707,14 @@ export function ResolvePanel({
               <section>
                 <button
                   type="button"
-                  onClick={() => setCastOpen(o => !o)}
+                  onClick={() => setCastOpen((o) => !o)}
                   className="mb-2 flex w-full items-center gap-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400"
                 >
-                  {castOpen ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  {castOpen ? (
+                    <ChevronDown className="h-3 w-3" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3" />
+                  )}
                   Cast
                 </button>
                 {castOpen && (
@@ -650,7 +748,7 @@ export function ResolvePanel({
               </Button>
               <button
                 type="button"
-                onClick={() => setResolveMenuOpen(o => !o)}
+                onClick={() => setResolveMenuOpen((o) => !o)}
                 className="rounded-r-md border border-l-0 border-green-700 bg-green-600 px-2 text-white hover:bg-green-700 dark:border-green-800"
                 aria-label="Resolve options"
               >
@@ -659,7 +757,10 @@ export function ResolvePanel({
             </div>
             {resolveMenuOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setResolveMenuOpen(false)} />
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={() => setResolveMenuOpen(false)}
+                />
                 <div className="absolute bottom-full right-3 z-20 mb-1 w-52 rounded-md border bg-surface-elevated py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
                   <button
                     type="button"
@@ -682,7 +783,7 @@ export function ResolvePanel({
                     type="button"
                     className="flex w-full px-3 py-2 text-left text-xs text-gray-600 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-gray-800 disabled:opacity-50"
                     disabled={hasParamErrors}
-                    onClick={() => void copyResolveCommand('curl')}
+                    onClick={() => void copyResolveCommand("curl")}
                   >
                     Copy curl command
                   </button>
@@ -690,7 +791,7 @@ export function ResolvePanel({
                     type="button"
                     className="flex w-full px-3 py-2 text-left text-xs text-gray-600 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-gray-800 disabled:opacity-50"
                     disabled={hasParamErrors}
-                    onClick={() => void copyResolveCommand('cli')}
+                    onClick={() => void copyResolveCommand("cli")}
                   >
                     Copy CLI command
                   </button>
@@ -698,7 +799,7 @@ export function ResolvePanel({
                     type="button"
                     className="flex w-full px-3 py-2 text-left text-xs text-gray-600 hover:bg-slate-100 dark:text-gray-300 dark:hover:bg-gray-800 disabled:opacity-50"
                     disabled={hasParamErrors}
-                    onClick={() => void copyResolveCommand('sdk')}
+                    onClick={() => void copyResolveCommand("sdk")}
                   >
                     Copy SDK command
                   </button>
@@ -709,5 +810,5 @@ export function ResolvePanel({
         </aside>
       </div>
     </div>
-  )
+  );
 }

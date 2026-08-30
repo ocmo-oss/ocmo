@@ -218,12 +218,21 @@ def delete_item(
     tags=["Tree"],
     operation_id=MOVE_ITEM,
 )
-def move_item(request, namespace: str, path: str, payload: LocationPayload):
+def move_item(
+    request,
+    namespace: str,
+    path: str,
+    payload: LocationPayload,
+    skip_reference_validation: bool = Query(False),
+):
     """Move an item or folder subtree to a new path."""
     auth = AuthManager.from_request(request)
     ns = NamespaceManager(namespace, auth=auth).get_or_raise()
     AuditManager.bind(request, auth, namespace=ns)
-    return TreeManager(ns, path, auth=auth).move_item(payload.target_path)
+    return TreeManager(ns, path, auth=auth).move_item(
+        payload.target_path.strip("/"),
+        validate_references=not skip_reference_validation,
+    )
 
 
 @router.post(

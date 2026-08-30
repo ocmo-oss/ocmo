@@ -133,6 +133,11 @@ prod.describe_item("app/web", description="Main web application config")
 
 ### Move
 
+By default, configs in the moved item or folder subtree are checked so `_ocmo` references
+(extend, render, validation schema, secrets) would still resolve from their new paths.
+Pass `skip_reference_validation=true` (REST/SDK) or `--skip-reference-validation` (CLI)
+to bypass.
+
 ```bash
 ocmo -n prod move item app/web app/api-web
 
@@ -141,17 +146,32 @@ curl -X POST "https://ocmo.example.com/api/v1/ns/prod/~move/app/web" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"target_path": "app/api-web"}'
+
+# Skip reference validation
+curl -X POST "https://ocmo.example.com/api/v1/ns/prod/~move/app/web?skip_reference_validation=true" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"target_path": "app/api-web"}'
 ```
 
 ### Copy
 
-Copies one tagged version (defaults to `latest`):
+Copies one tagged version (defaults to `latest`). Folder copies order nested configs,
+templates, and resolvers by `_ocmo` reference dependencies before creation so
+save-time reference validation can succeed. Pass `skip_reference_validation=true`
+(REST/SDK) or `--skip-reference-validation` (CLI) to skip validation and ordering.
 
 ```bash
 ocmo -n prod copy item app/web app/web-backup
 
 # REST
 curl -X POST "https://ocmo.example.com/api/v1/ns/prod/~copy/app/web" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"target_path": "app/web-backup"}'
+
+# Copy a specific tag, skip reference validation
+curl -X POST "https://ocmo.example.com/api/v1/ns/prod/~copy/app/web?tag_to_copy=stable&skip_reference_validation=true" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"target_path": "app/web-backup"}'

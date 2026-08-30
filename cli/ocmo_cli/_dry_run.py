@@ -135,6 +135,8 @@ def format_generated_dry_run(
         destination = payload.get("target_path") or kwargs.get("target_path")
         dest = str(destination or "?")
         lines.append(f"Would move item {quote(target or '?')} to {quote(dest)}{ns}.")
+        if kwargs.get("skip_reference_validation"):
+            lines.append("Reference validation would be skipped.")
         lines.append(f"After move, item will be available at {quote(dest)}.")
         return lines
 
@@ -144,6 +146,8 @@ def format_generated_dry_run(
         tag = kwargs.get("tag_to_copy")
         tag_text = f" (tag {quote(str(tag))})" if tag else ""
         lines.append(f"Would copy item {quote(target or '?')} to {quote(dest)}" f"{tag_text}{ns}.")
+        if kwargs.get("skip_reference_validation"):
+            lines.append("Reference validation would be skipped.")
         lines.append(f"After copy, item will be available at {quote(dest)}.")
         return lines
 
@@ -160,9 +164,7 @@ def format_generated_dry_run(
         if tag is None and isinstance(body, dict):
             tag = body.get("tag")
         version_text = _tag_target_version_text(payload, version)
-        lines.append(
-            f"Would tag item {quote(target or '?')} as {quote(str(tag or '?'))}{version_text}{ns}."
-        )
+        lines.append(f"Would tag item {quote(target or '?')} as {quote(str(tag or '?'))}{version_text}{ns}.")
         return lines
 
     if op_id == "rotate_resolver_token":

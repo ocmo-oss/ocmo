@@ -457,13 +457,13 @@ class _AsyncClientFacadeMixin:
 
 
 class _NamespaceFacadeMixin:
-    def copy_item(self, path: Any, *, tag_to_copy: Any = UNSET, target_path: Any = UNSET, body: Any = UNSET):
+    def copy_item(self, path: Any, *, tag_to_copy: Any = UNSET, skip_reference_validation: Any = UNSET, target_path: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``copy_item``."""
 
         return execute_sync(
             "copy_item",
             _op_copy_item.sync_detailed,
-            self._namespace, path, tag_to_copy=tag_to_copy, target_path=target_path, body=body,
+            self._namespace, path, tag_to_copy=tag_to_copy, skip_reference_validation=skip_reference_validation, target_path=target_path, body=body,
             client=self._api,
         )
 
@@ -627,13 +627,13 @@ class _NamespaceFacadeMixin:
             client=self._api,
         )
 
-    def move_item(self, path: Any, *, target_path: Any = UNSET, body: Any = UNSET):
+    def move_item(self, path: Any, *, skip_reference_validation: Any = UNSET, target_path: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``move_item``."""
 
         return execute_sync(
             "move_item",
             _op_move_item.sync_detailed,
-            self._namespace, path, target_path=target_path, body=body,
+            self._namespace, path, skip_reference_validation=skip_reference_validation, target_path=target_path, body=body,
             client=self._api,
         )
 
@@ -799,13 +799,13 @@ class _NamespaceFacadeMixin:
 
 
 class _AsyncNamespaceFacadeMixin:
-    async def copy_item(self, path: Any, *, tag_to_copy: Any = UNSET, target_path: Any = UNSET, body: Any = UNSET):
+    async def copy_item(self, path: Any, *, tag_to_copy: Any = UNSET, skip_reference_validation: Any = UNSET, target_path: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``copy_item``."""
 
         return await execute_async(
             "copy_item",
             _op_copy_item.asyncio_detailed,
-            self._namespace, path, tag_to_copy=tag_to_copy, target_path=target_path, body=body,
+            self._namespace, path, tag_to_copy=tag_to_copy, skip_reference_validation=skip_reference_validation, target_path=target_path, body=body,
             client=self._api,
         )
 
@@ -969,13 +969,13 @@ class _AsyncNamespaceFacadeMixin:
             client=self._api,
         )
 
-    async def move_item(self, path: Any, *, target_path: Any = UNSET, body: Any = UNSET):
+    async def move_item(self, path: Any, *, skip_reference_validation: Any = UNSET, target_path: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``move_item``."""
 
         return await execute_async(
             "move_item",
             _op_move_item.asyncio_detailed,
-            self._namespace, path, target_path=target_path, body=body,
+            self._namespace, path, skip_reference_validation=skip_reference_validation, target_path=target_path, body=body,
             client=self._api,
         )
 

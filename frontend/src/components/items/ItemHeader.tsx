@@ -1,25 +1,32 @@
-import { Link } from 'react-router-dom'
-import { ChevronRight, Copy, CopyPlus, FolderInput, Route, Trash2 } from 'lucide-react'
-import { ItemIcon } from '../../lib/itemTypes'
-import type { ItemType, TagInfo } from '../../api/types'
-import { pathSegments } from '../../lib/paths'
-import { Button } from '../ui/Button'
-import { showToast } from '../ui/Toast'
-import { pushNotification } from '../../store/notifications'
-import { VersionTagSelector } from './VersionTagSelector'
+import { Link } from "react-router-dom";
+import {
+  ChevronRight,
+  Copy,
+  CopyPlus,
+  FolderInput,
+  Route,
+  Trash2,
+} from "lucide-react";
+import { ItemIcon } from "../../lib/itemTypes";
+import type { ItemType, TagInfo } from "../../api/types";
+import { pathSegments } from "../../lib/paths";
+import { Button } from "../ui/Button";
+import { showToast } from "../ui/Toast";
+import { pushNotification } from "../../store/notifications";
+import { VersionTagSelector } from "./VersionTagSelector";
 
 interface ItemHeaderProps {
-  namespace: string
-  path: string
-  type: ItemType
-  version?: number
-  tags?: TagInfo[]
-  showVersionSelector?: boolean
-  deletedAt?: string | null
-  onDelete?: () => void
-  onMove?: () => void
-  onCopy?: () => void
-  onPropagate?: () => void
+  namespace: string;
+  path: string;
+  type: ItemType;
+  version?: number;
+  tags?: TagInfo[];
+  showVersionSelector?: boolean;
+  deletedAt?: string | null;
+  onDelete?: () => void;
+  onMove?: () => void;
+  onCopy?: () => void;
+  onPropagate?: () => void;
 }
 
 export function ItemHeader({
@@ -35,22 +42,25 @@ export function ItemHeader({
   onCopy,
   onPropagate,
 }: ItemHeaderProps) {
-  const segments = pathSegments(path)
+  const segments = pathSegments(path);
 
   const copyPath = async () => {
     try {
-      await navigator.clipboard.writeText(path)
-      showToast('Path copied to clipboard')
+      await navigator.clipboard.writeText(path);
+      showToast("Path copied to clipboard");
     } catch {
-      pushNotification('error', 'Failed to copy path')
+      pushNotification("error", "Failed to copy path");
     }
-  }
+  };
 
   return (
     <div className="border-b px-6 py-4 dark:border-gray-700">
-      <nav className="mb-2 flex items-center gap-1 text-xs text-gray-400" aria-label="Breadcrumbs">
+      <nav
+        className="mb-2 flex items-center gap-1 text-xs text-gray-400"
+        aria-label="Breadcrumbs"
+      >
         {segments.map((seg, i) => {
-          const segPath = segments.slice(0, i + 1).join('/')
+          const segPath = segments.slice(0, i + 1).join("/");
           return (
             <span key={segPath} className="flex items-center gap-1">
               {i > 0 && <ChevronRight className="h-3 w-3" />}
@@ -61,7 +71,7 @@ export function ItemHeader({
                 {seg}
               </Link>
             </span>
-          )
+          );
         })}
         <button
           type="button"
@@ -91,7 +101,12 @@ export function ItemHeader({
 
         <div className="ml-auto flex items-center gap-1">
           {onPropagate && (
-            <Button variant="ghost" size="sm" onClick={onPropagate} title="Manual propagation">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onPropagate}
+              title="Manual propagation"
+            >
               <Route className="h-3.5 w-3.5" />
             </Button>
           )}
@@ -113,5 +128,5 @@ export function ItemHeader({
         </div>
       </div>
     </div>
-  )
+  );
 }
