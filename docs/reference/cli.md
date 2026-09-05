@@ -89,6 +89,8 @@ Command grammar: `ocmo [global-flags] <action> [resource-type] [path[@version]] 
 | `ocmo -n <ns> create resolver <path>` | Create resolver |
 | `ocmo -n <ns> update resolver <path>` | Update description or config |
 | `ocmo -n <ns> rotate resolver <path> --slot <1\|2>` | Rotate a token slot |
+| `ocmo -n <ns> enable resolver <path>` | Enable a disabled resolver |
+| `ocmo -n <ns> disable resolver <path>` | Disable a resolver |
 | `ocmo -n <ns> get item <path>` | Get resolver metadata |
 | `ocmo -n <ns> delete item <path> [-y]` | Delete resolver |
 

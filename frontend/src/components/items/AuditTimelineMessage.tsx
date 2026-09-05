@@ -282,6 +282,12 @@ export function AuditTimelineMessage({ entry }: { entry: AuditTimelineEntry }) {
       );
       break;
     }
+    case "Enable resolver":
+      content = <>enabled resolver</>;
+      break;
+    case "Disable resolver":
+      content = <>disabled resolver</>;
+      break;
     case "Create lock":
       content = (
         <>

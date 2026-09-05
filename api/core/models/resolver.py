@@ -20,6 +20,10 @@ class Resolver(TreeItem):
     token2_last_used = models.DateTimeField(null=True, blank=True)
 
     configuration = models.JSONField(default=dict)
+    enabled = models.BooleanField(
+        default=True,
+        help_text="When false, resolver tokens authenticate but cannot resolve or probe permissions.",
+    )
 
     def __str__(self):
         return f"{self.namespace.name}:: Resolver:: {self.path}"

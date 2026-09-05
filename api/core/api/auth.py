@@ -32,6 +32,7 @@ def who_are_me(request):
 def can_i(request, payload: CanIRequestSchema):
     """Probe whether the current identity may perform requested operations."""
     auth = AuthManager.from_request(request)
+    auth.ensure_resolver_enabled()
 
     namespace = None
     if payload.namespace:

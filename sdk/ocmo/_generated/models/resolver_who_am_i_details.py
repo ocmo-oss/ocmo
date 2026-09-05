@@ -14,11 +14,13 @@ class ResolverWhoAmIDetails:
         namespace (str): Namespace name
         name (str): Resolver leaf name
         token_number (int): Which resolver token (1 or 2) authenticated the request
+        enabled (bool): Whether the resolver accepts resolve and can-i requests
     """
 
     namespace: str
     name: str
     token_number: int
+    enabled: bool
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -28,6 +30,8 @@ class ResolverWhoAmIDetails:
 
         token_number = self.token_number
 
+        enabled = self.enabled
+
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update(
@@ -35,6 +39,7 @@ class ResolverWhoAmIDetails:
                 "namespace": namespace,
                 "name": name,
                 "token_number": token_number,
+                "enabled": enabled,
             }
         )
 
@@ -49,10 +54,13 @@ class ResolverWhoAmIDetails:
 
         token_number = d.pop("token_number")
 
+        enabled = d.pop("enabled")
+
         resolver_who_am_i_details = cls(
             namespace=namespace,
             name=name,
             token_number=token_number,
+            enabled=enabled,
         )
 
         resolver_who_am_i_details.additional_properties = d

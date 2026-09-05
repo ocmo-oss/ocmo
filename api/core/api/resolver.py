@@ -12,6 +12,8 @@ from ..operation_ids import (
     CREATE_RESOLVER,
     GET_RESOLVER_CONFIGURATION_SCHEMA,
     ROTATE_RESOLVER_TOKEN,
+    ENABLE_RESOLVER,
+    DISABLE_RESOLVER,
     UPDATE_RESOLVER,
 )
 from ..schemas import ErrorSchema, ResolverSchema, ResolverTokenRotationResponseSchema
@@ -94,3 +96,39 @@ def rotate_resolver_token(
     ns = NamespaceManager(namespace, auth=auth).get_or_raise()
     AuditManager.bind(request, auth, namespace=ns)
     return TreeManager(ns, path, auth=auth).rotate_resolver_token(payload.token_number)
+
+
+@router.post(
+    "/ns/{namespace}/~resolver/~enable/{path:path}",
+    response={200: ResolverSchema, 404: ErrorSchema, 422: ErrorSchema},
+    tags=["Resolver"],
+    operation_id=ENABLE_RESOLVER,
+)
+def enable_resolver(
+    request,
+    namespace: str,
+    path: str,
+):
+    """Enable a resolver. Requires resolver:write. Idempotent."""
+    auth = AuthManager.from_request(request)
+    ns = NamespaceManager(namespace, auth=auth).get_or_raise()
+    AuditManager.bind(request, auth, namespace=ns)
+    return TreeManager(ns, path, auth=auth).set_resolver_enabled(True)
+
+
+@router.post(
+    "/ns/{namespace}/~resolver/~disable/{path:path}",
+    response={200: ResolverSchema, 404: ErrorSchema, 422: ErrorSchema},
+    tags=["Resolver"],
+    operation_id=DISABLE_RESOLVER,
+)
+def disable_resolver(
+    request,
+    namespace: str,
+    path: str,
+):
+    """Disable a resolver. Requires resolver:write. Idempotent."""
+    auth = AuthManager.from_request(request)
+    ns = NamespaceManager(namespace, auth=auth).get_or_raise()
+    AuditManager.bind(request, auth, namespace=ns)
+    return TreeManager(ns, path, auth=auth).set_resolver_enabled(False)

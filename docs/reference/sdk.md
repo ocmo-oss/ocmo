@@ -118,6 +118,8 @@ prod = client.ns("prod")
 | `prod.create_resolver(path, description=None, config=None)` | Create resolver |
 | `prod.update_resolver(path, description=None, config=None, regenerate_token=None)` | Update |
 | `prod.rotate_resolver_token(path, slot)` | Rotate token slot |
+| `prod.enable_resolver(path)` | Enable resolver (idempotent) |
+| `prod.disable_resolver(path)` | Disable resolver (idempotent) |
 
 ### Lock management
 

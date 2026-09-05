@@ -108,8 +108,13 @@ All paths below are relative to `/api/v1/ns/{ns}/`.
 
 | Method | Path | Notes |
 |--------|------|-------|
-| `POST` | `~resolver/~create/{path}` | Body: JSON `{description?, config?}` |
-| `PATCH` | `~resolver/~update/{path}` | Body: JSON `{description?, config?, regenerate_token?}` |
+| `POST` | `~resolver/~create/{path}` | Body: YAML resolver configuration document |
+| `PUT` | `~resolver/~update/{path}` | Body: YAML resolver configuration document |
+| `POST` | `~resolver/~rotate-token/{path}` | Body: `{ "token_number": 1 \| 2 }` |
+| `POST` | `~resolver/~enable/{path}` | Enable resolver — requires `resolver:write`; idempotent; no body |
+| `POST` | `~resolver/~disable/{path}` | Disable resolver — requires `resolver:write`; idempotent; no body |
+
+`ResolverSchema` and resolver `whoami` responses include `enabled` (default `true`).
 
 ---
 

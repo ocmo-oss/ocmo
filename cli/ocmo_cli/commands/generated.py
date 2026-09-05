@@ -194,6 +194,11 @@ _ACTION_RESOURCE_HELP: dict[tuple[str, str], str] = {
         "Rotate a resolver access token. ADDRESS is the resolver path; "
         "--token-number selects which token slot to rotate."
     ),
+    ("enable", "resolver"): "Enable a disabled resolver. ADDRESS is the resolver path.",
+    ("disable", "resolver"): (
+        "Disable a resolver. ADDRESS is the resolver path. "
+        "Disabled resolvers still authenticate for whoami but cannot resolve or probe permissions."
+    ),
 }
 
 
@@ -308,7 +313,7 @@ def _build_resource_command(action: str, resource: str, op_ids: list[str], confi
     confirm_mode = config.get("confirm")
 
     is_rotate_token = action == "rotate" and resource == "token"
-    is_mutating = action in ("create", "update", "delete", "move", "copy", "tag", "untag", "rotate", "propagate")
+    is_mutating = action in ("create", "update", "delete", "move", "copy", "tag", "untag", "rotate", "propagate", "enable", "disable")
 
     resource_help = _resource_command_help(action, resource)
     extra_specs = extra_params_for_ops(op_ids)

@@ -57,6 +57,8 @@ GET_RESOLVER_CONFIGURATION_SCHEMA = "get_resolver_configuration_schema"
 CREATE_RESOLVER = "create_resolver"
 UPDATE_RESOLVER = "update_resolver"
 ROTATE_RESOLVER_TOKEN = "rotate_resolver_token"
+ENABLE_RESOLVER = "enable_resolver"
+DISABLE_RESOLVER = "disable_resolver"
 
 # Resolve
 LIST_CAST_FORMATS = "list_cast_formats"
@@ -126,6 +128,8 @@ ALL: frozenset[str] = frozenset(
         CREATE_RESOLVER,
         UPDATE_RESOLVER,
         ROTATE_RESOLVER_TOKEN,
+        ENABLE_RESOLVER,
+        DISABLE_RESOLVER,
         LIST_CAST_FORMATS,
         DOWNLOAD_RESOLVED_ARTIFACT,
         RESOLVE_CONFIG,

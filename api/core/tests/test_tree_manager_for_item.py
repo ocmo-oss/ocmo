@@ -313,6 +313,19 @@ value: ok
         self.assertIsNotNone(copied.token1_lookup)
         self.assertNotEqual(copied.token1_lookup, source.token1_lookup)
 
+    def test_copy_disabled_resolver_preserves_enabled_state(self):
+        from core.models import Resolver
+
+        TreeManager(self.ns, "app/svc", auth=None).create_item('{"scope":"app"}', "resolver")
+        source = Resolver.objects.get(namespace=self.ns, path="app/svc")
+        source.enabled = False
+        source.save(update_fields=["enabled"])
+
+        TreeManager(self.ns, "app/svc", auth=None).copy_item("other/svc")
+
+        copied = Resolver.objects.get(namespace=self.ns, path="other/svc")
+        self.assertFalse(copied.enabled)
+
     def test_delete_custom_config_tag(self):
         from core.schemas.requests import TagPayload
 

@@ -38,6 +38,7 @@ Invalid JSON body. Check the `Content-Type` header and body syntax.
 |-----------|-----|
 | `PermissionDenied` — identity lacks the required operation | Check `_permissions` policy; use `can-i` to probe; check `permissions_tag` is set |
 | `ResolverNamespaceMismatch` — resolver token used against wrong namespace | Use the correct resolver token for this namespace |
+| `ResolverDisabled` — resolver is disabled | Re-enable with `resolver:write` (`POST ~enable` or `ocmo enable resolver`); `whoami` still works |
 | No Bearer on an OIDC-only endpoint | Resolver tokens are not accepted here; use a JWT |
 
 ---

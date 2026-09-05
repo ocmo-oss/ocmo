@@ -434,11 +434,14 @@ class TreeMutateMixin:
                     doc_data = source_item.versions.filter(version=version_to_copy).first().data
                 dest_path = self._copy_destination_path(source_root, source_item.path, destination)
                 self.__class__(self.namespace, dest_path, auth=None)._ensure_writable()
-                self.__class__(self.namespace, dest_path, auth=self.auth).create_item(
+                created = self.__class__(self.namespace, dest_path, auth=self.auth).create_item(
                     doc_data,
                     source_item.node_type,
                     validate_references=validate_references,
                 )
+                if source_item.node_type == "resolver" and not source_item.enabled:
+                    created.enabled = False
+                    created.save(update_fields=["enabled"])
                 new_items.append(dest_path)
         return {"created": new_items}
 

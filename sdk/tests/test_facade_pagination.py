@@ -162,6 +162,32 @@ def test_rotate_resolver_token_accepts_int_token_number(respx_mock):
     client.close()
 
 
+def test_enable_disable_resolver(respx_mock):
+    enable_url = f"{_SERVER}/api/v1/ns/prod/~resolver/~enable/app/resolver"
+    disable_url = f"{_SERVER}/api/v1/ns/prod/~resolver/~disable/app/resolver"
+    response_body = {
+        "name": "resolver",
+        "path": "app/resolver",
+        "node_type": "resolver",
+        "author": "dev",
+        "description": "",
+        "created_at": "2026-01-01T00:00:00Z",
+        "enabled": False,
+    }
+    respx_mock.post(disable_url).mock(return_value=httpx.Response(200, json={**response_body, "enabled": False}))
+    respx_mock.post(enable_url).mock(return_value=httpx.Response(200, json={**response_body, "enabled": True}))
+
+    client = OcmoClient(config=_config())
+    client.ns("prod").disable_resolver("app/resolver")
+    assert respx_mock.calls[-1].request.url.path.endswith("/~disable/app/resolver")
+    assert respx_mock.calls[-1].request.content in (b"", None)
+
+    client.ns("prod").enable_resolver("app/resolver")
+    assert respx_mock.calls[-1].request.url.path.endswith("/~enable/app/resolver")
+    assert respx_mock.calls[-1].request.content in (b"", None)
+    client.close()
+
+
 def test_set_tag_accepts_empty_204_body(respx_mock):
     respx_mock.post(f"{_SERVER}/api/v1/ns/prod/~tag/app/cfg").mock(return_value=httpx.Response(204))
 

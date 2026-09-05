@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
 import {
   ChevronRight,
   Copy,
@@ -27,6 +28,7 @@ interface ItemHeaderProps {
   onMove?: () => void;
   onCopy?: () => void;
   onPropagate?: () => void;
+  statusBadge?: ReactNode;
 }
 
 export function ItemHeader({
@@ -41,6 +43,7 @@ export function ItemHeader({
   onMove,
   onCopy,
   onPropagate,
+  statusBadge,
 }: ItemHeaderProps) {
   const segments = pathSegments(path);
 
@@ -89,6 +92,7 @@ export function ItemHeader({
         <h1 className="font-mono text-base font-semibold text-gray-900 dark:text-gray-100">
           {segments[segments.length - 1]}
         </h1>
+        {statusBadge}
         {showVersionSelector && version !== undefined && tags && (
           <VersionTagSelector
             namespace={namespace}

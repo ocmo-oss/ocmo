@@ -140,6 +140,14 @@ operations:
     scope: namespace
     cli: { action: rotate, resource: token }
 
+  enable_resolver:
+    scope: namespace
+    cli: { action: enable, resource: resolver }
+
+  disable_resolver:
+    scope: namespace
+    cli: { action: disable, resource: resolver }
+
   list_cast_formats:
     scope: client
     cli: { action: get, resource: cast }

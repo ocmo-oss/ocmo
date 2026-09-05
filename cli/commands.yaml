@@ -127,6 +127,14 @@ operations:
     resource: token
     confirm: destructive
     scope: namespace
+  enable_resolver:
+    action: enable
+    resource: resolver
+    scope: namespace
+  disable_resolver:
+    action: disable
+    resource: resolver
+    scope: namespace
   list_cast_formats:
     action: get
     resource: cast

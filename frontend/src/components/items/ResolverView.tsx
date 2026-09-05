@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import MonacoEditor from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
-import { RotateCcw, Copy, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { RotateCcw, Copy, AlertTriangle, Eye, EyeOff, ShieldOff } from "lucide-react";
 import { treeApi } from "../../api/tree";
 import type { ResolverCreateResponse, ResolverNode } from "../../api/types";
 import type { useItemPermissions } from "../../hooks/useItemPermissions";
@@ -29,6 +29,7 @@ import { PermissionDenied } from "./PermissionDenied";
 import { ItemSaveButton } from "./ItemSaveButton";
 import { Button } from "../ui/Button";
 import { Modal } from "../ui/Modal";
+import { Tooltip } from "../ui/Tooltip";
 import { pushApiError } from "../../store/notifications";
 import { showToast } from "../ui/Toast";
 import { isHealthy } from "../../store/health";
@@ -255,6 +256,29 @@ export default function ResolverView({
     onError: (e: Error) => pushApiError("Token rotation failed", e),
   });
 
+  const enabled = item.enabled !== false;
+
+  const setEnabledMut = useMutation({
+    mutationFn: (nextEnabled: boolean) =>
+      nextEnabled
+        ? treeApi.enableResolver(namespace, item.path)
+        : treeApi.disableResolver(namespace, item.path),
+    onSuccess: (_data, nextEnabled) => {
+      invalidateItemDetailQueries(qc, namespace, item.path);
+      showToast(nextEnabled ? "Resolver enabled" : "Resolver disabled");
+    },
+    onError: (e: Error) => pushApiError("Failed to update resolver status", e),
+  });
+
+  const disabledBadge = !enabled ? (
+    <Tooltip content="Resolver is disabled — resolve and can-i requests are rejected">
+      <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+        <ShieldOff className="h-3.5 w-3.5" aria-hidden="true" />
+        Disabled
+      </span>
+    </Tooltip>
+  ) : null;
+
   return (
     <div className="flex h-full flex-col">
       {!creating && (
@@ -264,6 +288,7 @@ export default function ResolverView({
             path={item.path}
             type="resolver"
             version={item.version}
+            statusBadge={disabledBadge}
             onDelete={canDeleteItem ? () => setDeleteOpen(true) : undefined}
             onMove={canMoveItem ? () => setMoveOpen(true) : undefined}
             onCopy={canCopyItem ? () => setCopyOpen(true) : undefined}
@@ -299,6 +324,17 @@ export default function ResolverView({
             </button>
           ))}
           <div className="flex-1" />
+          {permissions.canWrite && (
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={setEnabledMut.isPending}
+              onClick={() => setEnabledMut.mutate(!enabled)}
+              title={enabled ? "Disable resolver" : "Enable resolver"}
+            >
+              {enabled ? "Disable" : "Enable"}
+            </Button>
+          )}
           {activeTab === "config" && isDirty && (
             <span className="flex items-center gap-1 text-xs text-yellow-600 mr-2">
               <AlertTriangle className="h-3 w-3" /> Unsaved

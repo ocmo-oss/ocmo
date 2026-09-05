@@ -138,6 +138,11 @@ def item_metadata_rows(result: Any, *, resource: str | None = None) -> list[tupl
     if description:
         rows.append(("description", description))
 
+    if node_type_of(result) == "resolver":
+        enabled = _get_field(result, "enabled")
+        if enabled is not None:
+            rows.append(("enabled", enabled))
+
     return rows
 
 

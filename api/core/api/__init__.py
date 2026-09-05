@@ -28,6 +28,7 @@ from ..exceptions import (
     PropagationNotConfigured,
     ReservedTagsCantBeSet,
     ResolverNamespaceMismatch,
+    ResolverDisabled,
     SecretParameterError,
     TemplateRenderError,
     TreeItemConflict,
@@ -190,6 +191,10 @@ def register_exception_handlers(api):
 
     @api.exception_handler(ResolverNamespaceMismatch)
     def resolver_namespace_mismatch(request, exc):
+        return create_error_response(api, request, exc, str(exc), 403)
+
+    @api.exception_handler(ResolverDisabled)
+    def resolver_disabled(request, exc):
         return create_error_response(api, request, exc, str(exc), 403)
 
     @api.exception_handler(UploadTooLarge)

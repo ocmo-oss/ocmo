@@ -20,6 +20,8 @@ class ResolverSchema:
         author (str): Last author identifier
         description (str): Markdown description
         created_at (datetime.datetime): Creation timestamp
+        enabled (Union[Unset, bool]): When false, resolver tokens authenticate but cannot resolve or probe permissions
+            Default: True.
         configuration (Union[None, Unset, str]):
         token1 (Union[None, Unset, str]):
         token1_last_used (Union[None, Unset, datetime.datetime]):
@@ -33,6 +35,7 @@ class ResolverSchema:
     author: str
     description: str
     created_at: datetime.datetime
+    enabled: Union[Unset, bool] = True
     configuration: Union[None, Unset, str] = UNSET
     token1: Union[None, Unset, str] = UNSET
     token1_last_used: Union[None, Unset, datetime.datetime] = UNSET
@@ -52,6 +55,8 @@ class ResolverSchema:
         description = self.description
 
         created_at = self.created_at.isoformat()
+
+        enabled = self.enabled
 
         configuration: Union[None, Unset, str]
         if isinstance(self.configuration, Unset):
@@ -99,6 +104,8 @@ class ResolverSchema:
                 "created_at": created_at,
             }
         )
+        if enabled is not UNSET:
+            field_dict["enabled"] = enabled
         if configuration is not UNSET:
             field_dict["configuration"] = configuration
         if token1 is not UNSET:
@@ -128,6 +135,8 @@ class ResolverSchema:
         description = d.pop("description")
 
         created_at = isoparse(d.pop("created_at"))
+
+        enabled = d.pop("enabled", UNSET)
 
         def _parse_configuration(data: object) -> Union[None, Unset, str]:
             if data is None:
@@ -197,6 +206,7 @@ class ResolverSchema:
             author=author,
             description=description,
             created_at=created_at,
+            enabled=enabled,
             configuration=configuration,
             token1=token1,
             token1_last_used=token1_last_used,

@@ -24,6 +24,8 @@ from ...constants.audit_operations import (
     OP_NAVIGATE,
     OP_PROMOTE_STABLE_TAG,
     OP_PROPAGATE_CONFIG,
+    OP_DISABLE_RESOLVER,
+    OP_ENABLE_RESOLVER,
     OP_ROTATE_TOKEN,
     OP_SEARCH,
     OP_SET_TAG,
