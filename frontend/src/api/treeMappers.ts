@@ -45,6 +45,7 @@ type RawBaseNode = {
   token1_last_used?: string | null;
   token2?: string | null;
   token2_last_used?: string | null;
+  enabled?: boolean;
   children_count?: number;
 };
 

@@ -223,6 +223,7 @@ export const treeApi = {
     api
       .post<Parameters<typeof mapExtendedNode>[0]>(
         `${base(ns)}/~resolver/~enable/${path}`,
+        undefined,
       )
       .then((raw) => mapExtendedNode(raw) as ResolverNode),
 
@@ -230,6 +231,7 @@ export const treeApi = {
     api
       .post<Parameters<typeof mapExtendedNode>[0]>(
         `${base(ns)}/~resolver/~disable/${path}`,
+        undefined,
       )
       .then((raw) => mapExtendedNode(raw) as ResolverNode),
 

@@ -2960,7 +2960,34 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResolverSchema"
+                  "discriminator": {
+                    "mapping": {
+                      "config": "#/components/schemas/ConfigSchemaExtended",
+                      "folder": "#/components/schemas/FolderSchema",
+                      "resolver": "#/components/schemas/ResolverSchema",
+                      "secret": "#/components/schemas/SecretSchemaExtended",
+                      "template": "#/components/schemas/TemplateSchemaExtended"
+                    },
+                    "propertyName": "node_type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ConfigSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TemplateSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SecretSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ResolverSchema"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FolderSchema"
+                    }
+                  ],
+                  "title": "Response"
                 }
               }
             }
@@ -3027,7 +3054,34 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ResolverSchema"
+                  "discriminator": {
+                    "mapping": {
+                      "config": "#/components/schemas/ConfigSchemaExtended",
+                      "folder": "#/components/schemas/FolderSchema",
+                      "resolver": "#/components/schemas/ResolverSchema",
+                      "secret": "#/components/schemas/SecretSchemaExtended",
+                      "template": "#/components/schemas/TemplateSchemaExtended"
+                    },
+                    "propertyName": "node_type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ConfigSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TemplateSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SecretSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ResolverSchema"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FolderSchema"
+                    }
+                  ],
+                  "title": "Response"
                 }
               }
             }

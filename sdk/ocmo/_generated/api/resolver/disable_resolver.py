@@ -5,8 +5,12 @@ import httpx
 
 from ... import errors
 from ...client import AuthenticatedClient, Client
+from ...models.config_schema_extended import ConfigSchemaExtended
 from ...models.error_schema import ErrorSchema
+from ...models.folder_schema import FolderSchema
 from ...models.resolver_schema import ResolverSchema
+from ...models.secret_schema_extended import SecretSchemaExtended
+from ...models.template_schema_extended import TemplateSchemaExtended
 from ...types import Response
 
 
@@ -24,9 +28,60 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Optional[Union[ErrorSchema, ResolverSchema]]:
+) -> Optional[
+    Union[
+        ErrorSchema,
+        Union[
+            "ConfigSchemaExtended", "FolderSchema", "ResolverSchema", "SecretSchemaExtended", "TemplateSchemaExtended"
+        ],
+    ]
+]:
     if response.status_code == 200:
-        response_200 = ResolverSchema.from_dict(response.json())
+
+        def _parse_response_200(
+            data: object,
+        ) -> Union[
+            "ConfigSchemaExtended", "FolderSchema", "ResolverSchema", "SecretSchemaExtended", "TemplateSchemaExtended"
+        ]:
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                response_200_type_0 = ConfigSchemaExtended.from_dict(data)
+
+                return response_200_type_0
+            except:  # noqa: E722
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                response_200_type_1 = TemplateSchemaExtended.from_dict(data)
+
+                return response_200_type_1
+            except:  # noqa: E722
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                response_200_type_2 = SecretSchemaExtended.from_dict(data)
+
+                return response_200_type_2
+            except:  # noqa: E722
+                pass
+            try:
+                if not isinstance(data, dict):
+                    raise TypeError()
+                response_200_type_3 = ResolverSchema.from_dict(data)
+
+                return response_200_type_3
+            except:  # noqa: E722
+                pass
+            if not isinstance(data, dict):
+                raise TypeError()
+            response_200_type_4 = FolderSchema.from_dict(data)
+
+            return response_200_type_4
+
+        response_200 = _parse_response_200(response.json())
 
         return response_200
     if response.status_code == 404:
@@ -45,7 +100,14 @@ def _parse_response(
 
 def _build_response(
     *, client: Union[AuthenticatedClient, Client], response: httpx.Response
-) -> Response[Union[ErrorSchema, ResolverSchema]]:
+) -> Response[
+    Union[
+        ErrorSchema,
+        Union[
+            "ConfigSchemaExtended", "FolderSchema", "ResolverSchema", "SecretSchemaExtended", "TemplateSchemaExtended"
+        ],
+    ]
+]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -59,7 +121,14 @@ def sync_detailed(
     path: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[ErrorSchema, ResolverSchema]]:
+) -> Response[
+    Union[
+        ErrorSchema,
+        Union[
+            "ConfigSchemaExtended", "FolderSchema", "ResolverSchema", "SecretSchemaExtended", "TemplateSchemaExtended"
+        ],
+    ]
+]:
     """Disable Resolver
 
      Disable a resolver. Requires resolver:write. Idempotent.
@@ -73,7 +142,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorSchema, ResolverSchema]]
+        Response[Union[ErrorSchema, Union['ConfigSchemaExtended', 'FolderSchema', 'ResolverSchema', 'SecretSchemaExtended', 'TemplateSchemaExtended']]]
     """
 
     kwargs = _get_kwargs(
@@ -93,7 +162,14 @@ def sync(
     path: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[ErrorSchema, ResolverSchema]]:
+) -> Optional[
+    Union[
+        ErrorSchema,
+        Union[
+            "ConfigSchemaExtended", "FolderSchema", "ResolverSchema", "SecretSchemaExtended", "TemplateSchemaExtended"
+        ],
+    ]
+]:
     """Disable Resolver
 
      Disable a resolver. Requires resolver:write. Idempotent.
@@ -107,7 +183,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorSchema, ResolverSchema]
+        Union[ErrorSchema, Union['ConfigSchemaExtended', 'FolderSchema', 'ResolverSchema', 'SecretSchemaExtended', 'TemplateSchemaExtended']]
     """
 
     return sync_detailed(
@@ -122,7 +198,14 @@ async def asyncio_detailed(
     path: str,
     *,
     client: AuthenticatedClient,
-) -> Response[Union[ErrorSchema, ResolverSchema]]:
+) -> Response[
+    Union[
+        ErrorSchema,
+        Union[
+            "ConfigSchemaExtended", "FolderSchema", "ResolverSchema", "SecretSchemaExtended", "TemplateSchemaExtended"
+        ],
+    ]
+]:
     """Disable Resolver
 
      Disable a resolver. Requires resolver:write. Idempotent.
@@ -136,7 +219,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[ErrorSchema, ResolverSchema]]
+        Response[Union[ErrorSchema, Union['ConfigSchemaExtended', 'FolderSchema', 'ResolverSchema', 'SecretSchemaExtended', 'TemplateSchemaExtended']]]
     """
 
     kwargs = _get_kwargs(
@@ -154,7 +237,14 @@ async def asyncio(
     path: str,
     *,
     client: AuthenticatedClient,
-) -> Optional[Union[ErrorSchema, ResolverSchema]]:
+) -> Optional[
+    Union[
+        ErrorSchema,
+        Union[
+            "ConfigSchemaExtended", "FolderSchema", "ResolverSchema", "SecretSchemaExtended", "TemplateSchemaExtended"
+        ],
+    ]
+]:
     """Disable Resolver
 
      Disable a resolver. Requires resolver:write. Idempotent.
@@ -168,7 +258,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[ErrorSchema, ResolverSchema]
+        Union[ErrorSchema, Union['ConfigSchemaExtended', 'FolderSchema', 'ResolverSchema', 'SecretSchemaExtended', 'TemplateSchemaExtended']]
     """
 
     return (

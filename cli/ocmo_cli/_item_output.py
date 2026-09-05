@@ -36,7 +36,7 @@ def uses_item_output(op_id: str, action: str, resource: str, result: Any | None)
     """True when API result should use resolve-style raw/json/yaml output."""
     if action in ("create", "update") and resource in DOCUMENT_OUTPUT_RESOURCES:
         return True
-    if op_id == "get_item" and result is not None:
+    if op_id in ("get_item", "enable_resolver", "disable_resolver") and result is not None:
         return node_type_of(result) in DOCUMENT_NODE_TYPES
     return False
 

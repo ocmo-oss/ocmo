@@ -6,7 +6,7 @@ from django.test import Client, TestCase
 
 from core.managers.resolver_tokens import ResolverTokenManager
 from core.managers.tree import TreeManager
-from core.models import Namespace, Resolver
+from core.models import Resolver
 from core.tests.namespace_helpers import create_test_namespace
 
 

@@ -313,7 +313,19 @@ def _build_resource_command(action: str, resource: str, op_ids: list[str], confi
     confirm_mode = config.get("confirm")
 
     is_rotate_token = action == "rotate" and resource == "token"
-    is_mutating = action in ("create", "update", "delete", "move", "copy", "tag", "untag", "rotate", "propagate", "enable", "disable")
+    is_mutating = action in (
+        "create",
+        "update",
+        "delete",
+        "move",
+        "copy",
+        "tag",
+        "untag",
+        "rotate",
+        "propagate",
+        "enable",
+        "disable",
+    )
 
     resource_help = _resource_command_help(action, resource)
     extra_specs = extra_params_for_ops(op_ids)
@@ -321,7 +333,7 @@ def _build_resource_command(action: str, resource: str, op_ids: list[str], confi
         op_id in _VERSION_FILTER_OPS for op_id in op_ids
     )
     supports_file_body = (
-        action not in ("tag", "untag", "delete", "propagate", "move", "copy")
+        action not in ("tag", "untag", "delete", "propagate", "move", "copy", "enable", "disable")
         and not is_rotate_token
         and not (action == "create" and resource in ("namespace", "lock"))
         and not (action == "update" and resource == "lock")

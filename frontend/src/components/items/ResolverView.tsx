@@ -7,7 +7,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import MonacoEditor from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
-import { RotateCcw, Copy, AlertTriangle, Eye, EyeOff, ShieldOff } from "lucide-react";
+import {
+  RotateCcw,
+  Copy,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  PowerOff,
+} from "lucide-react";
 import { treeApi } from "../../api/tree";
 import type { ResolverCreateResponse, ResolverNode } from "../../api/types";
 import type { useItemPermissions } from "../../hooks/useItemPermissions";
@@ -273,7 +280,7 @@ export default function ResolverView({
   const disabledBadge = !enabled ? (
     <Tooltip content="Resolver is disabled — resolve and can-i requests are rejected">
       <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
-        <ShieldOff className="h-3.5 w-3.5" aria-hidden="true" />
+        <PowerOff className="h-3.5 w-3.5" aria-hidden="true" />
         Disabled
       </span>
     </Tooltip>
@@ -292,6 +299,13 @@ export default function ResolverView({
             onDelete={canDeleteItem ? () => setDeleteOpen(true) : undefined}
             onMove={canMoveItem ? () => setMoveOpen(true) : undefined}
             onCopy={canCopyItem ? () => setCopyOpen(true) : undefined}
+            onToggleEnabled={
+              permissions.canWrite
+                ? () => setEnabledMut.mutate(!enabled)
+                : undefined
+            }
+            enabled={enabled}
+            toggleEnabledLoading={setEnabledMut.isPending}
           />
           <ItemDescription
             namespace={namespace}
@@ -324,17 +338,6 @@ export default function ResolverView({
             </button>
           ))}
           <div className="flex-1" />
-          {permissions.canWrite && (
-            <Button
-              variant="ghost"
-              size="sm"
-              disabled={setEnabledMut.isPending}
-              onClick={() => setEnabledMut.mutate(!enabled)}
-              title={enabled ? "Disable resolver" : "Enable resolver"}
-            >
-              {enabled ? "Disable" : "Enable"}
-            </Button>
-          )}
           {activeTab === "config" && isDirty && (
             <span className="flex items-center gap-1 text-xs text-yellow-600 mr-2">
               <AlertTriangle className="h-3 w-3" /> Unsaved

@@ -107,6 +107,13 @@ def test_uses_item_output_for_get_item_config_only() -> None:
     assert uses_item_output("get_item", "get", "item", folder) is False
 
 
+def test_uses_item_output_for_enable_disable_resolver() -> None:
+    item = SimpleNamespace(node_type="resolver")
+    assert uses_item_output("enable_resolver", "enable", "resolver", item) is True
+    assert uses_item_output("disable_resolver", "disable", "resolver", item) is True
+    assert uses_item_output("enable_resolver", "enable", "resolver", None) is False
+
+
 def test_emit_item_raw_metadata_stderr_content_stdout(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
