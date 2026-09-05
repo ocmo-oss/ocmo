@@ -53,7 +53,7 @@ Every operation string used in `_permissions` policies, global permission rules,
 | Operation | Description |
 |-----------|-------------|
 | `resolver:read` | View resolver config (not token values) |
-| `resolver:write` | Create or update a resolver; rotate tokens |
+| `resolver:write` | Create or update a resolver; rotate tokens; enable or disable |
 | `resolver:delete` | Delete a resolver |
 | `resolver:describe` | Set description |
 | `resolver:audit` | View audit timeline |

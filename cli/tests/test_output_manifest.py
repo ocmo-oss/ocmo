@@ -80,11 +80,17 @@ def test_create_config_spec_uses_document_profile() -> None:
         "update secret",
         "update resolver",
         "update globalpermission",
+        "enable resolver",
+        "disable resolver",
     ],
 )
 def test_update_document_commands_match_create_profile(command_key: str) -> None:
     spec = get_command_spec(command_key)
     create_key = command_key.replace("update", "create", 1)
+    if command_key == "enable resolver":
+        create_key = "create resolver"
+    elif command_key == "disable resolver":
+        create_key = "create resolver"
     create_spec = get_command_spec(create_key)
     assert spec.fixed_default == create_spec.fixed_default
     assert spec.supported_formats == create_spec.supported_formats

@@ -19,3 +19,16 @@ class TreeResolverOpsMixin:
             self.item.token2_last_used = None
         self.item.save()
         return ResolverTokenRotationResponseSchema(token_number=token_num, token=plaintext)
+
+    @audit("resolver")
+    @require_permissions("resolver:write")
+    def set_resolver_enabled(self, enabled: bool):
+        """Enable or disable a resolver (idempotent)."""
+        self._ensure_writable()
+        self.get_or_raise(["resolver"])
+        enrich_audit(operation=OP_ENABLE_RESOLVER if enabled else OP_DISABLE_RESOLVER)
+        if self.item.enabled == enabled:
+            return self.item
+        self.item.enabled = enabled
+        self.item.save(update_fields=["enabled"])
+        return self.item

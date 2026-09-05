@@ -157,6 +157,7 @@ class ResolverAuth(APIKeyBase):
             "name": resolver.name,
             "access_scope": "/".join(resolver.path.split("/")[:-1]),
             "token_number": token_number,
+            "enabled": resolver.enabled,
         }
 
 

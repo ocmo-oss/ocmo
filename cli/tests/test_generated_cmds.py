@@ -179,6 +179,26 @@ def test_propagate_config_help_has_no_file_flag() -> None:
     assert "  --file" not in result.output
 
 
+def test_enable_and_disable_resolver_help_have_no_file_flag() -> None:
+    runner = CliRunner()
+    for cmd in ("enable", "disable"):
+        result = runner.invoke(cli, [cmd, "resolver", "--help"])
+        assert result.exit_code == 0, result.output
+        assert "  -f," not in result.output
+        assert "  --file" not in result.output
+
+
+def test_enable_resolver_help_has_document_output_formats() -> None:
+    runner = CliRunner()
+    result = runner.invoke(cli, ["enable", "resolver", "--help"])
+    assert result.exit_code == 0, result.output
+    assert "  -o," in result.output or "--output" in result.output
+    assert "raw" in result.output
+    assert "yaml" in result.output
+    assert "json" in result.output
+    assert "table" not in result.output
+
+
 def test_tag_item_requires_tag_flag() -> None:
     runner = CliRunner()
     result = runner.invoke(cli, ["-n", "prod", "tag", "item", "x/confT@2"])

@@ -19,6 +19,8 @@ from ...constants.audit_operations import (
     OP_DELETE_ITEM,
     OP_DELETE_TAG,
     OP_DIFF_ITEM,
+    OP_DISABLE_RESOLVER,
+    OP_ENABLE_RESOLVER,
     OP_LIST_VERSIONS,
     OP_MOVE_ITEM,
     OP_NAVIGATE,

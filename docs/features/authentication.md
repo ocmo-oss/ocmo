@@ -118,11 +118,13 @@ Both tokens are valid simultaneously during the transition window.
 | Resolve configs in scope | ✓ |
 | Navigate/search in scope | ✓ |
 | Check identity (`whoami`) | ✓ |
-| Probe permissions (`can-i`) | ✓ |
+| Probe permissions (`can-i`) | ✓ (when enabled) |
 | Write/delete/tag items | ✗ |
 | Read audit log | ✗ |
 | Access other namespaces | ✗ (token is namespace-bound) |
 | Access builtin configs | ✗ |
+
+When a resolver is **disabled**, `whoami` still succeeds and reports `enabled: false` in `resolver_details`. Resolve, resolve-parameters, and `can-i` return HTTP **403** (`ResolverDisabled`).
 
 ---
 

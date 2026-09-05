@@ -70,7 +70,17 @@ def generate(sdk_ops: dict, existing_cli_ops: dict) -> dict[str, dict]:
             elif cli_hint.get("skip"):
                 existing = {"skip": cli_hint["skip"]}
             elif sdk_cfg.get("sdk") is False:
-                existing = {"skip": "Internal SDK operation."}
+                cli_hint = sdk_cfg.get("cli", {})
+                if cli_hint.get("action") and cli_hint.get("resource"):
+                    entry = {
+                        "action": cli_hint["action"],
+                        "resource": cli_hint["resource"],
+                    }
+                    if cli_hint.get("confirm"):
+                        entry["confirm"] = cli_hint["confirm"]
+                    existing = entry
+                else:
+                    existing = {"skip": "Internal SDK operation."}
             else:
                 entry: dict = {}
                 if cli_hint.get("action"):

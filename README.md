@@ -200,7 +200,6 @@ standards: [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
   * Implement change requests: config approval flows and the ability to extend or fix configuration for people who do not have direct write access
   * Extend config propagation to automatically set a tag on the target config after successful propagation, including cascade propagation
   * Implement post-resolve schema validation to verify that a config resolved correctly before casting it to the target syntax
-  * Implement the ability to enable or disable specific resolvers
   * Implement white labeling
   * Implement config collections to group sets of configs under common versioning
   * Implement email notifications for configuration changes

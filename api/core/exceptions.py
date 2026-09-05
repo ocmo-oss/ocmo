@@ -56,6 +56,12 @@ class ResolverNamespaceMismatch(Exception):
     pass
 
 
+class ResolverDisabled(Exception):
+    """Resolver is disabled; only whoami is permitted."""
+
+    pass
+
+
 class UnknownCastFormat(Exception):
     pass
 

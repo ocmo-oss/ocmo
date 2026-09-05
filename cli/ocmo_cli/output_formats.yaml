@@ -203,6 +203,12 @@ commands:
   update resolver:
     profile: document
 
+  enable resolver:
+    profile: document
+
+  disable resolver:
+    profile: document
+
   update lock:
     profile: list
     name_field: path

@@ -40,6 +40,8 @@ import ocmo._generated.api.resolve.list_cast_formats as _op_list_cast_formats
 import ocmo._generated.api.resolve.resolve_draft_config as _op_resolve_draft_config
 import ocmo._generated.api.resolve.resolve_parameters as _op_resolve_parameters
 import ocmo._generated.api.resolver.create_resolver as _op_create_resolver
+import ocmo._generated.api.resolver.disable_resolver as _op_disable_resolver
+import ocmo._generated.api.resolver.enable_resolver as _op_enable_resolver
 import ocmo._generated.api.resolver.get_resolver_configuration_schema as _op_get_resolver_configuration_schema
 import ocmo._generated.api.resolver.rotate_resolver_token as _op_rotate_resolver_token
 import ocmo._generated.api.resolver.update_resolver as _op_update_resolver
@@ -557,6 +559,26 @@ class _NamespaceFacadeMixin:
             client=self._api,
         )
 
+    def disable_resolver(self, path: Any):
+        """OpenAPI operation ``disable_resolver``."""
+
+        return execute_sync(
+            "disable_resolver",
+            _op_disable_resolver.sync_detailed,
+            self._namespace, path,
+            client=self._api,
+        )
+
+    def enable_resolver(self, path: Any):
+        """OpenAPI operation ``enable_resolver``."""
+
+        return execute_sync(
+            "enable_resolver",
+            _op_enable_resolver.sync_detailed,
+            self._namespace, path,
+            client=self._api,
+        )
+
     def get_config_data_schema(self, path: Any, *, version: Any = UNSET):
         """OpenAPI operation ``get_config_data_schema``."""
 
@@ -896,6 +918,26 @@ class _AsyncNamespaceFacadeMixin:
             "diff_item",
             _op_diff_item.asyncio_detailed,
             self._namespace, path, from_=from_, to=to, to_path=to_path, reveal=reveal,
+            client=self._api,
+        )
+
+    async def disable_resolver(self, path: Any):
+        """OpenAPI operation ``disable_resolver``."""
+
+        return await execute_async(
+            "disable_resolver",
+            _op_disable_resolver.asyncio_detailed,
+            self._namespace, path,
+            client=self._api,
+        )
+
+    async def enable_resolver(self, path: Any):
+        """OpenAPI operation ``enable_resolver``."""
+
+        return await execute_async(
+            "enable_resolver",
+            _op_enable_resolver.asyncio_detailed,
+            self._namespace, path,
             client=self._api,
         )
 

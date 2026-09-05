@@ -121,6 +121,7 @@ def resolve_config(
     scope. Use ``'.'`` to resolve the scope root folder.
     """
     auth = AuthManager.from_request(request)
+    auth.ensure_resolver_enabled()
     ns = NamespaceManager(namespace, auth=auth).get_or_raise()
     AuditManager.bind(request, auth, namespace=ns)
     path = decode_resolve_path(path)
@@ -168,6 +169,7 @@ def resolve_parameters(
     folder — a folder path is rejected by the underlying resolver).
     """
     auth = AuthManager.from_request(request)
+    auth.ensure_resolver_enabled()
     ns = NamespaceManager(namespace, auth=auth).get_or_raise()
     AuditManager.bind(request, auth, namespace=ns)
     path = decode_resolve_path(path)

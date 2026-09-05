@@ -12,7 +12,7 @@ from typing import Any
 from django.conf import settings
 from django.http import HttpRequest
 
-from ..exceptions import Unauthenticated
+from ..exceptions import ResolverDisabled, Unauthenticated
 from .namespace import NamespaceManager
 from .permissions import PermissionsManager
 
@@ -107,8 +107,14 @@ class AuthManager:
                 "namespace": ns.name,
                 "name": self.resolver_name,
                 "token_number": self.token_number,
+                "enabled": self.resolver_enabled,
             }
         return payload
+
+    def ensure_resolver_enabled(self) -> None:
+        """Raise when the current identity is a disabled resolver service account."""
+        if self.is_resolver and not self.resolver_enabled:
+            raise ResolverDisabled("Resolver is disabled")
 
     # ------------------------------------------------------------------
     # User identity
@@ -193,6 +199,12 @@ class AuthManager:
         scope = self._raw.get("access_scope", "") or ""
         name = self._raw.get("name", "") or ""
         return f"{scope}/{name}" if scope else name
+
+    @property
+    def resolver_enabled(self) -> bool:
+        if not self.is_resolver:
+            return True
+        return bool(self._raw.get("enabled", True))
 
     # ------------------------------------------------------------------
     # Per-request decision memoisation (used by PermissionsManager)

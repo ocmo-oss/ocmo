@@ -190,13 +190,44 @@ Out-of-scope paths return HTTP 404 — same as permission-denied paths.
 
 ---
 
+## Enable / disable
+
+Resolvers are **enabled by default**. Disabling a resolver blocks its tokens from calling `~resolve`, `~resolve-parameters`, and `can-i`, while **`whoami` still works** so clients can detect the disabled state.
+
+| Operation | Permission |
+|-----------|------------|
+| Enable / disable | `resolver:write` |
+
+```bash
+# CLI
+ocmo -n prod disable resolver myapp/prod/deployer
+ocmo -n prod enable resolver myapp/prod/deployer
+
+# REST
+curl -X POST "https://ocmo.example.com/api/v1/ns/prod/~resolver/~disable/myapp/prod/deployer" \
+  -H "Authorization: Bearer $TOKEN"
+
+curl -X POST "https://ocmo.example.com/api/v1/ns/prod/~resolver/~enable/myapp/prod/deployer" \
+  -H "Authorization: Bearer $TOKEN"
+
+# SDK
+prod.disable_resolver("myapp/prod/deployer")
+prod.enable_resolver("myapp/prod/deployer")
+```
+
+Both SDK methods and the REST endpoints are **idempotent** — repeating the same action returns the current resolver without error.
+
+Disabled resolver tokens receive HTTP **403** (`ResolverDisabled`) on blocked routes. OIDC users with `resolver:write` can still view and re-enable the resolver.
+
+---
+
 ## Required permissions
 
 | Operation | Permission |
 |-----------|-----------|
 | Read resolver metadata | `resolver:read` |
 | Create resolver | `resolver:write` |
-| Update / rotate | `resolver:write` |
+| Update / rotate / enable / disable | `resolver:write` |
 | Delete resolver | `resolver:delete` |
 | Set description | `resolver:describe` |
 

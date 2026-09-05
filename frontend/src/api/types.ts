@@ -215,6 +215,7 @@ export interface ResolverNode extends AnyNode {
   type: "resolver";
   version: number;
   author: string;
+  enabled?: boolean;
   token1: string;
   token1_last_used: string | null;
   token2: string | null;

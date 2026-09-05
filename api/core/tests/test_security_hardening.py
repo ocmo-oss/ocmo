@@ -157,6 +157,7 @@ class WhoAmIEndpointTests(TestCase):
         self.assertEqual(resolver_details["namespace"], ns.name)
         self.assertEqual(resolver_details["name"], "svc")
         self.assertEqual(resolver_details["token_number"], 1)
+        self.assertTrue(resolver_details["enabled"])
         self.assertNotIn("resolver_path", resolver_details)
         self.assertNotIn("access_scope", resolver_details)
 

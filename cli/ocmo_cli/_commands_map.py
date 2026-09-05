@@ -37,6 +37,8 @@ OPERATIONS: dict = {
     "create_resolver": {"action": "create", "resource": "resolver", "scope": "namespace"},
     "update_resolver": {"action": "update", "resource": "resolver", "scope": "namespace"},
     "rotate_resolver_token": {"action": "rotate", "resource": "token", "confirm": "destructive", "scope": "namespace"},
+    "enable_resolver": {"action": "enable", "resource": "resolver", "scope": "namespace"},
+    "disable_resolver": {"action": "disable", "resource": "resolver", "scope": "namespace"},
     "list_cast_formats": {"action": "get", "resource": "cast", "scope": "client"},
     "download_resolved_artifact": {
         "skip": "Internal SDK operation; surfaced via `ocmo resolve`.",

@@ -20,6 +20,7 @@ import type {
   PropagationResult,
   ResolveParametersResponse,
   ResolverTokenRotationResponse,
+  ResolverNode,
 } from "./types";
 
 const base = (ns: string) => `/ns/${ns}`;
@@ -217,6 +218,22 @@ export const treeApi = {
       `${base(ns)}/~resolver/~rotate-token/${path}`,
       payload,
     ),
+
+  enableResolver: (ns: string, path: string) =>
+    api
+      .post<Parameters<typeof mapExtendedNode>[0]>(
+        `${base(ns)}/~resolver/~enable/${path}`,
+        undefined,
+      )
+      .then((raw) => mapExtendedNode(raw) as ResolverNode),
+
+  disableResolver: (ns: string, path: string) =>
+    api
+      .post<Parameters<typeof mapExtendedNode>[0]>(
+        `${base(ns)}/~resolver/~disable/${path}`,
+        undefined,
+      )
+      .then((raw) => mapExtendedNode(raw) as ResolverNode),
 
   // Resolve
   resolve: (

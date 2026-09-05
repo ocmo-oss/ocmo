@@ -34,6 +34,7 @@ class ResolverWhoAmIDetails(Schema):
     namespace: str = Field(..., description="Namespace name")
     name: str = Field(..., description="Resolver leaf name")
     token_number: int = Field(..., description="Which resolver token (1 or 2) authenticated the request")
+    enabled: bool = Field(..., description="Whether the resolver accepts resolve and can-i requests")
 
 
 class UserWhoAmISchema(Schema):
@@ -448,6 +449,10 @@ class SecretSchemaExtended(SecretSchema):
 class ResolverSchema(BaseNodeSchema):
     node_type: Literal["resolver"]
     created_at: datetime = Field(..., description="Creation timestamp")
+    enabled: bool = Field(
+        default=True,
+        description="When false, resolver tokens authenticate but cannot resolve or probe permissions",
+    )
     configuration: str | None = Field(None, json_schema_extra={"format": "textarea"})
     token1: str | None = None
     token1_last_used: datetime | None = None

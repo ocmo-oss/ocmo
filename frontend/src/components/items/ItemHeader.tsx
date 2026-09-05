@@ -1,9 +1,12 @@
 import { Link } from "react-router-dom";
+import type { ReactNode } from "react";
 import {
   ChevronRight,
   Copy,
   CopyPlus,
   FolderInput,
+  Power,
+  PowerOff,
   Route,
   Trash2,
 } from "lucide-react";
@@ -27,6 +30,10 @@ interface ItemHeaderProps {
   onMove?: () => void;
   onCopy?: () => void;
   onPropagate?: () => void;
+  onToggleEnabled?: () => void;
+  enabled?: boolean;
+  toggleEnabledLoading?: boolean;
+  statusBadge?: ReactNode;
 }
 
 export function ItemHeader({
@@ -41,6 +48,10 @@ export function ItemHeader({
   onMove,
   onCopy,
   onPropagate,
+  onToggleEnabled,
+  enabled = true,
+  toggleEnabledLoading = false,
+  statusBadge,
 }: ItemHeaderProps) {
   const segments = pathSegments(path);
 
@@ -89,6 +100,7 @@ export function ItemHeader({
         <h1 className="font-mono text-base font-semibold text-gray-900 dark:text-gray-100">
           {segments[segments.length - 1]}
         </h1>
+        {statusBadge}
         {showVersionSelector && version !== undefined && tags && (
           <VersionTagSelector
             namespace={namespace}
@@ -108,6 +120,21 @@ export function ItemHeader({
               title="Manual propagation"
             >
               <Route className="h-3.5 w-3.5" />
+            </Button>
+          )}
+          {onToggleEnabled && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onToggleEnabled}
+              disabled={toggleEnabledLoading}
+              title={enabled ? "Disable resolver" : "Enable resolver"}
+            >
+              {enabled ? (
+                <PowerOff className="h-3.5 w-3.5" />
+              ) : (
+                <Power className="h-3.5 w-3.5 text-green-600 dark:text-green-400" />
+              )}
             </Button>
           )}
           {onCopy && (

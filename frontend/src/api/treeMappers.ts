@@ -45,6 +45,7 @@ type RawBaseNode = {
   token1_last_used?: string | null;
   token2?: string | null;
   token2_last_used?: string | null;
+  enabled?: boolean;
   children_count?: number;
 };
 
@@ -173,6 +174,7 @@ export function mapExtendedNode(raw: RawBaseNode): AnyExtendedNode {
         token1_last_used: raw.token1_last_used ?? null,
         token2: raw.token2 ?? null,
         token2_last_used: raw.token2_last_used ?? null,
+        enabled: raw.enabled ?? true,
         configuration: raw.configuration ?? undefined,
         created_at: createdAt,
         updated_at: updatedAt,

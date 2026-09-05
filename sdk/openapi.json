@@ -2930,6 +2930,194 @@
         ]
       }
     },
+    "/api/v1/ns/{namespace}/~resolver/~enable/{path}": {
+      "post": {
+        "operationId": "enable_resolver",
+        "summary": "Enable Resolver",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "config": "#/components/schemas/ConfigSchemaExtended",
+                      "folder": "#/components/schemas/FolderSchema",
+                      "resolver": "#/components/schemas/ResolverSchema",
+                      "secret": "#/components/schemas/SecretSchemaExtended",
+                      "template": "#/components/schemas/TemplateSchemaExtended"
+                    },
+                    "propertyName": "node_type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ConfigSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TemplateSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SecretSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ResolverSchema"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FolderSchema"
+                    }
+                  ],
+                  "title": "Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Enable a resolver. Requires resolver:write. Idempotent.",
+        "tags": [
+          "Resolver"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~resolver/~disable/{path}": {
+      "post": {
+        "operationId": "disable_resolver",
+        "summary": "Disable Resolver",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "discriminator": {
+                    "mapping": {
+                      "config": "#/components/schemas/ConfigSchemaExtended",
+                      "folder": "#/components/schemas/FolderSchema",
+                      "resolver": "#/components/schemas/ResolverSchema",
+                      "secret": "#/components/schemas/SecretSchemaExtended",
+                      "template": "#/components/schemas/TemplateSchemaExtended"
+                    },
+                    "propertyName": "node_type"
+                  },
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ConfigSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TemplateSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SecretSchemaExtended"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ResolverSchema"
+                    },
+                    {
+                      "$ref": "#/components/schemas/FolderSchema"
+                    }
+                  ],
+                  "title": "Response"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "description": "Disable a resolver. Requires resolver:write. Idempotent.",
+        "tags": [
+          "Resolver"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/~cast-formats/": {
       "get": {
         "operationId": "list_cast_formats",
@@ -5605,12 +5793,18 @@
             "description": "Which resolver token (1 or 2) authenticated the request",
             "title": "Token Number",
             "type": "integer"
+          },
+          "enabled": {
+            "description": "Whether the resolver accepts resolve and can-i requests",
+            "title": "Enabled",
+            "type": "boolean"
           }
         },
         "required": [
           "namespace",
           "name",
-          "token_number"
+          "token_number",
+          "enabled"
         ],
         "title": "ResolverWhoAmIDetails",
         "type": "object"
@@ -6615,6 +6809,12 @@
             "format": "date-time",
             "title": "Created At",
             "type": "string"
+          },
+          "enabled": {
+            "default": true,
+            "description": "When false, resolver tokens authenticate but cannot resolve or probe permissions",
+            "title": "Enabled",
+            "type": "boolean"
           },
           "configuration": {
             "anyOf": [

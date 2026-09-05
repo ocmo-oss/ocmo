@@ -14,6 +14,8 @@ _GENERATED_ACTION_HELP: dict[str, str] = {
     "tag": "Add a version tag to an item.",
     "untag": "Remove a version tag from an item.",
     "rotate": "Rotate resolver access tokens.",
+    "enable": "Enable a disabled resolver.",
+    "disable": "Disable a resolver (blocks resolve and can-i for its tokens).",
     "propagate": "Propagate an item to descendant paths.",
     "search": "Search the item tree.",
 }
