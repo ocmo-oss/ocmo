@@ -102,7 +102,7 @@ _ocmo:
   extend:
     configs:
       - ../shared/base@latest
-    mode: accumulate
+    mode: stack
 label: root
 """,
         )
@@ -152,7 +152,7 @@ _ocmo:
   extend:
     configs:
       - ../shared/base@stable
-    mode: accumulate
+    mode: stack
 root_tag: "{!version_tag}"
 """,
         )

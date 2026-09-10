@@ -4,7 +4,7 @@
 
 ---
 
-## Quick example (`accumulate` mode)
+## Quick example (`stack` mode)
 
 ```yaml
 # apps/api/prod
@@ -13,7 +13,7 @@ _ocmo:
     configs:
       - ../../../base/database@stable
       - ../../../base/logging
-    mode: accumulate
+    mode: stack
 
 # Current config data (wins over merged values on conflict)
 database:
@@ -35,8 +35,8 @@ _ocmo:
       - path: shared/all@stable
         key: .database               # extract a subtree before merging
         as: .database                # place it at a different key
-    mode: accumulate                 # accumulate | distribute | align
-    by: .some.key                    # used by distribute and align modes
+    mode: stack                 # stack | broadcast | zip | replicate
+    by: .some.key                    # used by broadcast, zip, and replicate
 ```
 
 ### Top-level fields
@@ -44,8 +44,8 @@ _ocmo:
 | Field | Required | Description |
 |-------|----------|-------------|
 | `configs` | Yes | List of config references to merge |
-| `mode` | No | Merge strategy. Default: `accumulate`. |
-| `by` | No | JSON path into the current config's data. Used by `distribute` and `align`. |
+| `mode` | No | Merge strategy. Default: `stack`. |
+| `by` | No | JSON path into the current config's data. Required for `zip` and `replicate`. Optional for `broadcast`. |
 
 ### Config reference (per entry)
 
@@ -81,7 +81,7 @@ Example — extract `.database` from a shared config and merge it under `.persis
 
 ---
 
-## Mode: `accumulate` (default)
+## Mode: `stack` (default)
 
 Each config is merged into the previous one, then the current config's data is merged on top. **One output document.**
 
@@ -109,7 +109,7 @@ _ocmo:
     configs:
       - ../../base/global@stable
       - ../../base/prod
-    mode: accumulate
+    mode: stack
 
 database:
   host: db.prod.example.com
@@ -129,7 +129,7 @@ log_level: warn              # from current (wins)
 
 ---
 
-## Mode: `distribute`
+## Mode: `broadcast`
 
 Apply **the same** patch (from `by`, or the entire document data) to **each** config listed in `configs`. **One output per config in the list.**
 
@@ -147,7 +147,7 @@ _ocmo:
     configs:
       - services/api-config
       - services/worker-config
-    mode: distribute
+    mode: broadcast
     by: .overlay               # only the "overlay" key is used as the patch
 
 overlay:
@@ -164,7 +164,7 @@ If `by` is omitted, the entire document (minus `_ocmo`) is used as the patch.
 
 ---
 
-## Mode: `align`
+## Mode: `zip`
 
 Each config is matched 1-to-1 with the corresponding element in the list at `by`. **One output per pair.** The number of entries in `configs` must equal the number of elements in the `by` list.
 
@@ -182,7 +182,7 @@ _ocmo:
     configs:
       - clusters/eu-base
       - clusters/us-base
-    mode: align
+    mode: zip
     by: .patches
 
 patches:
@@ -195,6 +195,39 @@ patches:
 Resolved (2 outputs):
 - `eu-base` — `clusters/eu-base` merged with `{name: eu-cluster, endpoint: k8s.eu.example.com}`
 - `us-base` — `clusters/us-base` merged with `{name: us-cluster, endpoint: k8s.us.example.com}`
+
+---
+
+## Mode: `replicate`
+
+Merge **one** config from `configs` with **each** element in the list at `by`. **One output per list element.** Exactly one entry is allowed in `configs`.
+
+```
+base + by[0]  →  output[0]
+base + by[1]  →  output[1]
+```
+
+**Use case:** one shared base template config with per-tenant or per-environment patch rows.
+
+```yaml
+# app/final
+_ocmo:
+  extend:
+    configs:
+      - ./business.yaml
+    mode: replicate
+    by: .data
+
+data:
+  - baz: aaa
+    xxx: yyy
+  - baz: "555"
+    aaa: vvv
+```
+
+Resolved (2 outputs), named from the base config with numeric suffixes (see [Output naming](output-naming.md)):
+- `myconf-1.yaml` — base merged with `data[0]`
+- `myconf-2.yaml` — base merged with `data[1]`
 
 ---
 
@@ -286,7 +319,7 @@ Circular references are detected at resolve time and reported with the full cycl
 
 ## Multi-output bases (chained extends)
 
-When a base config itself produces multiple outputs (via `align` or `distribute`), those outputs expand in-place. This means an `accumulate` config that references a multi-output base will also produce multiple outputs.
+When a base config itself produces multiple outputs (via `zip`, `broadcast`, or `replicate`), those outputs expand in-place. This means a `stack` config that references a multi-output base will also produce multiple outputs.
 
 ---
 

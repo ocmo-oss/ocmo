@@ -1,6 +1,6 @@
 _ocmo:
   extend:
-    mode: accumulate
+    mode: stack
     configs:
       - path: ./shared/db
         as: .persistence.database

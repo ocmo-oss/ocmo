@@ -47,8 +47,8 @@ def _require_cache_header(resp):
 
 @pytest.fixture
 def cache_namespace(api_client: OcmoApiClient, keep_namespace: bool):
-    """Isolated namespace with extend_accumulate case bootstrapped."""
-    case = load_case(CASES_ROOT / "extend_accumulate")
+    """Isolated namespace with extend_stack case bootstrapped."""
+    case = load_case(CASES_ROOT / "extend_stack")
     ns_name = f"smoke-cache-{uuid.uuid4().hex[:8]}"
     created = api_client.create_namespace(ns_name)
     if not created.ok:

@@ -9,7 +9,7 @@ kubectl -n cert-manager get deploy cert-manager-webhook -o jsonpath='{.spec.repl
 kubectl -n cert-manager get deploy cert-manager-cainjector -o jsonpath='{.spec.replicas}{"\n"}'
 ```
 
-Expect **2 / 3 / 2** replicas (controller, webhook, cainjector), images `myregistry.example.com/cert-manager-*:v1.21.1` (or whatever you passed as `app_version`), and vendor PDBs. Every object should carry `app.kubernetes.io/env=prod` and `app.kubernetes.io/managed-by=ocmo` from the `app` distribute patch.
+Expect **2 / 3 / 2** replicas (controller, webhook, cainjector), images `myregistry.example.com/cert-manager-*:v1.21.1` (or whatever you passed as `app_version`), and vendor PDBs. Every object should carry `app.kubernetes.io/env=prod` and `app.kubernetes.io/managed-by=ocmo` from the `app` broadcast patch.
 
 ServiceAccounts should list `imagePullSecrets: [{name: registry-creds}]`.
 
@@ -80,7 +80,7 @@ If you saved a resolver token to disk for testing, delete that file as well. Rev
 |-------------|-------------------|
 | Namespace `tutorial-k8s` + `_permissions` | Workspace for multiple cluster apps; platform vs image-bot vs deploy resolver |
 | `helm template` + import + tag **`chart-v1.21.1` on every vendor file** | Helm is a generator; overlays pin a chart snapshot |
-| `envs/{prod,dev}/app` with `distribute` | One resolve emits the full manifest set (~50 files) |
+| `envs/{prod,dev}/app` with `broadcast` | One resolve emits the full manifest set (~50 files) |
 | Deployment overrides with `containers: 0:` numeric keys | Patch image/resources without rewriting the whole Pod spec |
 | `all-service-accounts.patch` extends vendor SAs | `imagePullSecrets` without duplicating ServiceAccount YAML |
 | `_ocmo.propagation` on dev deployment overrides and dev `app` | Promote image/config changes to prod when dev is resolved with `--mark-stable` |

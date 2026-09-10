@@ -16,7 +16,7 @@ class ExtendKeySchemaTests(TestCase):
     def test_string_ref_still_valid(self):
         meta = ConfigOcmoMetadataSchema.model_validate(
             {
-                "extend": {"configs": ["bases/a@latest"], "mode": "accumulate"},
+                "extend": {"configs": ["bases/a@latest"], "mode": "stack"},
             }
         )
         self.assertEqual(meta.extend.configs, ["bases/a@latest"])
@@ -74,7 +74,7 @@ class ExtendKeyResolveTests(TestCase):
             "app/prod",
             "_ocmo:\n"
             "  extend:\n"
-            "    mode: accumulate\n"
+            "    mode: stack\n"
             "    configs:\n"
             "      - path: ../shared/all\n"
             "        key: .database\n"
@@ -92,7 +92,7 @@ class ExtendKeyResolveTests(TestCase):
             "app/prod",
             "_ocmo:\n"
             "  extend:\n"
-            "    mode: accumulate\n"
+            "    mode: stack\n"
             "    configs:\n"
             "      - path: ../shared/all\n"
             "        key: .database\n"
@@ -111,7 +111,7 @@ class ExtendKeyResolveTests(TestCase):
             "app/prod",
             "_ocmo:\n"
             "  extend:\n"
-            "    mode: accumulate\n"
+            "    mode: stack\n"
             "    configs:\n"
             "      - path: ../shared/db\n"
             "        as: .persistence.database\n"
@@ -137,7 +137,7 @@ class ExtendKeyResolveTests(TestCase):
             "app/prod",
             "_ocmo:\n"
             "  extend:\n"
-            "    mode: accumulate\n"
+            "    mode: stack\n"
             "    configs:\n"
             "      - path: ../shared/all\n"
             "        key: .database?\n"
@@ -151,7 +151,7 @@ class ExtendKeyResolveTests(TestCase):
             "app/prod",
             "_ocmo:\n"
             "  extend:\n"
-            "    mode: accumulate\n"
+            "    mode: stack\n"
             "    configs:\n"
             "      - path: ../shared/all\n"
             "        key: .items[2]?\n"
@@ -176,7 +176,7 @@ class ExtendKeyResolveTests(TestCase):
             "app/rollout",
             "_ocmo:\n"
             "  extend:\n"
-            "    mode: distribute\n"
+            "    mode: broadcast\n"
             "    by: .overlay\n"
             "    configs:\n"
             "      - path: ../bases/svc-a\n"
@@ -196,7 +196,7 @@ class ExtendKeyResolveTests(TestCase):
             "app/root",
             "_ocmo:\n"
             "  extend:\n"
-            "    mode: align\n"
+            "    mode: zip\n"
             "    by: .patches\n"
             "    configs:\n"
             "      - path: ../bases/a\n"
@@ -276,7 +276,7 @@ class ExtendKeyResolveTests(TestCase):
             "  extend:\n"
             "    configs:\n"
             "      - ../bases/deployment\n"
-            "    mode: accumulate\n"
+            "    mode: stack\n"
             "spec:\n"
             "  template:\n"
             "    spec:\n"

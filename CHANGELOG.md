@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from `1.0.0` onward.
 Before `1.0.0`, minor releases may include breaking API or behavior changes.
 
+## [0.8.21]
+
+### Changed (breaking)
+
+- **`_ocmo.extend.mode` renamed:** `accumulate` → `stack`, `distribute` → `broadcast`, `align` → `zip`. Added `replicate`.
+- **`_ocmo.render.mode` renamed:** `distribute` → `broadcast`, `align` → `zip`. Added `replicate`.
+- **Output naming:** extend `replicate` suffixes outputs (`name-1.ext`, …); global dedup adds `-1`, `-2` to duplicate names when multiple outputs share a name.
+
+Legacy mode values are no longer accepted.
+
+### Added
+
+- **`extend.replicate`:** merge one base config with each element at `by` (1 × N outputs).
+- **`render.replicate`:** render one template once per element at `by`.
+
 ## [0.8.20]
 
 ### Docs

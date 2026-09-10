@@ -82,7 +82,7 @@ _ocmo:
 | `selector` | No | Dot-path or list of dot-paths to extract a subset |
 | `remap` | No | `{old_key: new_key}` — rename keys before merging |
 
-Mode (`accumulate`, `distribute`, `align`) applies to the whole `extend` list. Default: `accumulate`.
+Mode (`stack`, `broadcast`, `zip`, `replicate`) applies to the whole `extend` list. Default: `stack`.
 
 See [Extend](../features/resolving/extend.md) for modes and merge semantics.
 
@@ -101,7 +101,7 @@ _ocmo:
 
 **Mutually exclusive with `cast`** — use one or the other.
 
-Mode (`distribute`, `align`) controls multi-template output.
+Mode (`broadcast`, `align`) controls multi-template output.
 
 See [Render](../features/resolving/render.md).
 

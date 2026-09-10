@@ -42,7 +42,7 @@ policies:
 _EXTEND_YAML = """\
 _ocmo:
   extend:
-    mode: accumulate
+    mode: stack
     configs:
       - _permissions@latest
 key: value

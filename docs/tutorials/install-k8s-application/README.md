@@ -33,7 +33,7 @@ OCMO is the store. Helm is used **once**, as a generator. After that, [extend](.
 
 - Namespace `tutorial-k8s` with an access policy: humans author configs; CI deploys with a [resolver](../../features/resolvers.md) token.
 - Vendor tree: `helm template` output for cert-manager **v1.21.1**. Each vendor config is tagged `chart-v1.21.1`.
-- `envs/prod` and `envs/dev`: one `app` config per environment. Each `app` uses [distribute](../../features/resolving/extend.md#mode-distribute) so one resolve emits every Kubernetes object. Small `overrides/` files patch Deployments and ServiceAccounts.
+- `envs/prod` and `envs/dev`: one `app` config per environment. Each `app` uses [broadcast](../../features/resolving/extend.md#mode-broadcast) so one resolve emits every Kubernetes object. Small `overrides/` files patch Deployments and ServiceAccounts.
 - Dev deployment overrides and dev `app` [propagate](../../features/propagation.md) to prod when you resolve them with `--mark-stable`. You cannot set the reserved tag `stable` with `ocmo tag item`.
 - Registry credentials as an OCMO [secret](../../features/secrets.md) at `apps/registry.secret`. Deployment overrides pull images from `myregistry.example.com`, not from upstream `quay.io`.
 - Image tags driven by the dynamic [parameter](../../features/resolving/parameters.md) `app_version`. You can bump it in dev and propagate, or pass `--param app_version=v1.21.2` at resolve time.
@@ -58,7 +58,7 @@ tutorial-k8s/                              # OCMO namespace (workspace)
         │   └── …
         ├── envs/
         │   ├── dev/
-        │   │   ├── app                    # distribute: all vendor + overrides → ~50 manifests
+        │   │   ├── app                    # broadcast: all vendor + overrides → ~50 manifests
         │   │   ├── deploy                 # dev resolver (scope: envs/dev/); CI: ocmo resolve app
         │   │   └── overrides/
         │   │       ├── deployment-cert-manager-controller.yaml
@@ -81,7 +81,7 @@ tutorial-k8s/                              # OCMO namespace (workspace)
 
 Deployment overrides [extend](../../features/resolving/extend.md) one vendor file each. To change only `image` on the first container, they use **numeric keys** (`containers: 0: {image: …}`). A YAML list in the override would replace the whole list. See [Updating list items by index](../../features/resolving/extend.md#updating-list-items-by-index).
 
-Vendor ServiceAccounts are **not** listed in `app`. `all-service-accounts.patch` [distributes](../../features/resolving/extend.md#mode-distribute) `imagePullSecrets` onto the three vendor ServiceAccount configs instead.
+Vendor ServiceAccounts are **not** listed in `app`. `all-service-accounts.patch` [distributes](../../features/resolving/extend.md#mode-broadcast) `imagePullSecrets` onto the three vendor ServiceAccount configs instead.
 
 ## Prerequisites
 

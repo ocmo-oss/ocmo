@@ -74,7 +74,7 @@ The caller needs `secret:resolve` permission on the referenced secret. Options:
 
 1. Run trace-only and note all participating configs.
 2. Check each base config's data manually: `ocmo -n prod get item <path>@<version> --raw`
-3. Deep-merge semantics: the **later** config in the accumulate chain wins. The current config's data wins over all bases.
+3. Deep-merge semantics: the **later** config in the stack chain wins. The current config's data wins over all bases.
 4. Check for typos in extend paths — a misspelled path may silently load a different config.
 
 ---
