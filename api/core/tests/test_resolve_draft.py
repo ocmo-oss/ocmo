@@ -48,7 +48,7 @@ _BASE_YAML = "key: value\n"
 _EXTEND_DRAFT_YAML = """\
 _ocmo:
   extend:
-    mode: accumulate
+    mode: stack
     configs:
       - ./shared/base@latest
 draft: true

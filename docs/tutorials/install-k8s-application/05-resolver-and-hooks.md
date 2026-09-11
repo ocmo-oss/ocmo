@@ -19,7 +19,7 @@ Paths in resolve requests are **relative to resolver scope**. `app` is not a typ
 
 A resolver is **not** a config. You create it with `create resolver`, not `create config`.
 
-CI resolves **one config**: `app`. That config uses `mode: distribute` and emits ~50 artifacts. Do **not** resolve `.` (scope root). That would also resolve standalone override files and duplicate work. The path `.` is only valid with a resolver token (OIDC users cannot resolve `.`).
+CI resolves **one config**: `app`. That config uses `mode: broadcast` and emits ~50 artifacts. Do **not** resolve `.` (scope root). That would also resolve standalone override files and duplicate work. The path `.` is only valid with a resolver token (OIDC users cannot resolve `.`).
 
 The API only **returns** hook command text. It does not execute `kubectl` on the OCMO server. The CLI runs hooks on the machine that holds `OCMO_TOKEN`, after it has written artifacts to disk.
 

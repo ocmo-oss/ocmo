@@ -9,8 +9,8 @@ the documented pipeline steps:
     2. Pop and validate the ``_ocmo`` metadata block (strip it from data)
     3. Apply parameters (``{!param}`` placeholders + ``{!omit}``)
     4. Apply ``_ocmo.name`` (single-output)
-    5. Apply ``_ocmo.extend`` (accumulate / distribute / align)
-    6. Apply ``_ocmo.render`` (distribute / align) — incompatible with cast
+    5. Apply ``_ocmo.extend`` (stack / broadcast / zip / replicate)
+    6. Apply ``_ocmo.render`` (broadcast / zip / replicate) — incompatible with cast
     7. Apply cast (priority: ``?cast=`` → resolver default → ``_ocmo.cast`` → yaml)
 
 Orchestration (path classification, artifact storage, cache, mark-stable,
@@ -66,6 +66,7 @@ from ..shortcuts import (
     resolve_relative_path,
 )
 from ..utils.deep_merge import deep_merge, strip_omit
+from ..utils.output_naming import deduplicate_output_names, replicate_output_name
 from .auth import AuthManager
 from .cast import CastManager
 from .config_validation import ConfigValidationManager
@@ -377,12 +378,13 @@ class ResolvePipelineManager:
             if want_data:
                 for out in outputs:
                     out.raw_data = out.data_text
-                return outputs
-            return outputs
 
         # Capture _ocmo.cast for the top-level caller (not recursive sub-resolves).
         if not chain:
             self.metadata_cast = metadata.cast
+
+        if len(outputs) > 1:
+            deduplicate_output_names(outputs)
 
         # 8) Cast (priority: cast_override → metadata.cast → yaml)
         cast_fmt, cast_opts = self._effective_cast(metadata.cast)
@@ -391,6 +393,8 @@ class ResolvePipelineManager:
 
         caster = CastManager(cast_fmt, cast_opts, source_label=self.config_obj.path)
         for out in outputs:
+            if out.rendered:
+                continue
             try:
                 out.format = cast_fmt
                 out.data_text = caster.cast(out.raw_data)
@@ -492,7 +496,7 @@ class ResolvePipelineManager:
                     )
                 )
 
-        if mode == "accumulate":
+        if mode == "stack":
             merged: Any = {}
             for b in base_outputs:
                 merged = deep_merge(merged, b.raw_data)
@@ -500,13 +504,13 @@ class ResolvePipelineManager:
             current.raw_data = strip_omit(merged)
             return [current]
 
-        # Both distribute and align need the "patch" payload from current data.
+        # broadcast, zip, and replicate need the "patch" payload from current data.
         if extend.by:
             patch_value = json_path(current_data, extend.by)
         else:
             patch_value = current_data
 
-        if mode == "distribute":
+        if mode == "broadcast":
             results: list[_ResolvedOutput] = []
             for b in base_outputs:
                 merged = deep_merge(b.raw_data, patch_value)
@@ -522,12 +526,12 @@ class ResolvePipelineManager:
                 )
             return results
 
-        if mode == "align":
+        if mode == "zip":
             if not isinstance(patch_value, list):
-                raise CannotResolveConfig(f"extend mode 'align' requires by={extend.by!r} to resolve to a list")
+                raise CannotResolveConfig(f"extend mode 'zip' requires by={extend.by!r} to resolve to a list")
             if len(patch_value) != len(base_outputs):
                 raise CannotResolveConfig(
-                    f"extend 'align' length mismatch: {len(base_outputs)} configs vs "
+                    f"extend 'zip' length mismatch: {len(base_outputs)} configs vs "
                     f"{len(patch_value)} items at {extend.by!r}"
                 )
             results = []
@@ -537,6 +541,27 @@ class ResolvePipelineManager:
                     _ResolvedOutput(
                         name=b.name,
                         version=b.version,
+                        format="yaml",
+                        data_text=None,
+                        raw_data=strip_omit(merged),
+                        trace=trace,
+                    )
+                )
+            return results
+
+        if mode == "replicate":
+            if len(base_outputs) != 1:
+                raise CannotResolveConfig("extend mode 'replicate' requires exactly one config in configs")
+            if not isinstance(patch_value, list):
+                raise CannotResolveConfig(f"extend mode 'replicate' requires by={extend.by!r} to resolve to a list")
+            base = base_outputs[0]
+            results = []
+            for i, patch in enumerate(patch_value):
+                merged = deep_merge(base.raw_data, patch)
+                results.append(
+                    _ResolvedOutput(
+                        name=replicate_output_name(base.name, i + 1),
+                        version=base.version,
                         format="yaml",
                         data_text=None,
                         raw_data=strip_omit(merged),
@@ -590,32 +615,44 @@ class ResolvePipelineManager:
         """Render ``templates`` against one resolved config output."""
         data = output.raw_data
 
-        if render.mode == "distribute":
+        if render.mode == "broadcast":
             if render.by:
                 bucket = json_path(data, render.by)
                 if not isinstance(bucket, list):
-                    raise CannotResolveConfig(f"render mode 'distribute' with by={render.by!r} requires a list")
+                    raise CannotResolveConfig(f"render mode 'broadcast' with by={render.by!r} requires a list")
                 merged_ctx: Any = {}
                 for entry in bucket:
                     merged_ctx = deep_merge(merged_ctx, entry)
                 contexts = [merged_ctx] * len(templates)
             else:
                 contexts = [data] * len(templates)
-        else:  # align
+            render_pairs = list(zip(templates, contexts))
+        elif render.mode == "zip":
             if render.by is None:
-                raise CannotResolveConfig("render mode 'align' requires by")
+                raise CannotResolveConfig("render mode 'zip' requires by")
             bucket = json_path(data, render.by)
             if not isinstance(bucket, list):
-                raise CannotResolveConfig(f"render mode 'align' requires by={render.by!r} to resolve to a list")
+                raise CannotResolveConfig(f"render mode 'zip' requires by={render.by!r} to resolve to a list")
             if len(bucket) != len(templates):
                 raise CannotResolveConfig(
-                    f"render 'align' length mismatch: {len(templates)} templates vs "
+                    f"render 'zip' length mismatch: {len(templates)} templates vs "
                     f"{len(bucket)} entries at {render.by!r}"
                 )
-            contexts = bucket
+            render_pairs = list(zip(templates, bucket))
+        elif render.mode == "replicate":
+            if len(templates) != 1:
+                raise CannotResolveConfig("render mode 'replicate' requires exactly one template")
+            if render.by is None:
+                raise CannotResolveConfig("render mode 'replicate' requires by")
+            bucket = json_path(data, render.by)
+            if not isinstance(bucket, list):
+                raise CannotResolveConfig(f"render mode 'replicate' requires by={render.by!r} to resolve to a list")
+            render_pairs = [(templates[0], ctx) for ctx in bucket]
+        else:
+            raise CannotResolveConfig(f"Unsupported render mode {render.mode!r}")
 
         results: list[_ResolvedOutput] = []
-        for (_orig_ref, tmpl_path, tmpl_version, body), ctx in zip(templates, contexts):
+        for (_orig_ref, tmpl_path, tmpl_version, body), ctx in render_pairs:
             try:
                 rendered = env.from_string(body).render(**(ctx if isinstance(ctx, Mapping) else {"_": ctx}))
             except TemplateError as exc:
@@ -648,7 +685,7 @@ class ResolvePipelineManager:
         chain: list[str],
         trace: dict[str, Any],
     ) -> list[_ResolvedOutput]:
-        """Render each resolved config output (e.g. from extend distribute/align)."""
+        """Render each resolved config output (e.g. from extend broadcast/zip/replicate)."""
         if not outputs:
             return []
 

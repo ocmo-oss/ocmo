@@ -8,10 +8,12 @@ Each resolved artifact has a `name` field in the response. By default, the name 
 
 | Scenario | Default name |
 |---------|-------------|
-| Single-config resolve | Last path segment: `app/web` → `web` |
+| Single-config resolve (`stack`) | Generating config `_ocmo.name` or last path segment |
 | Folder resolve | Relative path from base: `app/web` resolved from `app/` → `web` |
-| Multi-output (extend distribute/align) | Last segment of each source config: `base/nginx` → `nginx` |
-| Multi-output (render distribute/align) | Last segment of each template path: `templates/nginx.conf.j2` → `nginx.conf.j2` |
+| Multi-output extend `broadcast` / `zip` | Target config `_ocmo.name` or path leaf |
+| Multi-output extend `replicate` | Target config name + `-1`, `-2`, … before extension |
+| Multi-output render `broadcast` / `zip` | Template path leaf or `# ocmo.name:` header |
+| Multi-output render `replicate` | `# ocmo.name:` in template (Jinja + context); no auto suffix |
 
 ---
 
@@ -35,7 +37,7 @@ _ocmo:
 
 ## Single-config resolve
 
-`_ocmo.name` replaces the default name entirely.
+`_ocmo.name` on the generating config replaces the default name entirely.
 
 ```yaml
 # Config at: k8s/prod/nginx-deployment
@@ -98,7 +100,31 @@ ocmo -n prod resolve apps/api/ -O ./output/
 
 ## Multi-output naming
 
-`_ocmo.name` only applies to **single-output** resolutions. When extend `distribute`/`align` or render `distribute`/`align` produces multiple outputs, each output is named from its **source** (the base config or template). To customize multi-output names, set `_ocmo.name` on each individual base config or template rather than on the generating config.
+`_ocmo.name` on the **generating** config applies only to **single-output** (`stack`) resolutions.
+
+| Extend mode | Name source |
+|-------------|-------------|
+| `broadcast`, `zip` | Each **target config** (`_ocmo.name` or path leaf) |
+| `replicate` | Target config name + numeric suffix on every output (`myconf-1.yaml`, `myconf-2.yaml`, …) |
+
+| Render mode | Name source |
+|-------------|-------------|
+| `broadcast`, `zip` | Template path leaf, or `# ocmo.name:` first line in rendered body |
+| `replicate` | `# ocmo.name:` in template (use context variables); no automatic suffix |
+
+Set `_ocmo.name` on each **target config** (extend) or use `# ocmo.name:` in templates (render) to customize names.
+
+---
+
+## Duplicate name deduplication
+
+When a resolve produces **more than one** output and two or more items share the same name, OCMO assigns numeric suffixes before the extension to duplicates:
+
+```
+conf.yaml, conf.yaml, conf.yaml  →  conf.yaml, conf-1.yaml, conf-2.yaml
+```
+
+The **first** occurrence keeps the original name; later duplicates get `-1`, `-2`, and so on. This applies across all multi-output modes after mode-specific naming runs.
 
 ---
 
@@ -122,3 +148,5 @@ Resolve with `?param_env=staging` → artifact name: `configs/staging-web.yaml`.
 - [Resolving overview](README.md)
 - [Folder resolve](folders.md)
 - [Parameters](parameters.md)
+- [Extend](extend.md)
+- [Render](render.md)

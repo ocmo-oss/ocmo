@@ -146,7 +146,7 @@ _ocmo:
   extend:
     configs:
       - ./overrides/item
-    mode: accumulate
+    mode: stack
 aggregated: true
 """,
             "config",
@@ -165,7 +165,7 @@ _ocmo:
   extend:
     configs:
       - ../missing/external
-    mode: accumulate
+    mode: stack
 value: ok
 """,
             "config",
@@ -182,7 +182,7 @@ _ocmo:
   extend:
     configs:
       - ../missing/external
-    mode: accumulate
+    mode: stack
 value: ok
 """,
             "config",
@@ -205,7 +205,7 @@ _ocmo:
   extend:
     configs:
       - ./cfg-sibling
-    mode: accumulate
+    mode: stack
 value: ok
 """,
             "config",
@@ -245,7 +245,7 @@ _ocmo:
   extend:
     configs:
       - ./overrides/item
-    mode: accumulate
+    mode: stack
 aggregated: true
 """,
             "config",
@@ -265,7 +265,7 @@ _ocmo:
   extend:
     configs:
       - ../missing/external
-    mode: accumulate
+    mode: stack
 value: ok
 """,
             "config",
@@ -288,7 +288,7 @@ _ocmo:
   extend:
     configs:
       - ../missing/external
-    mode: accumulate
+    mode: stack
 value: ok
 """,
             "config",

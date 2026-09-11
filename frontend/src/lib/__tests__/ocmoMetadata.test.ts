@@ -44,7 +44,7 @@ describe("hasOcmoRenderConfiguration", () => {
   it("returns true when render templates are declared", () => {
     const content = `_ocmo:
   render:
-    mode: distribute
+    mode: broadcast
     templates:
       - shared/tmpl@latest
 key: value

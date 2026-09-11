@@ -2,5 +2,5 @@ _ocmo:
   extend:
     configs:
       - ./loop_b
-    mode: accumulate
+    mode: stack
 hint: from-a

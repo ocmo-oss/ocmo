@@ -85,8 +85,50 @@ class OcmoMetadataSchemaTests(TestCase):
             ConfigOcmoMetadataSchema.model_validate(
                 {
                     "extend": {
-                        "mode": "accumulate",
+                        "mode": "stack",
                         "configs": ["a@latest", "b@latest", "c@latest"],
+                    },
+                }
+            )
+
+    def test_legacy_extend_modes_rejected(self):
+        for legacy in ("accumulate", "distribute", "align"):
+            with self.subTest(mode=legacy):
+                with self.assertRaises(PydanticValidationError):
+                    ConfigOcmoMetadataSchema.model_validate({"extend": {"mode": legacy, "configs": ["a@latest"]}})
+
+    def test_legacy_render_modes_rejected(self):
+        for legacy in ("distribute", "align"):
+            with self.subTest(mode=legacy):
+                with self.assertRaises(PydanticValidationError):
+                    ConfigOcmoMetadataSchema.model_validate(
+                        {"render": {"mode": legacy, "templates": ["tmpl/a@latest"]}}
+                    )
+
+    def test_extend_replicate_requires_single_config(self):
+        with self.assertRaises(PydanticValidationError):
+            ConfigOcmoMetadataSchema.model_validate(
+                {
+                    "extend": {
+                        "mode": "replicate",
+                        "by": ".data",
+                        "configs": ["a@latest", "b@latest"],
+                    },
+                }
+            )
+
+    def test_extend_replicate_requires_by(self):
+        with self.assertRaises(PydanticValidationError):
+            ConfigOcmoMetadataSchema.model_validate({"extend": {"mode": "replicate", "configs": ["a@latest"]}})
+
+    def test_render_replicate_requires_single_template(self):
+        with self.assertRaises(PydanticValidationError):
+            ConfigOcmoMetadataSchema.model_validate(
+                {
+                    "render": {
+                        "mode": "replicate",
+                        "by": ".items",
+                        "templates": ["a@latest", "b@latest"],
                     },
                 }
             )
@@ -97,7 +139,7 @@ class ExtendRenderIntegrationTests(TestCase):
     def setUp(self):
         self.ns = create_test_namespace("ocmo-meta")
 
-    def test_extend_distribute_then_render_produces_multiple_outputs(self):
+    def test_extend_broadcast_then_render_produces_multiple_outputs(self):
         TreeManager(self.ns, "bases/a", auth=None).create_item("name: a\n", "config")
         TreeManager(self.ns, "bases/b", auth=None).create_item("name: b\n", "config")
         TreeManager(self.ns, "tmpl/out", auth=None).create_item(
@@ -107,12 +149,12 @@ class ExtendRenderIntegrationTests(TestCase):
         yaml = (
             "_ocmo:\n"
             "  extend:\n"
-            "    mode: distribute\n"
+            "    mode: broadcast\n"
             "    configs:\n"
             "      - bases/a@latest\n"
             "      - bases/b@latest\n"
             "  render:\n"
-            "    mode: distribute\n"
+            "    mode: broadcast\n"
             "    templates:\n"
             "      - tmpl/out@latest\n"
             "patch:\n"

@@ -1,0 +1,6 @@
+id: error_extend_zip_mismatch
+description: extend zip with mismatched config count and by-list length returns 422
+resolve_path: scenario_mismatch/root
+expect:
+  status: 422
+  error_substring: zip

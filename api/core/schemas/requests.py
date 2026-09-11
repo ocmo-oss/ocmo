@@ -379,8 +379,8 @@ class GlobalPermissionRuleMovePayload(Schema):
 
 # ── Ocmo metadata schemas (used by resolving manager) ──
 
-ExtendMode = Literal["accumulate", "distribute", "align"]
-RenderMode = Literal["distribute", "align"]
+ExtendMode = Literal["stack", "broadcast", "zip", "replicate"]
+RenderMode = Literal["broadcast", "zip", "replicate"]
 ParameterType = Literal["projected", "dynamic", "secret"]
 
 
@@ -456,18 +456,20 @@ class ConfigExtendSchema(BaseModel):
         ],
     )
     mode: ExtendMode = Field(
-        "accumulate",
+        "stack",
         description=(
-            "``accumulate``: deep-merge all sources then this config. "
-            "``distribute``: merge the value at ``by`` into each source document separately. "
-            "``align``: pair list items at ``by`` with sources by index."
+            "``stack``: deep-merge all sources then this config. "
+            "``broadcast``: merge the value at ``by`` into each source document separately. "
+            "``zip``: pair list items at ``by`` with sources by index. "
+            "``replicate``: merge one source with each list item at ``by``."
         ),
     )
     by: SelectorExpression | None = Field(
         None,
         description=(
             "JSONPath into this config's data (after ``_ocmo`` removal). "
-            "Defaults to the document root. Required for ``align`` mode; meaning depends on ``mode``."
+            "Defaults to the document root. Required for ``zip`` and ``replicate``; "
+            "optional for ``broadcast``."
         ),
         examples=[".environments", ".services"],
     )
@@ -488,9 +490,11 @@ class ConfigExtendSchema(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_align_by(self):
-        if self.mode == "align" and not self.by:
-            raise ValueError("extend mode 'align' requires the 'by' field")
+    def validate_mode_constraints(self):
+        if self.mode in ("zip", "replicate") and not self.by:
+            raise ValueError(f"extend mode {self.mode!r} requires the 'by' field")
+        if self.mode == "replicate" and len(self.configs) != 1:
+            raise ValueError("extend mode 'replicate' requires exactly one config in configs")
         return self
 
 
@@ -509,10 +513,11 @@ class ConfigRenderSchema(BaseModel):
         examples=[["../templates/nginx.conf.j2@latest", "../templates/app.ini.j2"]],
     )
     mode: RenderMode = Field(
-        "distribute",
+        "broadcast",
         description=(
-            "``distribute``: render each template once per element at ``by`` (or once for root data). "
-            "``align``: pair list items at ``by`` with templates by index."
+            "``broadcast``: render each template with the same context (or merged list at ``by``). "
+            "``zip``: pair list items at ``by`` with templates by index. "
+            "``replicate``: render one template once per list item at ``by``."
         ),
     )
     by: SelectorExpression | None = Field(
@@ -538,9 +543,11 @@ class ConfigRenderSchema(BaseModel):
         return v
 
     @model_validator(mode="after")
-    def validate_align_by(self):
-        if self.mode == "align" and not self.by:
-            raise ValueError("render mode 'align' requires the 'by' field")
+    def validate_mode_constraints(self):
+        if self.mode in ("zip", "replicate") and not self.by:
+            raise ValueError(f"render mode {self.mode!r} requires the 'by' field")
+        if self.mode == "replicate" and len(self.templates) != 1:
+            raise ValueError("render mode 'replicate' requires exactly one template")
         return self
 
 

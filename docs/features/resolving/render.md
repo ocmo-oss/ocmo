@@ -62,8 +62,8 @@ _ocmo:
       - path: another/template.j2
         key: .services.nginx      # use only this subtree as context
         as: {}                    # (unused for render)
-    mode: distribute              # distribute | align
-    by: .some.list               # used in align mode
+    mode: broadcast              # broadcast | zip | replicate
+    by: .some.list               # required for zip and replicate
 ```
 
 ### Fields
@@ -71,14 +71,14 @@ _ocmo:
 | Field | Required | Description |
 |-------|----------|-------------|
 | `templates` | Yes | List of Template paths. Supports `@latest`, `@<tag>`, `@<version>`. Relative paths from the config's folder. |
-| `mode` | No | Default: `distribute`. |
-| `by` | No | JSON path into config data. For `align`: must point to a list. |
+| `mode` | No | Default: `broadcast`. |
+| `by` | No | JSON path into config data. Required for `zip` and `replicate`. |
 
 ---
 
 ## Modes
 
-### `distribute` (default)
+### `broadcast` (default)
 
 All templates rendered against **the same data context**. One output per template.
 
@@ -95,13 +95,13 @@ _ocmo:
     templates:
       - templates/nginx.conf.j2
       - templates/supervisor.conf.j2
-    mode: distribute
+    mode: broadcast
 
 domain: myapp.example.com
 workers: 4
 ```
 
-### `align`
+### `zip`
 
 `by` must point to a list in the config data. Each template is paired with the corresponding list element. One output per pair. List length must equal `templates` length.
 
@@ -118,7 +118,7 @@ _ocmo:
     templates:
       - templates/frontend.conf.j2
       - templates/backend.conf.j2
-    mode: align
+    mode: zip
     by: .vhosts
 
 vhosts:
@@ -130,11 +130,35 @@ vhosts:
     upstream: 127.0.0.1:8000
 ```
 
+### `replicate`
+
+Exactly **one** template. `by` must point to a list; the template is rendered once per list element as Jinja context. One output per element.
+
+```
+template + by[0]  →  output[0]
+template + by[1]  →  output[1]
+```
+
+Use `# ocmo.name:` in the template (with context variables) to assign distinct output names per row.
+
+```yaml
+_ocmo:
+  render:
+    templates:
+      - templates/item.yaml.j2
+    mode: replicate
+    by: .items
+
+items:
+  - {slug: alpha, value: 1}
+  - {slug: beta, value: 2}
+```
+
 ---
 
 ## Output naming
 
-The `name` of each rendered artifact defaults to the last segment of the **template** path (e.g., `nginx.conf.j2` → artifact name `nginx.conf.j2`). Override per-output using `_ocmo.name` on the **config**, or via [output naming](output-naming.md) conventions.
+The `name` of each rendered artifact defaults to the last segment of the **template** path (e.g., `nginx.conf.j2` → artifact name `nginx.conf.j2`). Override per-output using `# ocmo.name:` in the template body, or via [output naming](output-naming.md).
 
 ---
 

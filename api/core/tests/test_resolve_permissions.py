@@ -59,7 +59,7 @@ _BASE_YAML = "key: value\n"
 _EXTEND_SHARED_YAML = """\
 _ocmo:
   extend:
-    mode: accumulate
+    mode: stack
     configs:
       - ../../shared/base@latest
 key: child
@@ -68,7 +68,7 @@ key: child
 _RENDER_SHARED_YAML = """\
 _ocmo:
   render:
-    mode: distribute
+    mode: broadcast
     templates:
       - ../../shared/tmpl@latest
 key: child

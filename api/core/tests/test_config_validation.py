@@ -77,7 +77,7 @@ class ConfigValidationSchemaTests(TestCase):
             ConfigOcmoMetadataSchema.model_validate(
                 {
                     "is_json_schema": True,
-                    "extend": {"mode": "accumulate", "configs": ["a@latest"]},
+                    "extend": {"mode": "stack", "configs": ["a@latest"]},
                 }
             )
 
@@ -396,7 +396,7 @@ _ocmo:
     configs:
       - path: ../bases/{!env}
         key: .tier
-    mode: accumulate
+    mode: stack
 value: ok
 """,
             "config",
@@ -416,7 +416,7 @@ _ocmo:
   extend:
     configs:
       - ../shared/images@{!image_tag}
-    mode: accumulate
+    mode: stack
 value: ok
 """,
             "config",
@@ -435,7 +435,7 @@ _ocmo:
   extend:
     configs:
       - ../bases/{!env}
-    mode: accumulate
+    mode: stack
 value: ok
 """,
                 "config",
@@ -455,7 +455,7 @@ _ocmo:
   extend:
     configs:
       - ../shared/images@{!image_tag}
-    mode: accumulate
+    mode: stack
 value: ok
 """,
                 "config",
@@ -474,7 +474,7 @@ _ocmo:
   extend:
     configs:
       - ../../../bases/{!env}
-    mode: accumulate
+    mode: stack
 value: ok
 """,
             "config",

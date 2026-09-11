@@ -112,7 +112,7 @@ class TwoLayerCacheApiTests(TestCase):
 _EXTEND_YAML = """\
 _ocmo:
   extend:
-    mode: accumulate
+    mode: stack
     configs:
       - ../shared/base@latest
 key: child

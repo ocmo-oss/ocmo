@@ -1,8 +1,0 @@
-_ocmo:
-  extend:
-    mode: accumulate
-    configs:
-      - path: ./shared/all
-        key: .database
-host: db.prod.example.com
-pool_size: 20

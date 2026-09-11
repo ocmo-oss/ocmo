@@ -1,6 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+// Vite /api proxy target for direct dev-server access (:3000). Empty VITE_API_BASE_URL
+// means the SPA calls same-origin /api (through the gateway on :8080 in compose).
+const apiProxyTarget =
+  process.env.VITE_API_PROXY_TARGET ||
+  process.env.VITE_API_BASE_URL ||
+  'http://localhost:8000'
+
 export default defineConfig({
   plugins: [react()],
   worker: {
@@ -29,7 +36,7 @@ export default defineConfig({
     },
     proxy: {
       '/api': {
-        target: process.env.VITE_API_BASE_URL ?? 'http://localhost:8000',
+        target: apiProxyTarget,
         changeOrigin: true,
       },
     },

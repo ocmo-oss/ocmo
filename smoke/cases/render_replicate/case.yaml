@@ -1,0 +1,11 @@
+id: render_replicate
+description: render.replicate renders one template per element at by
+resolve_path: scenario_rrepl/app
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: alpha.yaml
+      file: alpha.yaml
+    - name: beta.yaml
+      file: beta.yaml

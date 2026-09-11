@@ -1,0 +1,8 @@
+_ocmo:
+  extend:
+    mode: stack
+    configs:
+      - path: ./shared/all
+        key: .database
+host: db.prod.example.com
+pool_size: 20

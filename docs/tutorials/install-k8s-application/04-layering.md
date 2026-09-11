@@ -5,7 +5,7 @@
 Three pieces work together:
 
 1. `overrides/` — small configs that [extend](../../features/resolving/extend.md) one vendor manifest each (Deployments, ServiceAccounts).
-2. `app` — one config with `mode: distribute`. It lists every vendor slug plus the override configs. The shared `metadata.labels` patch is merged into **each** output. One resolve → ~50 Kubernetes files.
+2. `app` — one config with `mode: broadcast`. It lists every vendor slug plus the override configs. The shared `metadata.labels` patch is merged into **each** output. One resolve → ~50 Kubernetes files.
 3. `_ocmo.propagation` **on dev overrides** — when you resolve a dev config with `[--mark-stable](../../features/resolving/README.md#mark-stable)`, OCMO advances the reserved `stable` tag and [pushes](../../features/propagation.md) a merge into the matching prod config. Prod keeps HA fields that dev does not define (`replicas`, `affinity`, `resources`).
 
 The `_ocmo` block is stripped from the artifact. It never appears in the YAML you apply.
@@ -27,11 +27,11 @@ Extend references are checked at save time: vendor files from [step 2](02-import
 | Path                                             | Role                                                                                                                  |
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
 | `envs/dev/overrides/deployment-*.yaml`           | Lighter overrides; [propagate](../../features/propagation.md) to prod when resolved with `--mark-stable` (step 3)     |
-| `envs/dev/overrides/all-service-accounts.patch`  | [Distribute](../../features/resolving/extend.md#mode-distribute) `imagePullSecrets` onto three vendor ServiceAccounts |
+| `envs/dev/overrides/all-service-accounts.patch`  | [Distribute](../../features/resolving/extend.md#mode-broadcast) `imagePullSecrets` onto three vendor ServiceAccounts |
 | `envs/dev/overrides/registry-creds`              | Kubernetes pull Secret (reads `apps/registry.secret`)                                                                 |
-| `envs/dev/app`                                   | Lists every vendor + override; `distribute` adds env labels to all outputs                                            |
+| `envs/dev/app`                                   | Lists every vendor + override; `broadcast` adds env labels to all outputs                                            |
 | `envs/prod/overrides/deployment-*.yaml`          | Extend one vendor Deployment; HA, images, resources                                                                   |
-| `envs/prod/overrides/all-service-accounts.patch` | Same distribute patch as dev (copy with `ocmo copy item`)                                                            |
+| `envs/prod/overrides/all-service-accounts.patch` | Same broadcast patch as dev (copy with `ocmo copy item`)                                                            |
 | `envs/prod/overrides/registry-creds`             | Same pull Secret overlay as dev (copy with `ocmo copy item`)                                                          |
 | `envs/prod/app`                                  | Same `app` body as dev; `env` comes from the path (`prod`)                                                            |
 
@@ -166,14 +166,14 @@ ocmo -n tutorial-k8s resolve draft apps/cert-manager/envs/dev/overrides/deployme
 
 ### Dev: ServiceAccounts (extend vendor, do not recreate)
 
-Vendor ServiceAccounts are **not** listed in `app`. This patch [distributes](../../features/resolving/extend.md#mode-distribute) the same `imagePullSecrets` fragment onto each vendor ServiceAccount. One resolve of this config emits **three** outputs (one per listed vendor file).
+Vendor ServiceAccounts are **not** listed in `app`. This patch [distributes](../../features/resolving/extend.md#mode-broadcast) the same `imagePullSecrets` fragment onto each vendor ServiceAccount. One resolve of this config emits **three** outputs (one per listed vendor file).
 
 ```yaml
 # apps/cert-manager/envs/dev/overrides/all-service-accounts.patch
 _ocmo:
   name: serviceaccount-cert-manager.yaml
   extend:
-    mode: distribute
+    mode: broadcast
     configs:
       - ../../../vendor/serviceaccount-cert-manager.yaml@chart-v1.21.1
       - ../../../vendor/serviceaccount-cert-manager-webhook.yaml@chart-v1.21.1
@@ -187,7 +187,7 @@ imagePullSecrets:
   - name: registry-creds
 ```
 
-For [distribute](../../features/resolving/output-naming.md#multi-output-naming), each output is named from the **source** vendor slug (`serviceaccount-cert-manager.yaml`, and so on). `_ocmo.name` on this generating config does not rename those outputs.
+For [broadcast](../../features/resolving/output-naming.md#multi-output-naming), each output is named from the **source** vendor slug (`serviceaccount-cert-manager.yaml`, and so on). `_ocmo.name` on this generating config does not rename those outputs.
 
 ### Dev: registry pull Secret
 
@@ -222,7 +222,7 @@ data:
 - the three ServiceAccounts (the patch emits those)
 - the three vendor Deployments (the override files replace them)
 
-`mode: distribute` with no `by` uses the whole document (minus `_ocmo`) as the patch. Here that is `metadata.labels`. Each listed config gets those labels merged in. You get **one output per list entry**. Nested distribute (the ServiceAccount patch) expands in place, so you still get one file per ServiceAccount.
+`mode: broadcast` with no `by` uses the whole document (minus `_ocmo`) as the patch. Here that is `metadata.labels`. Each listed config gets those labels merged in. You get **one output per list entry**. Nested broadcast (the ServiceAccount patch) expands in place, so you still get one file per ServiceAccount.
 
 After [importing the chart](02-import-helm-chart.md), confirm slugs with `ocmo -n tutorial-k8s ls apps/cert-manager/vendor -o name`. Imported slugs use `-` where `kubectl-slice` used `:` (see [step 2](02-import-helm-chart.md#import-into-ocmo)). If your split matches step 2, use this file as-is:
 
@@ -241,7 +241,7 @@ _ocmo:
       value: ".Path[-2]"
       description: Target environment (prod / dev)
   extend:
-    mode: distribute
+    mode: broadcast
     configs:
       - ../../vendor/clusterrolebinding-cert-manager-cainjector.yaml@chart-v1.21.1
       - ../../vendor/clusterrolebinding-cert-manager-controller-approve-cert-manager-io.yaml@chart-v1.21.1
@@ -682,7 +682,7 @@ ocmo -n tutorial-k8s resolve apps/cert-manager/envs/prod/app --cast yaml --outpu
 ls /tmp/tutorial-k8s-manifests/ | wc -l    # expect ~50
 ```
 
-`envs/prod/app` is a multi-output [distribute](../../features/resolving/extend.md#mode-distribute) resolve (~50 files). Use `--output-dir` to write one file per artifact; `-O` / `--output-file` is only for single-item resolves.
+`envs/prod/app` is a multi-output [broadcast](../../features/resolving/extend.md#mode-broadcast) resolve (~50 files). Use `--output-dir` to write one file per artifact; `-O` / `--output-file` is only for single-item resolves.
 
 ### REST
 
