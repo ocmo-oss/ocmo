@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from `1.0.0` onward.
 Before `1.0.0`, minor releases may include breaking API or behavior changes.
 
-## [0.8.21]
+## [0.8.21] - 2026-09-11
 
 ### Changed (breaking)
 
@@ -48,5 +48,6 @@ Legacy mode values are no longer accepted.
 - Initial open-source monorepo publication: API, SDK, CLI, frontend, gateway, and documentation.
 - Apache 2.0 license, contributor guidelines, and security policy.
 
+[0.8.21]: https://github.com/ocmo-oss/ocmo/compare/v0.8.20...v0.8.21
 [0.8.20]: https://github.com/ocmo-oss/ocmo/compare/v0.8.19...v0.8.20
 [0.8.19]: https://github.com/ocmo-oss/ocmo/releases/tag/v0.8.19
