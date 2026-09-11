@@ -1,0 +1,11 @@
+id: naming_extend_replicate_distinct
+description: "Extend replicate: data-driven names without auto-suffix"
+resolve_path: extend/replicate/distinct-names
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: app-dev.yaml
+      file: app-dev.yaml
+    - name: app-staging.yaml
+      file: app-staging.yaml

@@ -1,0 +1,8 @@
+_ocmo:
+  propagation:
+    enabled: true
+    trigger: manual
+    mode: data
+    targets:
+      - dev/tgt
+shared: from_source

@@ -1,0 +1,8 @@
+id: cast_env
+description: _ocmo.cast env format with unix dialect and APP_ prefix
+resolve_path: scenario5/envapp
+expect:
+  status: 200
+  items:
+    - name: envapp
+      file: envapp.env

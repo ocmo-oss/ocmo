@@ -18,7 +18,7 @@ _ocmo:
       description: pod replicas
       transformers:
         - int
-  name: "{!cluster}-{!env}.conf"
+  name: "{._ocmo.Name}-{._ocmo.Path[-3]}.conf"
 
 apiVersion: apps/v1
 kind: Deployment

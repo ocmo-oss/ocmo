@@ -3,7 +3,8 @@
 Implements the parameters step from ``docs/resolving-parameters-feature.md``:
 evaluate declared parameters (projected, dynamic, secret), apply transformers,
 and substitute ``{!name}`` / ``{!omit}`` placeholders into the config body and
-selected ``_ocmo`` metadata fields.
+selected ``_ocmo`` metadata fields (extend/render refs). ``_ocmo.name`` uses
+``{.selector}`` placeholders resolved after extend merge instead.
 
 Projected selectors include ``.Name``, ``.Path``, ``.Path[N]``, ``.Data.*``,
 ``.Version.tag``, and ``.Version.number``.
@@ -287,7 +288,7 @@ class ResolveParametersManager:
         self.parameters_meta = parameters_meta
 
     def _substitute_metadata(self, metadata: ConfigOcmoMetadataSchema) -> ConfigOcmoMetadataSchema:
-        """Substitute `{!param}` placeholders in extend / render / name fields."""
+        """Substitute `{!param}` placeholders in extend / render reference fields."""
 
         params = self.parameters_effective
 
@@ -306,8 +307,6 @@ class ResolveParametersManager:
             metadata.extend.configs = updated_configs
         if metadata.render is not None:
             metadata.render.templates = [sub(t) for t in metadata.render.templates]
-        if metadata.name is not None:
-            metadata.name = sub(metadata.name)
         return metadata
 
     def _eval_projected(self, selector: str, context: dict[str, Any]) -> Any:

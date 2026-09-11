@@ -1,0 +1,10 @@
+_ocmo:
+  extend:
+    mode: broadcast
+    by: .overlay
+    configs:
+      - ../targets/svc-a
+      - ../targets/svc-b
+overlay:
+  region: eu
+  log_level: debug

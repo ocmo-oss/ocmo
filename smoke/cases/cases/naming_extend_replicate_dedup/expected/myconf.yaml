@@ -1,0 +1,4 @@
+_ocmo:
+  name: myconf.yaml
+foo: bar
+patch: a

@@ -18,13 +18,15 @@ For each config, steps run in this order:
 
 ```
 1. Load config body → strip _ocmo block
-2. Parameters       → substitute {!name} placeholders
-3. Output name      → apply _ocmo.name if set
-4. Extend           → deep-merge referenced configs
-5. Render           → apply Jinja2 templates
+2. Parameters       → substitute {!name} placeholders (body + extend/render refs)
+3. Extend           → deep-merge referenced configs
+4. Output name      → apply _ocmo.name after merge ({.selector} placeholders)
+5. Render           → apply Jinja2 templates (# ocmo.name: overrides extend name)
 6. Cast             → serialize to output format
 7. Store artifact   → write to backend, mint download URL
 ```
+
+See [Output naming](output-naming.md) for placeholder syntax and per-mode name ownership.
 
 Each stage is optional — a config with no `_ocmo` block simply passes through and is cast to YAML.
 

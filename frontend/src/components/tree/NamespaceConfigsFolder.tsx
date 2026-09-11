@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight, FolderCog } from "lucide-react";
 import { useParams } from "react-router-dom";
 import type { Lock, TreeNavigationNode } from "../../api/types";
@@ -7,6 +7,8 @@ import { NAMESPACE_CONFIGS_FOLDER_LABEL } from "../../lib/builtinPaths";
 import { isTreeNodeVisible } from "../../lib/treeFilter";
 import { TreeBranchContextMenu } from "./TreeBranchContextMenu";
 import { TreeNodeComponent } from "./TreeNode";
+import { isPathUnderFolder } from "../../lib/treeBranch";
+import { useTreeExpansionStore } from "../../store/treeExpansion";
 
 interface NamespaceConfigsFolderProps {
   items: TreeNavigationNode[];
@@ -27,7 +29,19 @@ export function NamespaceConfigsFolder({
     x: number;
     y: number;
   } | null>(null);
+  const isolateRevision = useTreeExpansionStore((s) => s.isolateRevision);
+  const isolatedPath = useTreeExpansionStore((s) => s.isolatedPath);
   const { reloadBranch, reloading } = useReloadTreeBranch(namespace);
+
+  useEffect(() => {
+    if (!isolatedPath) return;
+    const onBranch = items.some((item) =>
+      isPathUnderFolder(item.path, isolatedPath),
+    );
+    if (!onBranch) {
+      setExpanded(false);
+    }
+  }, [isolateRevision, isolatedPath, items]);
 
   const visibleItems = items.filter((item) =>
     isTreeNodeVisible(item.path, matchingPaths, searchActive),
@@ -75,6 +89,7 @@ export function NamespaceConfigsFolder({
           x={contextMenu.x}
           y={contextMenu.y}
           reloading={reloading}
+          reloadLabel="Reload tree"
           onClose={() => setContextMenu(null)}
           onReload={() => {
             void reloadBranch().then(() => setContextMenu(null));

@@ -1,0 +1,4 @@
+_ocmo:
+  name: "{._ocmo.Name}-{.region}.yaml"
+name: svc-a
+port: 8080

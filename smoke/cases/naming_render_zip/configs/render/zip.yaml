@@ -1,0 +1,10 @@
+_ocmo:
+  render:
+    mode: zip
+    by: .services
+    templates:
+      - render/zip-frontend.j2@latest
+      - render/zip-backend.j2@latest
+services:
+  - {name: web, port: 80}
+  - {name: api, port: 8080}

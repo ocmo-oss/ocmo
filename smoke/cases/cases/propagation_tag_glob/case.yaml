@@ -1,0 +1,14 @@
+kind: propagation
+id: propagation_tag_glob
+description: Tag glob wildcard matches release-* tags
+source_path: dev/src
+action: tag
+tag:
+  name: release-2026
+  version: 1
+expect:
+  status: 200
+  propagation: true
+  targets:
+    - path: dev/tgt
+      status: updated

@@ -12,7 +12,7 @@ Before `1.0.0`, minor releases may include breaking API or behavior changes.
 
 - **`_ocmo.extend.mode` renamed:** `accumulate` → `stack`, `distribute` → `broadcast`, `align` → `zip`. Added `replicate`.
 - **`_ocmo.render.mode` renamed:** `distribute` → `broadcast`, `align` → `zip`. Added `replicate`.
-- **Output naming:** extend `replicate` suffixes outputs (`name-1.ext`, …); global dedup adds `-1`, `-2` to duplicate names when multiple outputs share a name.
+- **Output naming:** `_ocmo.name` uses deferred `{.selector}` placeholders (merged data + `{._ocmo.*}` metadata). `{!param}` in names is rejected. Extend `replicate` no longer auto-suffixes; dedup adds `-1`, `-2` only on name collisions.
 
 Legacy mode values are no longer accepted.
 

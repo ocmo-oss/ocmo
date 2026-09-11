@@ -1,0 +1,13 @@
+_ocmo:
+  render:
+    templates:
+      - scenario_rzip/svc-frontend.conf.j2
+      - scenario_rzip/svc-backend.conf.j2
+    mode: zip
+    by: .services
+
+services:
+  - name: webserver
+    port: 80
+  - name: apiserver
+    port: 8080

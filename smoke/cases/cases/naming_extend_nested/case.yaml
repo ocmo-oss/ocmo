@@ -1,0 +1,8 @@
+id: naming_extend_nested
+description: "Nested extend: target stack + parent broadcast naming"
+resolve_path: extend/nested/parent-broadcast
+expect:
+  status: 200
+  items:
+    - name: nested-owner-nested-eu.yaml
+      file: nested-owner-nested-eu.yaml

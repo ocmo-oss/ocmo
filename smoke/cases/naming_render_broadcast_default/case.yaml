@@ -1,0 +1,8 @@
+id: naming_render_broadcast_default
+description: "Render broadcast: default artifact name is template path leaf"
+resolve_path: render/broadcast-default
+expect:
+  status: 200
+  items:
+    - name: default-leaf.j2
+      file: default-leaf.j2

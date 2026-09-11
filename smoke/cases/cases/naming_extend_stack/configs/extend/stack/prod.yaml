@@ -1,0 +1,8 @@
+_ocmo:
+  extend:
+    mode: stack
+    configs:
+      - ../bases/base
+  name: app-{.database.env}.yaml
+database:
+  env: prod

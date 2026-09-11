@@ -116,6 +116,65 @@ def _delete_ephemeral_item(client: OcmoApiClient, namespace: str, path: str) -> 
         )
 
 
+def _bootstrap_configs_tree(ns, configs: list[tuple[str, str]]) -> None:
+    """Create configs via TreeManager with reference-cycle retry (Django / recording)."""
+
+    from django.core.exceptions import ValidationError as OcmoValidationError
+    from core.managers.tree import TreeManager
+
+    pending = list(configs)
+    max_rounds = len(pending) + 1
+
+    for _ in range(max_rounds):
+        if not pending:
+            return
+        next_pending: list[tuple[str, str]] = []
+        for tree_path, contents in pending:
+            mgr = TreeManager(ns, tree_path, auth=None)
+            try:
+                if mgr.item:
+                    mgr.update_item(contents)
+                else:
+                    mgr.create_item(contents, "config")
+            except OcmoValidationError:
+                next_pending.append((tree_path, contents))
+                continue
+
+        if len(next_pending) == len(pending):
+            for tree_path, contents in pending:
+                stub = _config_bootstrap_stub(contents)
+                mgr = TreeManager(ns, tree_path, auth=None)
+                if mgr.item:
+                    mgr.update_item(stub)
+                else:
+                    mgr.create_item(stub, "config")
+            for tree_path, contents in pending:
+                TreeManager(ns, tree_path, auth=None).update_item(contents)
+            return
+        pending = next_pending
+
+    for tree_path, _contents in pending:
+        raise RuntimeError(f"Could not create config {tree_path!r} after {max_rounds} attempts")
+
+
+def bootstrap_case_tree(ns, case: SmokeCase) -> None:
+    """Bootstrap case fixtures into a Django Namespace (for recording expected/)."""
+
+    from core.managers.tree import TreeManager
+
+    configs: list[tuple[str, str]] = []
+    for kind, tree_path, contents in iter_tree_files(case):
+        if kind == "config":
+            configs.append((tree_path, contents))
+            continue
+        mgr = TreeManager(ns, tree_path, auth=None)
+        if mgr.item:
+            mgr.update_item(contents)
+        else:
+            mgr.create_item(contents, kind)
+    _bootstrap_configs_tree(ns, configs)
+
+
 def bootstrap_case(client: OcmoApiClient, namespace: str, case: SmokeCase) -> None:
     """Create all configs, templates, and secrets from the case directory."""
 

@@ -1,0 +1,8 @@
+id: naming_extend_render_header_wins
+description: "Extend + render: # ocmo.name: wins over extend-resolved _ocmo.name"
+resolve_path: extend-render/stack-header-wins
+expect:
+  status: 200
+  items:
+    - name: stacked.conf
+      file: stacked.conf

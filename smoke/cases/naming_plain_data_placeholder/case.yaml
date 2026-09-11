@@ -1,0 +1,8 @@
+id: naming_plain_data_placeholder
+description: "Deferred naming: {.data} placeholder from merged output"
+resolve_path: plain/data-placeholder
+expect:
+  status: 200
+  items:
+    - name: data-placeholder-prod.yaml
+      file: data-placeholder-prod.yaml

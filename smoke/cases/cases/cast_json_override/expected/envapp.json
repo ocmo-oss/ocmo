@@ -1,0 +1,10 @@
+{
+  "database": {
+    "host": "db.example.com",
+    "port": 5432
+  },
+  "flags": [
+    "alpha",
+    "beta"
+  ]
+}

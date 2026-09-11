@@ -1,0 +1,9 @@
+keep_me: valuable
+remove_me: "{!omit}"
+nested:
+  keep_this: hello
+  drop_this: "{!omit}"
+list_items:
+  - keep
+  - "{!omit}"
+  - also_keep

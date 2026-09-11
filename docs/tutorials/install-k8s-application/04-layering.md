@@ -187,7 +187,7 @@ imagePullSecrets:
   - name: registry-creds
 ```
 
-For [broadcast](../../features/resolving/output-naming.md#multi-output-naming), each output is named from the **source** vendor slug (`serviceaccount-cert-manager.yaml`, and so on). `_ocmo.name` on this generating config does not rename those outputs.
+For [broadcast](../../features/resolving/output-naming.md#broadcast), each output is named from the **target** config's `_ocmo.name` or path leaf. `_ocmo.name` on the generating config does not rename those outputs.
 
 ### Dev: registry pull Secret
 

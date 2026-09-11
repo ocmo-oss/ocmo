@@ -1,0 +1,4 @@
+name: svc-b
+port: 9090
+region: eu-west
+log_level: debug

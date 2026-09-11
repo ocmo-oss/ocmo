@@ -1,0 +1,6 @@
+keep_me: valuable
+nested:
+  keep_this: hello
+list_items:
+  - keep
+  - also_keep

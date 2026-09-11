@@ -1,0 +1,11 @@
+kind: propagation
+id: propagation_mode_data
+description: Data mode preserves target _ocmo metadata
+source_path: dev/src
+action: propagate
+expect:
+  status: 200
+  targets:
+    - path: dev/tgt
+      status: updated
+      file: tgt.yaml

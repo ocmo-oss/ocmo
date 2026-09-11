@@ -1,0 +1,11 @@
+id: naming_render_zip
+description: "Render zip: per-template # ocmo.name: headers"
+resolve_path: render/zip
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: api-back.conf
+      file: api-back.conf
+    - name: web-front.conf
+      file: web-front.conf

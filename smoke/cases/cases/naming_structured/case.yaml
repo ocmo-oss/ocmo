@@ -1,0 +1,8 @@
+id: naming_structured
+description: "_ocmo.name containing '/' fully replaces the relative output path in folder resolution"
+resolve_path: report/data
+expect:
+  status: 200
+  items:
+    - name: monthly.yaml
+      file: monthly.yaml

@@ -1,0 +1,8 @@
+id: naming_plain_folder_structured
+description: "Structured _ocmo.name with slash overrides folder leaf"
+resolve_path: plain/folder-structured
+expect:
+  status: 200
+  items:
+    - name: output/monthly.yaml
+      file: output/monthly.yaml

@@ -1,0 +1,10 @@
+id: parameters_override
+description: Dynamic parameter override via param_replicas query
+resolve_path: infra/prod/clusters/eu-cluster
+query:
+  param_replicas: "7"
+expect:
+  status: 200
+  items:
+    - name: eu-cluster-prod.conf
+      file: eu-cluster-prod.conf

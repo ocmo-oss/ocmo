@@ -1,0 +1,8 @@
+id: naming_extend_stack
+description: "Extend stack: generating config owns _ocmo.name after merge"
+resolve_path: extend/stack/prod
+expect:
+  status: 200
+  items:
+    - name: app-prod.yaml
+      file: app-prod.yaml

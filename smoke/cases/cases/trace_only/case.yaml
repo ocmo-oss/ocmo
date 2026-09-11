@@ -1,0 +1,9 @@
+id: trace_only
+description: trace_only returns dependency trace without artifacts
+resolve_path: scenario2/prod
+query:
+  trace_only: "true"
+expect:
+  status: 200
+  trace_only: true
+  items: []

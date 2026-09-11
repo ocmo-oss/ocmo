@@ -1,0 +1,5 @@
+_ocmo:
+  name: "output/monthly.yaml"
+
+period: monthly
+year: 2026

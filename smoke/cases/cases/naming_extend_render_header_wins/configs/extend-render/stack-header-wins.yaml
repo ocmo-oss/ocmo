@@ -1,0 +1,14 @@
+_ocmo:
+  extend:
+    mode: stack
+    configs:
+      - ../extend/bases/base
+  name: ignored-by-render.yaml
+  render:
+    templates:
+      - templates/render/header-override.j2@latest
+app_name: stacked
+domain: stacked.example.com
+backend_host: 10.0.0.1
+backend_port: 9000
+ssl_enabled: false

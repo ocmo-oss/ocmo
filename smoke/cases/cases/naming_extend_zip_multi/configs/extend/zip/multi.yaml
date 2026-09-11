@@ -1,0 +1,10 @@
+_ocmo:
+  extend:
+    mode: zip
+    by: .patches
+    configs:
+      - ../targets/base-a
+      - ../targets/base-a
+patches:
+  - {env: dev}
+  - {env: staging}

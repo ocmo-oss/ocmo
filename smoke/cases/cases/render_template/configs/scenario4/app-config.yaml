@@ -1,0 +1,10 @@
+_ocmo:
+  render:
+    templates:
+      - scenario4/nginx.conf.j2
+
+app_name: myapp
+domain: myapp.example.com
+backend_host: 127.0.0.1
+backend_port: 8080
+ssl_enabled: true

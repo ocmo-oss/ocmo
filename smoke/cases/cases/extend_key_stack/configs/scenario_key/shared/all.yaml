@@ -1,0 +1,5 @@
+database:
+  host: db.internal
+  port: 5432
+logging:
+  level: info
