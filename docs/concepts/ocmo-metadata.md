@@ -101,7 +101,7 @@ _ocmo:
 
 **Mutually exclusive with `cast`** — use one or the other.
 
-Mode (`broadcast`, `align`) controls multi-template output.
+Mode (`broadcast`, `zip`, `replicate`) controls multi-template output.
 
 See [Render](../features/resolving/render.md).
 

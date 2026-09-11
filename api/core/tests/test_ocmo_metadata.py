@@ -139,7 +139,7 @@ class ExtendRenderIntegrationTests(TestCase):
     def setUp(self):
         self.ns = create_test_namespace("ocmo-meta")
 
-    def test_extend_distribute_then_render_produces_multiple_outputs(self):
+    def test_extend_broadcast_then_render_produces_multiple_outputs(self):
         TreeManager(self.ns, "bases/a", auth=None).create_item("name: a\n", "config")
         TreeManager(self.ns, "bases/b", auth=None).create_item("name: b\n", "config")
         TreeManager(self.ns, "tmpl/out", auth=None).create_item(

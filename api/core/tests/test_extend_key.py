@@ -65,7 +65,7 @@ class ExtendKeyResolveTests(TestCase):
         outputs = ResolvePipelineManager(self.ns, path, "latest", auth=None).resolve()
         return [yaml.safe_load(o.data_text) for o in outputs]
 
-    def test_accumulate_key_extracts_at_root(self):
+    def test_stack_key_extracts_at_root(self):
         self._create(
             "shared/all",
             "database:\n  aa: bb\nlogging:\n  level: info\n",
@@ -83,7 +83,7 @@ class ExtendKeyResolveTests(TestCase):
         data = self._resolve("app/prod")[0]
         self.assertEqual(data, {"aa": "bb", "cc": "dd"})
 
-    def test_accumulate_key_and_as_wraps_under_as(self):
+    def test_stack_key_and_as_wraps_under_as(self):
         self._create(
             "shared/all",
             "database:\n  aa: bb\n",
@@ -102,7 +102,7 @@ class ExtendKeyResolveTests(TestCase):
         data = self._resolve("app/prod")[0]
         self.assertEqual(data, {"database": {"aa": "bb", "cc": "dd"}})
 
-    def test_accumulate_as_only_wraps_whole_document(self):
+    def test_stack_as_only_wraps_whole_document(self):
         self._create(
             "shared/db",
             "host: db.internal\nport: 5432\n",
@@ -170,7 +170,7 @@ class ExtendKeyResolveTests(TestCase):
         with self.assertRaises(CannotResolveConfig):
             self._resolve("app/prod")
 
-    def test_distribute_with_key(self):
+    def test_broadcast_with_key(self):
         self._create("bases/svc-a", "spec:\n  image: api:1\n  port: 8080\n")
         self._create(
             "app/rollout",
@@ -189,7 +189,7 @@ class ExtendKeyResolveTests(TestCase):
             {"image": "api:1", "port": 8080, "replicas": 3},
         )
 
-    def test_align_with_key(self):
+    def test_zip_with_key(self):
         self._create("bases/a", "defaults:\n  tier: basic\n")
         self._create("bases/b", "defaults:\n  tier: basic\n")
         self._create(
@@ -259,7 +259,7 @@ class ExtendKeyResolveTests(TestCase):
         self.assertEqual(ref.path, "../bases/prod")
         self.assertEqual(ref.key, ".tier")
 
-    def test_accumulate_int_key_list_merges_mapping_items(self):
+    def test_stack_int_key_list_merges_mapping_items(self):
         self._create(
             "bases/deployment",
             "spec:\n"
