@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping, Sequence
+from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
@@ -72,6 +72,7 @@ def deduplicate_output_names(outputs: Sequence[_NamedOutput]) -> None:
         seen[name] += 1
         output.name = apply_numeric_suffix(name, seen[name])
 
+
 def validate_name_template_syntax(template: str) -> None:
     """Validate placeholder syntax in an ``_ocmo.name`` template (save-time)."""
 
@@ -92,9 +93,7 @@ def validate_resolved_name(name: str) -> None:
     if any(seg in (".", "..") for seg in segments):
         raise OutputNameError("_ocmo.name resolved to a path containing '.' or '..' segments")
     if len(segments) > _MAX_NAME_PATH_SEGMENTS:
-        raise OutputNameError(
-            f"_ocmo.name resolved to more than {_MAX_NAME_PATH_SEGMENTS} path segments"
-        )
+        raise OutputNameError(f"_ocmo.name resolved to more than {_MAX_NAME_PATH_SEGMENTS} path segments")
     if any(ord(ch) < 32 for ch in name):
         raise OutputNameError("_ocmo.name resolved to a value containing control characters")
 
@@ -115,9 +114,7 @@ def eval_config_metadata_selector(selector: str, owner: NameOwnerContext) -> Any
         try:
             return segments[idx]
         except IndexError:
-            raise OutputNameError(
-                f"Path index {idx} out of range for {owner.path!r}"
-            ) from None
+            raise OutputNameError(f"Path index {idx} out of range for {owner.path!r}") from None
     if selector == ".Version.tag":
         return owner.version_tag
     if selector == ".Version.number":

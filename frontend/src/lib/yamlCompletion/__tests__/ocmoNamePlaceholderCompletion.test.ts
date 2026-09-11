@@ -36,7 +36,11 @@ function labels(items: Array<{ label: unknown }>): string[] {
   );
 }
 
-async function getSuggestions(yaml: string, lineNumber: number, column: number) {
+async function getSuggestions(
+  yaml: string,
+  lineNumber: number,
+  column: number,
+) {
   const model = textModel(yaml);
   const position = makePosition(lineNumber, column);
   return __testing.buildYamlCompletionSuggestions(
@@ -51,9 +55,9 @@ async function getSuggestions(yaml: string, lineNumber: number, column: number) 
 
 describe("ocmoNamePlaceholderCompletion", () => {
   it("suggests metadata selectors inside {._ocmo.}", async () => {
-    const yaml = ['_ocmo:', '  name: "test{._ocmo.}.yaml"'].join("\n");
+    const yaml = ["_ocmo:", '  name: "test{._ocmo.}.yaml"'].join("\n");
     const line = yaml.split("\n")[1];
-    const cursorCol = line.indexOf("}.") ;
+    const cursorCol = line.indexOf("}.");
     const items = await getSuggestions(yaml, 2, cursorCol);
     expect(labels(items)).toEqual(
       OCMO_NAME_METADATA_SELECTORS.map((s) => `._ocmo.${s.label}`),
@@ -61,23 +65,23 @@ describe("ocmoNamePlaceholderCompletion", () => {
   });
 
   it("does not suggest when placeholder is complete", () => {
-    const yaml = ['_ocmo:', '  name: "test{._ocmo.Name}.yaml"'].join("\n");
+    const yaml = ["_ocmo:", '  name: "test{._ocmo.Name}.yaml"'].join("\n");
     const model = textModel(yaml);
     const line = yaml.split("\n")[1];
     const position = makePosition(2, line.indexOf("}") + 1);
-    expect(shouldSuggestOcmoNameMetadata(model as never, position as never)).toBe(
-      false,
-    );
+    expect(
+      shouldSuggestOcmoNameMetadata(model as never, position as never),
+    ).toBe(false);
   });
 
   it("does not suggest when typed text uniquely matches one selector", () => {
-    const yaml = ['_ocmo:', '  name: "test{._ocmo.Name}.yaml"'].join("\n");
+    const yaml = ["_ocmo:", '  name: "test{._ocmo.Name}.yaml"'].join("\n");
     const model = textModel(yaml);
     const line = yaml.split("\n")[1];
     const position = makePosition(2, line.indexOf("}"));
-    expect(shouldSuggestOcmoNameMetadata(model as never, position as never)).toBe(
-      false,
-    );
+    expect(
+      shouldSuggestOcmoNameMetadata(model as never, position as never),
+    ).toBe(false);
     expect(
       buildOcmoNameMetadataCompletions(
         monacoStub as never,
@@ -88,13 +92,13 @@ describe("ocmoNamePlaceholderCompletion", () => {
   });
 
   it("still suggests when prefix matches only one incomplete selector", () => {
-    const yaml = ['_ocmo:', '  name: "test{._ocmo.N}.yaml"'].join("\n");
+    const yaml = ["_ocmo:", '  name: "test{._ocmo.N}.yaml"'].join("\n");
     const model = textModel(yaml);
     const line = yaml.split("\n")[1];
     const position = makePosition(2, line.indexOf("}"));
-    expect(shouldSuggestOcmoNameMetadata(model as never, position as never)).toBe(
-      true,
-    );
+    expect(
+      shouldSuggestOcmoNameMetadata(model as never, position as never),
+    ).toBe(true);
     expect(
       labels(
         buildOcmoNameMetadataCompletions(
@@ -107,13 +111,13 @@ describe("ocmoNamePlaceholderCompletion", () => {
   });
 
   it("still suggests when multiple selectors share the typed prefix", () => {
-    const yaml = ['_ocmo:', '  name: "test{._ocmo.Path}.yaml"'].join("\n");
+    const yaml = ["_ocmo:", '  name: "test{._ocmo.Path}.yaml"'].join("\n");
     const model = textModel(yaml);
     const line = yaml.split("\n")[1];
     const position = makePosition(2, line.indexOf("}"));
-    expect(shouldSuggestOcmoNameMetadata(model as never, position as never)).toBe(
-      true,
-    );
+    expect(
+      shouldSuggestOcmoNameMetadata(model as never, position as never),
+    ).toBe(true);
     expect(
       labels(
         buildOcmoNameMetadataCompletions(
@@ -126,20 +130,20 @@ describe("ocmoNamePlaceholderCompletion", () => {
   });
 
   it("does not suggest for data placeholders", () => {
-    const yaml = ['_ocmo:', '  name: "test{.database.}.yaml"'].join("\n");
+    const yaml = ["_ocmo:", '  name: "test{.database.}.yaml"'].join("\n");
     const model = textModel(yaml);
     const line = yaml.split("\n")[1];
-    const position = makePosition(2, line.indexOf("}.") );
-    expect(shouldSuggestOcmoNameMetadata(model as never, position as never)).toBe(
-      false,
-    );
+    const position = makePosition(2, line.indexOf("}."));
+    expect(
+      shouldSuggestOcmoNameMetadata(model as never, position as never),
+    ).toBe(false);
   });
 
   it("inserts metadata selector with correct range", () => {
-    const yaml = ['_ocmo:', '  name: "test{._ocmo.}.yaml"'].join("\n");
+    const yaml = ["_ocmo:", '  name: "test{._ocmo.}.yaml"'].join("\n");
     const model = textModel(yaml);
     const line = yaml.split("\n")[1];
-    const position = makePosition(2, line.indexOf("}.") );
+    const position = makePosition(2, line.indexOf("}."));
     const items = buildOcmoNameMetadataCompletions(
       monacoStub as never,
       model as never,
@@ -154,7 +158,7 @@ describe("ocmoNamePlaceholderCompletion", () => {
   });
 
   it("inserts full metadata path when only {. is typed", () => {
-    const yaml = ['_ocmo:', '  name: "test{.}.yaml"'].join("\n");
+    const yaml = ["_ocmo:", '  name: "test{.}.yaml"'].join("\n");
     const model = textModel(yaml);
     const line = yaml.split("\n")[1];
     const position = makePosition(2, line.indexOf("{.") + 2);
@@ -168,13 +172,12 @@ describe("ocmoNamePlaceholderCompletion", () => {
   });
 
   it("keeps auto-trigger alive inside {._ocmo.} name placeholder", () => {
-    const yaml = ['_ocmo:', '  name: "test{._ocmo.}.yaml"'].join("\n");
+    const yaml = ["_ocmo:", '  name: "test{._ocmo.}.yaml"'].join("\n");
     const model = textModel(yaml);
     const line = yaml.split("\n")[1];
-    const position = makePosition(2, line.indexOf("}.") );
+    const position = makePosition(2, line.indexOf("}."));
     const paramOptions: ParameterCompletionOptions = {
       metadataKey: "_ocmo",
-      parameterNames: [],
     };
     expect(
       __testing.shouldAutoTriggerYamlSuggest(

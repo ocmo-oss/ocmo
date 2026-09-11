@@ -1,8 +1,6 @@
 import type * as Monaco from "monaco-editor";
 import { stripYamlScalarQuotes } from "./lineSyntax";
-import {
-  propertyValueCompletionRange,
-} from "./ocmoParameterDeclarationCompletion";
+import { propertyValueCompletionRange } from "./ocmoParameterDeclarationCompletion";
 
 const OCMO_METADATA_PREFIX = "._ocmo.";
 
@@ -10,7 +8,10 @@ export const OCMO_NAME_METADATA_SELECTORS = [
   { label: "Name", description: "Name owner leaf segment" },
   { label: "Path", description: "Name owner full path" },
   { label: "Path[-1]", description: "Name owner path segment by index" },
-  { label: "Version.tag", description: "Version reference tag used for resolve" },
+  {
+    label: "Version.tag",
+    description: "Version reference tag used for resolve",
+  },
   { label: "Version.number", description: "Resolved integer version number" },
 ] as const;
 
@@ -23,7 +24,12 @@ export interface OcmoNamePlaceholderContext {
 function propertyValueBounds(
   model: Monaco.editor.ITextModel,
   position: Monaco.Position,
-): { start: number; end: number; fullValue: string; cursorOffset: number } | null {
+): {
+  start: number;
+  end: number;
+  fullValue: string;
+  cursorOffset: number;
+} | null {
   const range = propertyValueCompletionRange(model, position);
   if (!range) return null;
   const raw = model.getValueInRange(range);
@@ -68,7 +74,10 @@ export function detectOcmoNamePlaceholderContext(
   const bounds = propertyValueBounds(model, position);
   if (!bounds) return null;
 
-  const partial = placeholderPartialAtCursor(bounds.fullValue, bounds.cursorOffset);
+  const partial = placeholderPartialAtCursor(
+    bounds.fullValue,
+    bounds.cursorOffset,
+  );
   if (partial === null) return null;
 
   const openIdx = bounds.fullValue
@@ -93,9 +102,16 @@ function metadataInsertText(selectorLabel: string): string {
   return `${OCMO_METADATA_PREFIX}${selectorLabel}`;
 }
 
-function selectorMatchesTyped(selectorLabel: string, typedSuffix: string): boolean {
+function selectorMatchesTyped(
+  selectorLabel: string,
+  typedSuffix: string,
+): boolean {
   const full = `_ocmo.${selectorLabel}`;
-  if (typedSuffix === "" || typedSuffix === "_ocmo" || typedSuffix === "_ocmo.") {
+  if (
+    typedSuffix === "" ||
+    typedSuffix === "_ocmo" ||
+    typedSuffix === "_ocmo."
+  ) {
     return true;
   }
   if (typedSuffix.startsWith("_ocmo.")) {

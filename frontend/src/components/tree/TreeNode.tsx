@@ -159,9 +159,7 @@ export function TreeNodeComponent({
           href={href}
           isFolder={false}
           onIsolateBranch={
-            isCurrent
-              ? () => isolateToCurrentPath(item.path)
-              : undefined
+            isCurrent ? () => isolateToCurrentPath(item.path) : undefined
           }
         />
         {lockInfo && <TreeLockIndicator lockInfo={lockInfo} />}
@@ -244,9 +242,7 @@ export function TreeNodeComponent({
             href={href}
             isFolder
             onIsolateBranch={
-              isCurrent
-                ? () => isolateToCurrentPath(terminalPath)
-                : undefined
+              isCurrent ? () => isolateToCurrentPath(terminalPath) : undefined
             }
           />
           {terminalLockInfo && (

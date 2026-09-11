@@ -53,7 +53,6 @@ from ..schemas import (
     ConfigCastSchema,
     ConfigExtendRefSchema,
     ConfigExtendSchema,
-    ConfigOcmoMetadataSchema,
     ConfigRenderSchema,
     normalize_extend_ref,
 )

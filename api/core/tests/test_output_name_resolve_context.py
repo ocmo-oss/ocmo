@@ -37,8 +37,7 @@ class OutputNameResolveContextTests(TestCase):
     def test_broadcast_target_name_from_merged_overlay(self):
         self._create(
             "targets/svc-a",
-            "_ocmo:\n  name: \"{._ocmo.Name}-{.region}.yaml\"\n"
-            "name: svc-a\n",
+            '_ocmo:\n  name: "{._ocmo.Name}-{.region}.yaml"\nname: svc-a\n',
         )
         self._create(
             "app/rollout",
@@ -77,8 +76,7 @@ class OutputNameResolveContextTests(TestCase):
     def test_path_metadata_name_without_body_duplication(self):
         self._create(
             "infra/prod/clusters/eu-cluster",
-            "_ocmo:\n  name: \"{._ocmo.Name}-{._ocmo.Path[-3]}.conf\"\n"
-            "apiVersion: apps/v1\n",
+            '_ocmo:\n  name: "{._ocmo.Name}-{._ocmo.Path[-3]}.conf"\napiVersion: apps/v1\n',
         )
         outputs = self._resolve("infra/prod/clusters/eu-cluster")
         self.assertEqual(outputs[0].name, "eu-cluster-prod.conf")

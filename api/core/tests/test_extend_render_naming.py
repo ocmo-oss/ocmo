@@ -70,11 +70,7 @@ class ExtendRenderNamingTests(TestCase):
             "template",
         )
         TreeManager(self.ns, "app/root", auth=None).create_item(
-            "_ocmo:\n"
-            "  render:\n"
-            "    templates:\n"
-            "      - tmpl/out.j2@latest\n"
-            "value: demo\n",
+            "_ocmo:\n  render:\n    templates:\n      - tmpl/out.j2@latest\nvalue: demo\n",
             "config",
         )
         outputs = ResolvePipelineManager(self.ns, "app/root", "latest", auth=None).resolve()

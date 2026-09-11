@@ -9,9 +9,7 @@ export function TreeNavHeader() {
   const { reloadBranch, reloading } = useReloadTreeBranch(namespace);
 
   return (
-    <div
-      className="flex shrink-0 items-center justify-between border-b px-2 py-0.5 dark:border-gray-700"
-    >
+    <div className="flex shrink-0 items-center justify-between border-b px-2 py-0.5 dark:border-gray-700">
       <span className="text-[11px] font-medium text-gray-500 dark:text-gray-400">
         Tree
       </span>
@@ -28,9 +26,7 @@ export function TreeNavHeader() {
           )}
           aria-label="Reload tree"
         >
-          <RefreshCw
-            className={cn("h-3 w-3", reloading && "animate-spin")}
-          />
+          <RefreshCw className={cn("h-3 w-3", reloading && "animate-spin")} />
         </button>
       </Tooltip>
     </div>
