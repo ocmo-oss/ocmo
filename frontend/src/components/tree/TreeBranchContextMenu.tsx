@@ -5,6 +5,7 @@ interface TreeBranchContextMenuProps {
   x: number;
   y: number;
   reloading: boolean;
+  reloadLabel?: string;
   onClose: () => void;
   onReload: () => void;
 }
@@ -13,6 +14,7 @@ export function TreeBranchContextMenu({
   x,
   y,
   reloading,
+  reloadLabel = "Reload",
   onClose,
   onReload,
 }: TreeBranchContextMenuProps) {
@@ -42,7 +44,7 @@ export function TreeBranchContextMenu({
           <RefreshCw
             className={cn("h-3.5 w-3.5 shrink-0", reloading && "animate-spin")}
           />
-          Reload
+          {reloadLabel}
         </button>
       </div>
     </>

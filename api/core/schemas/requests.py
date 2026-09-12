@@ -17,6 +17,7 @@ from ..shortcuts import (
     validate_path_characters,
     validate_selector_syntax,
 )
+from ..utils.output_naming import validate_name_template_syntax
 from ..validation_errors import format_pydantic_validation_error
 from .generic import (
     CastSchema as ConfigCastSchema,
@@ -662,9 +663,15 @@ class ConfigOcmoMetadataSchema(BaseModel):
         None,
         description=(
             "Override resolved output file name(s); may include characters not allowed "
-            "in OCMO tree paths. Supports ``{!param}`` placeholders."
+            "in OCMO tree paths. Supports ``{.selector}`` placeholders for merged output "
+            "data and ``{._ocmo.Name}``, ``{._ocmo.Path[n]}``, ``{._ocmo.Version.*}`` "
+            "for name-owner metadata. Evaluated after extend merge."
         ),
-        examples=["nginx-deployment@prod.yaml", "{!env}/app.conf"],
+        examples=[
+            "nginx-deployment@prod.yaml",
+            "{._ocmo.Name}-{.database.env}.yaml",
+            "configs/{.env}/app.conf",
+        ],
     )
     validation: ConfigValidationSchema | None = Field(
         None,
@@ -720,6 +727,8 @@ class ConfigOcmoMetadataSchema(BaseModel):
     def validate_name(self):
         if self.name is None:
             return self
+        if "{!" in self.name:
+            raise ValueError("_ocmo.name does not support {!param} placeholders; use {.selector} instead")
         if self.name.startswith("/") or self.name.endswith("/"):
             raise ValueError("_ocmo.name cannot start or end with '/'")
         segments = self.name.split("/")
@@ -727,6 +736,10 @@ class ConfigOcmoMetadataSchema(BaseModel):
             raise ValueError("_ocmo.name cannot contain '.' or '..' segments")
         if len(segments) > 5:
             raise ValueError("_ocmo.name cannot have more than 5 path segments")
+        try:
+            validate_name_template_syntax(self.name)
+        except ValueError as exc:
+            raise ValueError(f"_ocmo.name has invalid placeholder syntax: {exc}") from exc
         return self
 
     @model_validator(mode="after")

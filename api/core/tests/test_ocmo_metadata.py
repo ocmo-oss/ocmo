@@ -65,7 +65,7 @@ class OcmoMetadataSchemaTests(TestCase):
         with self.assertRaises(ValidationError):
             TreeManager(ns, "app/unused", auth=None).create_item(doc, "config")
 
-    def test_parameter_referenced_in_metadata_counts_as_used(self):
+    def test_parameter_referenced_only_in_extend_path_counts_as_used(self):
         doc = (
             "_ocmo:\n"
             "  parameters:\n"
@@ -73,11 +73,21 @@ class OcmoMetadataSchemaTests(TestCase):
             "      type: dynamic\n"
             "      value: prod\n"
             "      description: Environment name\n"
-            "  name: '{!env}'\n"
+            "  extend:\n"
+            "    configs:\n"
+            "      - ../bases/{!env}\n"
             "key: value\n"
         )
         validated = ConfigDocument.model_validate(doc)
         self.assertIn("env", validated.root)
+
+    def test_name_rejects_param_placeholders(self):
+        with self.assertRaises(PydanticValidationError):
+            ConfigOcmoMetadataSchema.model_validate(
+                {
+                    "name": "{!env}.yaml",
+                }
+            )
 
     @override_settings(OCMO_MAX_EXTEND_CONFIGS=2)
     def test_extend_reference_limit_enforced(self):

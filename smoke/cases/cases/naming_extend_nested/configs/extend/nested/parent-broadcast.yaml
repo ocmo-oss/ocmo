@@ -1,0 +1,8 @@
+_ocmo:
+  extend:
+    mode: broadcast
+    by: .overlay
+    configs:
+      - ../targets/nested-owner
+overlay:
+  region: eu

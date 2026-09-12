@@ -1,0 +1,3 @@
+_ocmo:
+  name: "{._ocmo.Name}-{._ocmo.Path[-3]}.conf"
+apiVersion: apps/v1

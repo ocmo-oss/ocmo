@@ -1,0 +1,11 @@
+kind: propagation
+id: propagation_exclude
+description: Exclude paths are not overwritten on target
+source_path: dev/src
+action: propagate
+expect:
+  status: 200
+  targets:
+    - path: dev/tgt
+      status: updated
+      file: tgt.yaml

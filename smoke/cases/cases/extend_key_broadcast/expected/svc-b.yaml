@@ -1,0 +1,4 @@
+image: worker:1
+concurrency: 4
+replicas: 3
+env: production

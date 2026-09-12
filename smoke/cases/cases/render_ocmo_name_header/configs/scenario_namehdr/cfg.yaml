@@ -1,0 +1,7 @@
+_ocmo:
+  render:
+    templates:
+      - scenario_namehdr/output.j2
+
+greeting: Hello
+target: World

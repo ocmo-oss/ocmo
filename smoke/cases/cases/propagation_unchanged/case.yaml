@@ -1,0 +1,10 @@
+kind: propagation
+id: propagation_unchanged
+description: Identical merge result reports unchanged status
+source_path: dev/src
+action: propagate
+expect:
+  status: 200
+  targets:
+    - path: dev/tgt
+      status: unchanged

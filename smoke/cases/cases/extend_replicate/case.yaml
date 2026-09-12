@@ -1,0 +1,11 @@
+id: extend_replicate
+description: extend.replicate merges one base with each element at by
+resolve_path: scenario_repl/final
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: myconf-1.yaml
+      file: myconf-1.yaml
+    - name: myconf-2.yaml
+      file: myconf-2.yaml

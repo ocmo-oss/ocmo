@@ -1,0 +1,8 @@
+_ocmo:
+  parameters:
+    token:
+      type: secret
+      value: secrets/nonexistent-secret@latest
+      description: API token from missing secret (error case)
+
+api_token: "{!token}"

@@ -1,0 +1,9 @@
+_ocmo:
+  propagation:
+    enabled: true
+    trigger: manual
+    targets:
+    - dev/other
+  cast:
+    format: yaml
+shared: from_source

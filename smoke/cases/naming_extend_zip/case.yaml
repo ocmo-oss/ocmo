@@ -1,0 +1,8 @@
+id: naming_extend_zip
+description: "Extend zip: target name from per-row patch data"
+resolve_path: extend/zip/root
+expect:
+  status: 200
+  items:
+    - name: app-dev.yaml
+      file: app-dev.yaml

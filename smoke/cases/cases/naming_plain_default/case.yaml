@@ -1,0 +1,8 @@
+id: naming_plain_default
+description: "Deferred naming: default path leaf when _ocmo.name is absent"
+resolve_path: plain/no-name
+expect:
+  status: 200
+  items:
+    - name: no-name
+      file: no-name

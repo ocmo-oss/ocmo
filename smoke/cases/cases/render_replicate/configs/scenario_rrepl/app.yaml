@@ -1,0 +1,11 @@
+_ocmo:
+  render:
+    mode: replicate
+    by: .items
+    templates:
+      - scenario_rrepl/item.yaml.j2
+items:
+  - slug: alpha
+    value: 1
+  - slug: beta
+    value: 2

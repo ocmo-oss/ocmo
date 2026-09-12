@@ -1,0 +1,4 @@
+_ocmo:
+  name: "{._ocmo.Name}-{.region}.yaml"
+name: svc-b
+port: 9090

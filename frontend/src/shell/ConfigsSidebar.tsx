@@ -1,5 +1,6 @@
 import { TreeSearch } from "../components/tree/TreeSearch";
 import { TreeNav } from "../components/tree/TreeNav";
+import { TreeNavHeader } from "../components/tree/TreeNavHeader";
 import { CreateItemButton } from "../components/tree/CreateItemButton";
 
 export function ConfigsSidebar() {
@@ -11,6 +12,7 @@ export function ConfigsSidebar() {
         </div>
         <CreateItemButton />
       </div>
+      <TreeNavHeader />
       <div className="flex-1 overflow-auto">
         <TreeNav />
       </div>

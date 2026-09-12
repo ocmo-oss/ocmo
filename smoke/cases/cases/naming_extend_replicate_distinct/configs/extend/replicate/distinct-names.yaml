@@ -1,0 +1,9 @@
+_ocmo:
+  extend:
+    mode: replicate
+    by: .data
+    configs:
+      - ../bases/business
+data:
+  - {env: dev}
+  - {env: staging}

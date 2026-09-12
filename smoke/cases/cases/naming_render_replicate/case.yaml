@@ -1,0 +1,11 @@
+id: naming_render_replicate
+description: "Render replicate: Jinja in # ocmo.name: per context row"
+resolve_path: render/replicate
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: alpha.yaml
+      file: alpha.yaml
+    - name: beta.yaml
+      file: beta.yaml

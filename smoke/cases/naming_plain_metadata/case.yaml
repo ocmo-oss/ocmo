@@ -1,0 +1,8 @@
+id: naming_plain_metadata
+description: "Deferred naming: {._ocmo.Path[n]} metadata placeholder"
+resolve_path: plain/infra/prod/clusters/eu-cluster
+expect:
+  status: 200
+  items:
+    - name: eu-cluster-prod.conf
+      file: eu-cluster-prod.conf

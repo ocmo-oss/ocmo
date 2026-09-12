@@ -1,0 +1,11 @@
+id: naming_extend_broadcast
+description: "Extend broadcast: each target owns _ocmo.name; overlay in merged data"
+resolve_path: extend/broadcast/rollout
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: svc-a-eu.yaml
+      file: svc-a-eu.yaml
+    - name: svc-b-eu.yaml
+      file: svc-b-eu.yaml

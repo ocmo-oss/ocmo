@@ -1,0 +1,4 @@
+image: api:1
+port: 8080
+replicas: 3
+env: production

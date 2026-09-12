@@ -1,0 +1,8 @@
+id: naming_render_broadcast_header
+description: "Render broadcast: # ocmo.name: header overrides template leaf"
+resolve_path: render/broadcast-header
+expect:
+  status: 200
+  items:
+    - name: myapp.conf
+      file: myapp.conf

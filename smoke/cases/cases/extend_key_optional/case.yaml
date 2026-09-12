@@ -1,0 +1,8 @@
+id: extend_key_optional
+description: optional extend key with ? yields empty overlay when path is missing
+resolve_path: scenario_keyopt/prod
+expect:
+  status: 200
+  items:
+    - name: prod
+      file: prod.yaml

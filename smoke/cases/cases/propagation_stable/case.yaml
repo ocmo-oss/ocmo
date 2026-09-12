@@ -1,0 +1,14 @@
+kind: propagation
+id: propagation_stable
+description: Stable promotion via resolve triggers tag propagation
+source_path: dev/src
+action: resolve
+resolve_path: dev/src
+query:
+  mark-stable: "true"
+expect:
+  status: 200
+  targets:
+    - path: dev/tgt
+      status: updated
+      file: tgt.yaml

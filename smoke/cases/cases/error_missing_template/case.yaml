@@ -1,0 +1,11 @@
+id: error_missing_template
+description: render block referencing a non-existent template returns 404
+resolve_path: scenario_err_tpl/cfg
+bootstrap:
+  ephemeral:
+    - kind: template
+      path: scenario_err_tpl/no_such_template.j2
+      data: "smoke placeholder\n"
+expect:
+  status: 404
+  error_substring: wasn't found

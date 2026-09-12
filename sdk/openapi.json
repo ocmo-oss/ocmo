@@ -5590,7 +5590,7 @@
           "version": {
             "description": "Deployed package version",
             "examples": [
-              "0.8.21"
+              "0.8.22"
             ],
             "title": "Version",
             "type": "string"

@@ -1,0 +1,11 @@
+id: folder_resolve
+description: Resolving a folder resolves every config in the subtree
+resolve_path: scenario6
+expect:
+  status: 200
+  match: multiset
+  items:
+    - file: rollout-svc-a.yaml
+    - file: rollout-svc-b.yaml
+    - file: svc-a-standalone.yaml
+    - file: svc-b-standalone.yaml

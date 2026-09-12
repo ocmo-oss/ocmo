@@ -48,7 +48,7 @@ class ExtendReplicateTests(TestCase):
             {"foo": "bar", "baz": "555", "aaa": "vvv"},
         )
 
-    def test_replicate_output_names_use_numeric_suffix(self):
+    def test_replicate_duplicate_static_names_get_dedup_suffixes(self):
         self._create(
             "bases/business",
             "_ocmo:\n  name: myconf.yaml\nfoo: bar\n",
@@ -67,4 +67,24 @@ class ExtendReplicateTests(TestCase):
             "  - {patch: c}\n",
         )
         outputs = self._resolve("app/final")
-        self.assertEqual([o.name for o in outputs], ["myconf-1.yaml", "myconf-2.yaml", "myconf-3.yaml"])
+        self.assertEqual([o.name for o in outputs], ["myconf.yaml", "myconf-1.yaml", "myconf-2.yaml"])
+
+    def test_replicate_resolves_name_from_merged_patch_data(self):
+        self._create(
+            "bases/business",
+            "_ocmo:\n  name: app-{.env}.yaml\nfoo: bar\n",
+        )
+        self._create(
+            "app/final",
+            "_ocmo:\n"
+            "  extend:\n"
+            "    mode: replicate\n"
+            "    by: .data\n"
+            "    configs:\n"
+            "      - ../bases/business\n"
+            "data:\n"
+            "  - {env: dev}\n"
+            "  - {env: staging}\n",
+        )
+        outputs = self._resolve("app/final")
+        self.assertEqual([o.name for o in outputs], ["app-dev.yaml", "app-staging.yaml"])

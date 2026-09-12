@@ -225,9 +225,9 @@ data:
     aaa: vvv
 ```
 
-Resolved (2 outputs), named from the base config with numeric suffixes (see [Output naming](output-naming.md)):
-- `myconf-1.yaml` — base merged with `data[0]`
-- `myconf-2.yaml` — base merged with `data[1]`
+Resolved (2 outputs). Names come from the **base** config's `_ocmo.name` (or path leaf), evaluated against merged data per row. See [Output naming — replicate](output-naming.md#replicate).
+
+Example with `name: "app-{.env}.yaml"` on the base → `app-dev.yaml`, `app-staging.yaml` when each patch row includes `env`.
 
 ---
 

@@ -1,0 +1,11 @@
+id: naming_extend_zip_multi
+description: "Extend zip: multiple patch rows produce distinct names"
+resolve_path: extend/zip/multi
+expect:
+  status: 200
+  sort_by_name: true
+  items:
+    - name: app-dev.yaml
+      file: app-dev.yaml
+    - name: app-staging.yaml
+      file: app-staging.yaml

@@ -1,0 +1,9 @@
+_ocmo:
+  render:
+    mode: replicate
+    by: .items
+    templates:
+      - render/replicate-item.j2@latest
+items:
+  - {slug: alpha, value: 1}
+  - {slug: beta, value: 2}

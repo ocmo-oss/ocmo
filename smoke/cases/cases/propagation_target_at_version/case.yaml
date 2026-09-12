@@ -1,0 +1,13 @@
+kind: propagation
+id: propagation_target_at_version
+description: Target reference with @version merges into that version
+source_path: dev/src
+action: propagate
+updates:
+  - path: dev/tgt
+    file: updates/tgt-v2.yaml
+expect:
+  status: 200
+  targets:
+    - path: dev/tgt@1
+      status: updated

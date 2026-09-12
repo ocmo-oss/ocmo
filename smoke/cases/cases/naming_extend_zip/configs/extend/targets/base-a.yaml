@@ -1,0 +1,2 @@
+_ocmo:
+  name: app-{.env}.yaml

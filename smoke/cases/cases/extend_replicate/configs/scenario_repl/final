@@ -1,0 +1,11 @@
+_ocmo:
+  extend:
+    mode: replicate
+    by: .data
+    configs:
+      - ./business
+data:
+  - baz: aaa
+    xxx: yyy
+  - baz: "555"
+    aaa: vvv

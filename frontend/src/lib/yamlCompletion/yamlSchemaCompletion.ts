@@ -17,6 +17,10 @@ import {
   shouldSuggestParameterValue,
 } from "./ocmoParameterDeclarationCompletion";
 import {
+  buildOcmoNameMetadataCompletions,
+  shouldSuggestOcmoNameMetadata,
+} from "./ocmoNamePlaceholderCompletion";
+import {
   buildSecretPathSuggestions,
   buildUriReferenceSuggestions,
   extractTypedUriReference,
@@ -3210,6 +3214,15 @@ function buildYamlCompletionSuggestions(
   }
 
   if (ctx.kind === "property-value") {
+    if (
+      metadataKey &&
+      ctx.valuePropertyKey === "name" &&
+      ctx.objectPath[0] === metadataKey &&
+      shouldSuggestOcmoNameMetadata(model, position)
+    ) {
+      return buildOcmoNameMetadataCompletions(monaco, model, position);
+    }
+
     if (metadataKey ?? declaration?.objectPath[0]) {
       const valueDeclaration = detectOcmoParameterValueContext(
         model,
@@ -3456,6 +3469,15 @@ function hasYamlCompletionSuggestions(
     return true;
   }
   if (
+    metadataKey &&
+    ctx.kind === "property-value" &&
+    ctx.valuePropertyKey === "name" &&
+    ctx.objectPath[0] === metadataKey &&
+    shouldSuggestOcmoNameMetadata(model, position)
+  ) {
+    return true;
+  }
+  if (
     uriOptions &&
     targetSchema &&
     shouldSuggestUriReferences(
@@ -3561,6 +3583,15 @@ export function shouldAutoTriggerYamlSuggest(
     if (
       metadataKey &&
       shouldSuggestParameterValue(model, position, ctx, metadataKey)
+    ) {
+      return true;
+    }
+    if (
+      metadataKey &&
+      ctx.kind === "property-value" &&
+      ctx.valuePropertyKey === "name" &&
+      ctx.objectPath[0] === metadataKey &&
+      shouldSuggestOcmoNameMetadata(model, position)
     ) {
       return true;
     }

@@ -1,0 +1,3 @@
+service: beta
+port: 9000
+env: staging

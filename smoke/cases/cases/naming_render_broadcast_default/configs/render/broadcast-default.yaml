@@ -1,0 +1,5 @@
+_ocmo:
+  render:
+    templates:
+      - templates/render/default-leaf.j2@latest
+app: demo

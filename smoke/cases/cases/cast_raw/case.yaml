@@ -1,0 +1,8 @@
+id: cast_raw
+description: cast format raw with stringify serialises a mapping to YAML text passthrough
+resolve_path: scenario_raw/msg
+expect:
+  status: 200
+  items:
+    - name: msg
+      file: msg.txt

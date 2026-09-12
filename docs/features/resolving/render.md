@@ -158,7 +158,7 @@ items:
 
 ## Output naming
 
-The `name` of each rendered artifact defaults to the last segment of the **template** path (e.g., `nginx.conf.j2` → artifact name `nginx.conf.j2`). Override per-output using `# ocmo.name:` in the template body, or via [output naming](output-naming.md).
+The `name` of each rendered artifact defaults to the last segment of the **template** path (e.g., `nginx.conf.j2` → artifact name `nginx.conf.j2`). Override per-output using `# ocmo.name:` in the template body (wins over extend-resolved `_ocmo.name`). See [Output naming — Render](output-naming.md#render) for per-mode examples.
 
 ---
 

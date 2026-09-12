@@ -1,0 +1,6 @@
+id: recursion_error
+description: Circular extend chain returns 422
+resolve_path: scenario10/loop_a
+expect:
+  status: 422
+  error_substring: Recursion not allowed

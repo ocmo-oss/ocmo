@@ -1,4 +1,4 @@
-import { useState, type MouseEvent } from "react";
+import { useEffect, useState, type MouseEvent } from "react";
 import { Link, NavLink, useParams } from "react-router-dom";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -16,6 +16,8 @@ import { TreeBranchContextMenu } from "./TreeBranchContextMenu";
 import { TreeLockIndicator } from "./TreeLockIndicator";
 import { SkeletonList } from "../ui/Skeleton";
 import { cn } from "../ui/cn";
+import { isPathUnderFolder } from "../../lib/treeBranch";
+import { useTreeExpansionStore } from "../../store/treeExpansion";
 
 interface TreeNodeProps {
   item: TreeNavigationNode;
@@ -23,10 +25,6 @@ interface TreeNodeProps {
   matchingPaths: Set<string>;
   searchActive: boolean;
   locks: Lock[];
-}
-
-function isPathUnderFolder(folderPath: string, itemPath: string): boolean {
-  return itemPath === folderPath || itemPath.startsWith(`${folderPath}/`);
 }
 
 function FolderChainLabel({
@@ -66,16 +64,23 @@ function TreeItemLabel({
   namespace,
   href,
   isFolder,
+  onIsolateBranch,
 }: {
   item: TreeNavigationNode;
   segments?: Array<{ name: string; path: string }>;
   namespace: string;
   href: string;
   isFolder: boolean;
+  onIsolateBranch?: () => void;
 }) {
   return (
     <NavLink
       to={href}
+      onDoubleClick={(e) => {
+        if (!onIsolateBranch) return;
+        e.preventDefault();
+        onIsolateBranch();
+      }}
       className={({ isActive }) =>
         cn(
           "flex items-center gap-1.5 whitespace-nowrap rounded py-0.5 text-xs",
@@ -110,6 +115,11 @@ export function TreeNodeComponent({
     x: number;
     y: number;
   } | null>(null);
+  const isolateRevision = useTreeExpansionStore((s) => s.isolateRevision);
+  const isolatedPath = useTreeExpansionStore((s) => s.isolatedPath);
+  const isolateToCurrentPath = useTreeExpansionStore(
+    (s) => s.isolateToCurrentPath,
+  );
   const { reloadBranch, reloading } = useReloadTreeBranch(namespace);
   const isFolder = item.type === "folder";
   const indent = depth * 12;
@@ -123,6 +133,15 @@ export function TreeNodeComponent({
     gcTime: 5 * 60_000,
   });
 
+  const folderTerminalPath = chain?.terminal.path ?? item.path;
+
+  useEffect(() => {
+    if (!isFolder || !isolatedPath) return;
+    if (!isPathUnderFolder(folderTerminalPath, isolatedPath)) {
+      setUserExpanded(false);
+    }
+  }, [isolateRevision, isolatedPath, folderTerminalPath, isFolder]);
+
   const rowClass =
     "group flex items-center gap-1 rounded-sm py-0.5 pr-2 hover:bg-slate-200 dark:hover:bg-gray-800";
 
@@ -130,6 +149,7 @@ export function TreeNodeComponent({
     if (!isTreeNodeVisible(item.path, matchingPaths, searchActive)) return null;
 
     const href = treeItemHref(namespace!, item.path, false);
+    const isCurrent = currentItemPath === item.path;
     return (
       <div className={rowClass} style={{ paddingLeft: `${indent + 8}px` }}>
         <span className="w-3.5 shrink-0" />
@@ -138,6 +158,9 @@ export function TreeNodeComponent({
           namespace={namespace!}
           href={href}
           isFolder={false}
+          onIsolateBranch={
+            isCurrent ? () => isolateToCurrentPath(item.path) : undefined
+          }
         />
         {lockInfo && <TreeLockIndicator lockInfo={lockInfo} />}
       </div>
@@ -177,6 +200,7 @@ export function TreeNodeComponent({
   );
   const href = treeItemHref(namespace!, terminalPath, true);
   const terminalLockInfo = getLockForPath(terminalPath, locks) ?? lockInfo;
+  const isCurrent = currentItemPath === terminalPath;
 
   const openContextMenu = (e: MouseEvent) => {
     e.preventDefault();
@@ -217,6 +241,9 @@ export function TreeNodeComponent({
             namespace={namespace!}
             href={href}
             isFolder
+            onIsolateBranch={
+              isCurrent ? () => isolateToCurrentPath(terminalPath) : undefined
+            }
           />
           {terminalLockInfo && (
             <TreeLockIndicator lockInfo={terminalLockInfo} />

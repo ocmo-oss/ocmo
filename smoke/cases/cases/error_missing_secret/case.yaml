@@ -1,0 +1,11 @@
+id: error_missing_secret
+description: secret parameter referencing a non-existent secret returns 422
+resolve_path: scenario_err_sec/cfg
+bootstrap:
+  ephemeral:
+    - kind: secret
+      path: secrets/nonexistent-secret
+      data: "value: smoke-placeholder\n"
+expect:
+  status: 422
+  error_substring: Secret

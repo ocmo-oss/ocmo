@@ -1,0 +1,8 @@
+id: render_template
+description: Jinja2 template render with ocmo.name header
+resolve_path: scenario4/app-config
+expect:
+  status: 200
+  items:
+    - name: myapp.conf
+      file: myapp.conf

@@ -1,0 +1,8 @@
+id: naming_plain_static
+description: "Deferred naming: static _ocmo.name template"
+resolve_path: plain/static-name
+expect:
+  status: 200
+  items:
+    - name: web-api.json
+      file: web-api.json

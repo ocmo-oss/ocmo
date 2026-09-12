@@ -1,0 +1,4 @@
+persistence:
+  db:
+    aa: bb
+    cc: dd

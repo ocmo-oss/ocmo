@@ -159,16 +159,16 @@ Multiple transformers chain left to right: `{!value|trim|lower|slug}`.
 
 ### `name`
 
-Override the output artifact filename. Does not affect the item's path in the tree.
+Override the output artifact filename. Does not affect the item's path in the tree. Evaluated **after extend merge** using `{.selector}` placeholders (not `{!param}`).
 
 ```yaml
 _ocmo:
   name: "nginx.conf"
-  # or with parameter substitution:
-  name: "configs/{!env}/web.yaml"
+  # merged data + name-owner metadata:
+  name: "{._ocmo.Name}-{.database.env}.yaml"
 ```
 
-See [Output naming](../features/resolving/output-naming.md).
+See [Output naming](../features/resolving/output-naming.md) for full syntax, examples per extend/render mode, and name ownership rules.
 
 ---
 

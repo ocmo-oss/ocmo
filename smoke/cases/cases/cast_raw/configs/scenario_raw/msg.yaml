@@ -1,0 +1,9 @@
+_ocmo:
+  cast:
+    format: raw
+    options:
+      strict: false
+      stringify: true
+
+count: 42
+greeting: Hello World

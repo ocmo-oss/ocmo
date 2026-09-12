@@ -1,0 +1,10 @@
+id: no_creds
+description: no-creds=true substitutes <secret-value-placeholder> for secret parameters without fetching secrets
+resolve_path: scenario7/use-secret
+query:
+  no-creds: "true"
+expect:
+  status: 200
+  items:
+    - name: use-secret
+      file: use-secret.json

@@ -1,0 +1,12 @@
+id: naming_extend_replicate_dedup
+description: "Extend replicate: static name collision triggers dedup suffixes"
+resolve_path: extend/replicate/dedup-static
+expect:
+  status: 200
+  items:
+    - name: myconf.yaml
+      file: myconf.yaml
+    - name: myconf-1.yaml
+      file: myconf-1.yaml
+    - name: myconf-2.yaml
+      file: myconf-2.yaml

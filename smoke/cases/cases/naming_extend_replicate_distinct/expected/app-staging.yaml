@@ -1,0 +1,4 @@
+_ocmo:
+  name: app-{.env}.yaml
+foo: bar
+env: staging

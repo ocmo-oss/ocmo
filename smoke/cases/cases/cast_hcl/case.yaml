@@ -1,0 +1,8 @@
+id: cast_hcl
+description: cast format hcl serialises config data to HashiCorp Configuration Language
+resolve_path: scenario_hcl/infra
+expect:
+  status: 200
+  items:
+    - name: infra
+      file: infra.hcl

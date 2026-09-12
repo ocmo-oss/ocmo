@@ -8,10 +8,11 @@ the documented pipeline steps:
     1. Load YAML body
     2. Pop and validate the ``_ocmo`` metadata block (strip it from data)
     3. Apply parameters (``{!param}`` placeholders + ``{!omit}``)
-    4. Apply ``_ocmo.name`` (single-output)
-    5. Apply ``_ocmo.extend`` (stack / broadcast / zip / replicate)
+    4. Apply ``_ocmo.extend`` (stack / broadcast / zip / replicate)
+    5. Apply ``_ocmo.name`` after merge (``{.selector}`` placeholders)
     6. Apply ``_ocmo.render`` (broadcast / zip / replicate) — incompatible with cast
-    7. Apply cast (priority: ``?cast=`` → resolver default → ``_ocmo.cast`` → yaml)
+    7. Deduplicate output names when needed
+    8. Apply cast (priority: ``?cast=`` → resolver default → ``_ocmo.cast`` → yaml)
 
 Orchestration (path classification, artifact storage, cache, mark-stable,
 download URLs, folder iteration) lives in
@@ -52,7 +53,6 @@ from ..schemas import (
     ConfigCastSchema,
     ConfigExtendRefSchema,
     ConfigExtendSchema,
-    ConfigOcmoMetadataSchema,
     ConfigRenderSchema,
     normalize_extend_ref,
 )
@@ -66,7 +66,12 @@ from ..shortcuts import (
     resolve_relative_path,
 )
 from ..utils.deep_merge import deep_merge, strip_omit
-from ..utils.output_naming import deduplicate_output_names, replicate_output_name
+from ..utils.output_naming import (
+    NameOwnerContext,
+    OutputNameError,
+    deduplicate_output_names,
+    finalize_output_name,
+)
 from .auth import AuthManager
 from .cast import CastManager
 from .config_validation import ConfigValidationManager
@@ -133,12 +138,24 @@ class _MockConfig:
 class _ResolvedOutput:
     """In-flight resolved item (data still in memory; not yet stored)."""
 
-    __slots__ = ("name", "version", "format", "data_text", "raw_data", "trace", "rendered")
+    __slots__ = (
+        "name",
+        "name_template",
+        "name_owner",
+        "version",
+        "format",
+        "data_text",
+        "raw_data",
+        "trace",
+        "rendered",
+    )
 
     def __init__(
         self,
         *,
-        name: str,
+        name: str = "",
+        name_template: str | None = None,
+        name_owner: NameOwnerContext | None = None,
         version: int,
         format: str,
         data_text: str | None,
@@ -147,6 +164,8 @@ class _ResolvedOutput:
         rendered: bool = False,
     ):
         self.name = name
+        self.name_template = name_template
+        self.name_owner = name_owner
         self.version = version
         self.format = format
         self.data_text = data_text  # finalized bytes-string (after cast/render)
@@ -189,6 +208,7 @@ class ResolvePipelineManager:
         no_creds: bool = False,
         draft_content: str | None = None,
         config_obj: Config | _MockConfig | None = None,
+        defer_output_naming: bool = False,
     ):
         self.namespace = namespace
         self.auth = auth
@@ -218,6 +238,7 @@ class ResolvePipelineManager:
         self.cast_override = cast_override
         self.cast_options_override = cast_options_override or {}
         self.no_creds = no_creds
+        self.defer_output_naming = defer_output_naming
 
         self._yaml = YAML()
         self._yaml.preserve_quotes = True
@@ -271,7 +292,16 @@ class ResolvePipelineManager:
         merged into the calling config.
         """
         outputs = self._resolve_recursive(chain=chain, want_data=True)
-        return [{"name": o.name, "data": o.raw_data, "trace": o.trace} for o in outputs]
+        return [
+            {
+                "name": o.name,
+                "name_template": o.name_template,
+                "name_owner": o.name_owner,
+                "data": o.raw_data,
+                "trace": o.trace,
+            }
+            for o in outputs
+        ]
 
     @require_permissions(PermCheck("config:resolve", resource=arg("resolved_path")))
     def load_render_template(self, resolved_path: str, version_ref: str) -> Template:
@@ -283,6 +313,28 @@ class ResolvePipelineManager:
 
     def _trace_key(self) -> str:
         return f"{self.config_obj.path}@{self.version_obj.version}"
+
+    def _name_owner_context(self) -> NameOwnerContext:
+        return NameOwnerContext(
+            path=self.config_obj.path,
+            name=self.config_obj.name,
+            version_tag=self.requested_version,
+            version_number=self.version_obj.version,
+        )
+
+    @staticmethod
+    def _finalize_output_name(output: _ResolvedOutput) -> None:
+        if output.name_owner is None:
+            output.name = "output"
+            return
+        try:
+            output.name = finalize_output_name(
+                name_template=output.name_template,
+                merged_data=output.raw_data,
+                owner=output.name_owner,
+            )
+        except OutputNameError as exc:
+            raise CannotResolveConfig(str(exc)) from exc
 
     def _resolve_recursive(self, *, chain: list[str], want_data: bool = False) -> list[_ResolvedOutput]:
         # Depth + loop guard.
@@ -338,11 +390,7 @@ class ResolvePipelineManager:
                 )
             )
 
-        # 4) Apply _ocmo.name (single-output default; multi-output naming
-        #    happens inside extend/render below).
-        own_name = self._initial_name(metadata)
-
-        # 5) Build base output (this config's own data as one item).
+        # 4) Build base output (this config's own data as one item).
         #    Keep the _OMIT sentinels around: extend may need them to drive
         #    dict-key removal and list-item omission during deep-merge; we
         #    strip them once at the end of the resolve.
@@ -355,7 +403,8 @@ class ResolvePipelineManager:
         new_chain = chain + [my_key]
         outputs: list[_ResolvedOutput] = [
             _ResolvedOutput(
-                name=own_name,
+                name_template=metadata.name,
+                name_owner=self._name_owner_context(),
                 version=self.version_obj.version,
                 format="yaml",
                 data_text=None,
@@ -364,15 +413,24 @@ class ResolvePipelineManager:
             )
         ]
 
-        # 6) Extend
+        # 5) Extend
         if metadata.extend is not None:
-            outputs = self._apply_extend(metadata.extend, outputs, new_chain, my_trace)
+            outputs = self._apply_extend(
+                metadata.extend,
+                outputs,
+                new_chain,
+                my_trace,
+                generating_name_template=metadata.name,
+                generating_owner=self._name_owner_context(),
+            )
         else:
             # No extend → still need to drop any leftover _OMIT sentinels
             # that came from {!omit} placeholders inside this config.
             outputs[0].raw_data = strip_omit(outputs[0].raw_data)
+            if not self.defer_output_naming:
+                self._finalize_output_name(outputs[0])
 
-        # 7) Render (incompatible with cast — schema enforces this).
+        # 6) Render (incompatible with cast — schema enforces this).
         if metadata.render is not None:
             outputs = self._apply_render(metadata.render, outputs, new_chain, my_trace)
             if want_data:
@@ -408,15 +466,6 @@ class ResolvePipelineManager:
 
         return outputs
 
-    def _initial_name(self, metadata: ConfigOcmoMetadataSchema) -> str:
-        if metadata.name:
-            # Single-config naming rule: keep only the last segment when the
-            # value contains '/'.
-            if "/" in metadata.name:
-                return metadata.name.split("/")[-1]
-            return metadata.name
-        return self.config_obj.name
-
     # ----- extend -----
 
     def _prepare_extend_fragment(
@@ -445,6 +494,9 @@ class ResolvePipelineManager:
         outputs: list[_ResolvedOutput],
         chain: list[str],
         trace: dict[str, Any],
+        *,
+        generating_name_template: str | None,
+        generating_owner: NameOwnerContext,
     ) -> list[_ResolvedOutput]:
         assert len(outputs) == 1, "extend operates on this config's single output"
         current = outputs[0]
@@ -466,6 +518,7 @@ class ResolvePipelineManager:
                 dynamic_params=self.dynamic_params,
                 auth=self.auth,
                 no_creds=self.no_creds,
+                defer_output_naming=True,
             )
             sub_items = sub_mgr.resolve_data_only(chain=chain)
             # Merge sub-manager participants into ours.
@@ -487,7 +540,8 @@ class ResolvePipelineManager:
                 )
                 base_outputs.append(
                     _ResolvedOutput(
-                        name=item["name"],
+                        name_template=item.get("name_template"),
+                        name_owner=item.get("name_owner"),
                         version=sub_mgr.version_obj.version,
                         format="yaml",
                         data_text=None,
@@ -502,6 +556,10 @@ class ResolvePipelineManager:
                 merged = deep_merge(merged, b.raw_data)
             merged = deep_merge(merged, current_data)
             current.raw_data = strip_omit(merged)
+            current.name_template = generating_name_template
+            current.name_owner = generating_owner
+            if not self.defer_output_naming:
+                self._finalize_output_name(current)
             return [current]
 
         # broadcast, zip, and replicate need the "patch" payload from current data.
@@ -514,16 +572,18 @@ class ResolvePipelineManager:
             results: list[_ResolvedOutput] = []
             for b in base_outputs:
                 merged = deep_merge(b.raw_data, patch_value)
-                results.append(
-                    _ResolvedOutput(
-                        name=b.name,
-                        version=b.version,
-                        format="yaml",
-                        data_text=None,
-                        raw_data=strip_omit(merged),
-                        trace=trace,
-                    )
+                output = _ResolvedOutput(
+                    name_template=b.name_template,
+                    name_owner=b.name_owner,
+                    version=b.version,
+                    format="yaml",
+                    data_text=None,
+                    raw_data=strip_omit(merged),
+                    trace=trace,
                 )
+                if not self.defer_output_naming:
+                    self._finalize_output_name(output)
+                results.append(output)
             return results
 
         if mode == "zip":
@@ -537,16 +597,18 @@ class ResolvePipelineManager:
             results = []
             for b, patch in zip(base_outputs, patch_value):
                 merged = deep_merge(b.raw_data, patch)
-                results.append(
-                    _ResolvedOutput(
-                        name=b.name,
-                        version=b.version,
-                        format="yaml",
-                        data_text=None,
-                        raw_data=strip_omit(merged),
-                        trace=trace,
-                    )
+                output = _ResolvedOutput(
+                    name_template=b.name_template,
+                    name_owner=b.name_owner,
+                    version=b.version,
+                    format="yaml",
+                    data_text=None,
+                    raw_data=strip_omit(merged),
+                    trace=trace,
                 )
+                if not self.defer_output_naming:
+                    self._finalize_output_name(output)
+                results.append(output)
             return results
 
         if mode == "replicate":
@@ -556,18 +618,20 @@ class ResolvePipelineManager:
                 raise CannotResolveConfig(f"extend mode 'replicate' requires by={extend.by!r} to resolve to a list")
             base = base_outputs[0]
             results = []
-            for i, patch in enumerate(patch_value):
+            for patch in patch_value:
                 merged = deep_merge(base.raw_data, patch)
-                results.append(
-                    _ResolvedOutput(
-                        name=replicate_output_name(base.name, i + 1),
-                        version=base.version,
-                        format="yaml",
-                        data_text=None,
-                        raw_data=strip_omit(merged),
-                        trace=trace,
-                    )
+                output = _ResolvedOutput(
+                    name_template=base.name_template,
+                    name_owner=base.name_owner,
+                    version=base.version,
+                    format="yaml",
+                    data_text=None,
+                    raw_data=strip_omit(merged),
+                    trace=trace,
                 )
+                if not self.defer_output_naming:
+                    self._finalize_output_name(output)
+                results.append(output)
             return results
 
         raise CannotResolveConfig(f"Unsupported extend mode {mode!r}")
@@ -664,6 +728,8 @@ class ResolvePipelineManager:
             if m:
                 name = m.group(1).strip()
                 rendered = rest
+            elif output.name_template is not None:
+                name = output.name
 
             results.append(
                 _ResolvedOutput(

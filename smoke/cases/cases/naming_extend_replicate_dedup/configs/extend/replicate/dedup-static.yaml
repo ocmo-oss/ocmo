@@ -1,0 +1,10 @@
+_ocmo:
+  extend:
+    mode: replicate
+    by: .data
+    configs:
+      - ../bases/static-name
+data:
+  - {patch: a}
+  - {patch: b}
+  - {patch: c}

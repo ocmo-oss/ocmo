@@ -1,0 +1,5 @@
+database:
+  env: nested
+  port: 5432
+tier: nested
+region: eu

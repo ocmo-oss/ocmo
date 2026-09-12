@@ -1,0 +1,3 @@
+service: alpha
+port: 8000
+env: prod
