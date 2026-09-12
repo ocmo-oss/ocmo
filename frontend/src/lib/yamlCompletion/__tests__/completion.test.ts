@@ -342,6 +342,52 @@ describe("hasYamlCompletionSuggestions", () => {
   });
 });
 
+describe("property key prefix filtering", () => {
+  const schema = normalEditorSchema({
+    type: "object",
+    properties: { foo: { type: "string" } },
+  });
+  const paramOpts = { metadataKey: "_ocmo" };
+
+  it("offers _ocmo on an empty document", async () => {
+    const items = await getSuggestions(schema, "", 1, 1, paramOpts);
+    expect(items.some((item) => item.label === "_ocmo")).toBe(true);
+  });
+
+  it("does not offer _ocmo when typing a non-key character", async () => {
+    for (const yaml of [":", "-", ".", "#"]) {
+      const model = textModel(yaml);
+      const position = makePosition(1, yaml.length + 1);
+      expect(
+        __testing.hasYamlCompletionSuggestions(
+          monacoStub as any,
+          schema,
+          model as any,
+          position as any,
+          null,
+          paramOpts,
+        ),
+      ).toBe(false);
+      expect(
+        __testing.shouldAutoTriggerYamlSuggest(
+          model as any,
+          position as any,
+          null,
+          schema,
+          paramOpts,
+        ),
+      ).toBe(false);
+      const items = await getSuggestions(schema, yaml, 1, yaml.length + 1, paramOpts);
+      expect(items.some((item) => item.label === "_ocmo")).toBe(false);
+    }
+  });
+
+  it("still offers _ocmo when typing a valid key prefix", async () => {
+    const items = await getSuggestions(schema, "_", 1, 2, paramOpts);
+    expect(items.some((item) => item.label === "_ocmo")).toBe(true);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // isArrayItemLine edge case: bare dash without trailing space
 // ---------------------------------------------------------------------------

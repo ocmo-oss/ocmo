@@ -78,6 +78,8 @@ GET /api/v1/ns/{namespace}/~resolve/{path}
 
 The SDK and CLI download each URL automatically. Raw REST callers must fetch `item.url` as a second request.
 
+An empty `items` list (`length: 0`) is a valid success response — not an error. It can happen when [optional extend sources](extend.md#optional-sources) are all skipped (for example `replicate` with a missing optional base). The CLI exits with code **10** in that case; the SDK returns an empty `ResolveResult`.
+
 ---
 
 ## Walkthrough: resolve a config to JSON

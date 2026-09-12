@@ -8,6 +8,7 @@ from ocmo_cli._exit import (
     INTERRUPTED,
     LOCKED,
     NOT_FOUND,
+    RESOLVE_EMPTY,
     SUCCESS,
     USAGE_ERROR,
     VALIDATION_ERROR,
@@ -26,4 +27,5 @@ def test_exit_codes_values() -> None:
     assert VALIDATION_ERROR == 7
     assert HOOK_FAILURE == 8
     assert VERIFY_FAILURE == 9
+    assert RESOLVE_EMPTY == 10
     assert INTERRUPTED == 130

@@ -62,7 +62,8 @@ from .artifacts import ArtifactsManager, get_backend, mint_token, sweep_fs_artif
 from .audit import AuditManager
 from .auth import AuthManager
 from .cast import CastManager
-from .resolve_cache import ResolveCacheManager
+from .config_validation import ConfigValidationManager
+from .resolve_cache import ResolveCacheManager, extend_cache_fingerprint
 from .resolver import ResolverManager
 from .resolving import CacheParticipant, ResolvePipelineManager, effective_cast
 from .tree import TreeManager
@@ -340,6 +341,22 @@ class ResolutionManager:
             no_creds=self.no_creds,
         )
 
+    def _resolve_cache_context(
+        self,
+        config_path: str,
+        *,
+        config: Config | None = None,
+    ) -> tuple[int, str]:
+        """Return ``(content_version, extend_fingerprint)`` for cache keying."""
+        if config is not None:
+            tm = TreeManager.for_item(self.namespace, config, auth=None)
+        else:
+            tm = TreeManager(self.namespace, config_path, auth=None)
+        item = tm.get_or_raise(["config"])
+        version_obj = tm.resolve_version(item, self.version)
+        metadata, _ = ConfigValidationManager.parse_config_yaml_document(version_obj.data)
+        return version_obj.version, extend_cache_fingerprint(metadata)
+
     def _record_resolve_audit(
         self,
         config_path: str,
@@ -479,6 +496,11 @@ class ResolutionManager:
         if not tm.is_direct_resolve_target:
             raise CapabilityDenied(f"Config '{config_path}' is outside resolver scope and cannot be resolved directly")
 
+        content_version: int | None = None
+        extend_fingerprint = ""
+        if self.draft_content is None:
+            content_version, extend_fingerprint = self._resolve_cache_context(config_path, config=config)
+
         # trace_only or bypass_cache or draft_content: always run the full pipeline, skip cache.
         if self.trace_only or bypass_cache or self.draft_content is not None:
             items = self._run_pipeline(
@@ -501,6 +523,8 @@ class ResolutionManager:
             self.cast_options,
             self.dynamic_params,
             no_creds=self.no_creds,
+            content_version=content_version,
+            extend_fingerprint=extend_fingerprint,
         )
         art_entry = ResolveCacheManager.get(art_key)
         if art_entry is not None and ResolveCacheManager.is_valid(art_entry, self.namespace):
@@ -519,6 +543,8 @@ class ResolutionManager:
             self.version,
             self.dynamic_params,
             no_creds=self.no_creds,
+            content_version=content_version,
+            extend_fingerprint=extend_fingerprint,
         )
         res_entry = ResolveCacheManager.get(res_key)
         if res_entry is not None and ResolveCacheManager.participants_valid(res_entry, self.namespace):

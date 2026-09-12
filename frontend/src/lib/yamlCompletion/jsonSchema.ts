@@ -31,6 +31,27 @@ export function hasOneOf(schema: JsonSchema | null, root: JsonSchema): boolean {
   return oneOfBranches(schema, root).length > 1;
 }
 
+/** Non-null branches of a schema ``anyOf`` (union), resolved and deduped. */
+export function anyOfBranches(
+  schema: JsonSchema | null,
+  root: JsonSchema,
+): JsonSchema[] {
+  if (!schema) return [];
+  const current = resolveRef(schema, root);
+  if (!Array.isArray(current.anyOf)) return [];
+  const branches: JsonSchema[] = [];
+  const seen = new Set<string>();
+  for (const item of current.anyOf) {
+    const candidate = unwrapSchema(asObject(item), root);
+    if (!candidate || candidate.type === "null") continue;
+    const key = JSON.stringify(candidate);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    branches.push(candidate);
+  }
+  return branches;
+}
+
 export function oneOfVariantLabel(branch: JsonSchema, index: number): string {
   if (typeof branch.title === "string" && branch.title.trim()) {
     return branch.title.trim();

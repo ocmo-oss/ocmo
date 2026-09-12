@@ -1,5 +1,5 @@
 import { useEffect, useState, type MouseEvent } from "react";
-import { Link, NavLink, useParams } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Lock, TreeNavigationNode } from "../../api/types";
@@ -30,28 +30,34 @@ interface TreeNodeProps {
 function FolderChainLabel({
   segments,
   namespace,
+  onIsolateBranch,
 }: {
   segments: Array<{ name: string; path: string }>;
   namespace: string;
+  onIsolateBranch?: () => void;
 }) {
-  if (segments.length === 1) {
-    return (
-      <span className="whitespace-nowrap font-mono">{segments[0].name}</span>
-    );
-  }
-
   return (
     <span className="flex items-center gap-0.5 whitespace-nowrap font-mono">
       {segments.map((seg, index) => (
         <span key={seg.path} className="flex items-center gap-0.5">
           {index > 0 && <span className="shrink-0 text-gray-400">/</span>}
-          <Link
+          <NavLink
             to={`/ns/${namespace}/configs/${seg.path}`}
             onClick={(e) => e.stopPropagation()}
-            className="hover:text-brand-700 dark:hover:text-brand-300"
+            onDoubleClick={(e) => {
+              if (index !== segments.length - 1 || !onIsolateBranch) return;
+              e.preventDefault();
+              onIsolateBranch();
+            }}
+            className={({ isActive }) =>
+              cn(
+                "hover:text-brand-700 dark:hover:text-brand-300",
+                isActive && "font-medium text-brand-700 dark:text-brand-300",
+              )
+            }
           >
             {seg.name}
-          </Link>
+          </NavLink>
         </span>
       ))}
     </span>
@@ -73,6 +79,26 @@ function TreeItemLabel({
   isFolder: boolean;
   onIsolateBranch?: () => void;
 }) {
+  const labelClass = ({ isActive }: { isActive: boolean }) =>
+    cn(
+      "flex items-center gap-1.5 whitespace-nowrap rounded py-0.5 text-xs",
+      "text-gray-700 dark:text-gray-300",
+      isActive && "font-medium text-brand-700 dark:text-brand-300",
+    );
+
+  if (isFolder && segments && segments.length > 1) {
+    return (
+      <span className={labelClass({ isActive: false })}>
+        <ItemIcon type="folder" />
+        <FolderChainLabel
+          segments={segments}
+          namespace={namespace}
+          onIsolateBranch={onIsolateBranch}
+        />
+      </span>
+    );
+  }
+
   return (
     <NavLink
       to={href}
@@ -81,17 +107,11 @@ function TreeItemLabel({
         e.preventDefault();
         onIsolateBranch();
       }}
-      className={({ isActive }) =>
-        cn(
-          "flex items-center gap-1.5 whitespace-nowrap rounded py-0.5 text-xs",
-          "text-gray-700 dark:text-gray-300",
-          isActive && "font-medium text-brand-700 dark:text-brand-300",
-        )
-      }
+      className={labelClass}
     >
       <ItemIcon type={isFolder ? "folder" : item.type} />
       {isFolder && segments ? (
-        <FolderChainLabel segments={segments} namespace={namespace} />
+        <span className="whitespace-nowrap font-mono">{segments[0].name}</span>
       ) : (
         <span className="whitespace-nowrap font-mono">{item.name}</span>
       )}

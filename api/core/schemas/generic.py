@@ -22,6 +22,41 @@ UriReference = Annotated[
     ),
 ]
 
+# Render sources — template tree items only.
+RenderTemplateReference = Annotated[
+    str,
+    Field(
+        min_length=1,
+        json_schema_extra={
+            "format": "uri-reference",
+            "x-ocmo-uri-reference": "template-only",
+        },
+        description=(
+            "Template path to render, with optional ``@version`` suffix. "
+            "Relative paths use ``./`` and ``../`` from the current config's folder."
+        ),
+    ),
+]
+
+# Config path references — config tree items only (not templates, secrets, or resolvers).
+ConfigOnlyReference = Annotated[
+    str,
+    Field(
+        min_length=1,
+        json_schema_extra={
+            "format": "uri-reference",
+            "x-ocmo-uri-reference": "config-only",
+        },
+        description=(
+            "Config path with optional ``@version`` suffix. "
+            "Relative paths use ``./`` and ``../`` from the current config's folder."
+        ),
+    ),
+]
+
+# Extend sources — config tree items only.
+ExtendConfigReference = ConfigOnlyReference
+
 # JSONPath-like selector into config data or resolution context (not a tree path).
 SelectorExpression = Annotated[
     str,

@@ -48,6 +48,7 @@ import {
   type JsonSchema,
   asObject,
   resolveRef,
+  anyOfBranches,
   oneOfBranches,
   hasOneOf,
   oneOfVariantLabel,
@@ -66,6 +67,8 @@ import {
   bodyLineLeadingSpaces,
   arrayItemCount,
   stripYamlScalarQuotes,
+  typedPropertyKeyPrefix,
+  isValidPropertyKeyPrefix,
 } from "./lineSyntax";
 
 function indent(level: number): string {
@@ -291,12 +294,18 @@ const SORT_TEXT = {
   /** Enum/discriminator values: sort before properties (`!` < `0` < `z`). */
   enumValue: (index: number, label: string) =>
     `!${index.toString().padStart(3, "0")}:${label}`,
+  /** Extend object-form array snippets — above URI browse results. */
+  extendObjectSnippet: (index: number) =>
+    `!!${index.toString().padStart(2, "0")}:extend-object`,
   /** Regular property snippet, optional suffix for stable ordering. */
   property: (suffix = "") => `0:${suffix}`,
   /** oneOf snippet variant – required-fields depth sorts before all-fields. */
   oneOfVariant: (depth: SnippetDepth, choiceKey: string) =>
     `${depth === "required" ? "z0" : "z1"}:${choiceKey}`,
 };
+
+const EXTEND_OBJECT_SNIPPET_FILTER_TEXT =
+  "- object path key as skip_missing extend source";
 
 function snippetVariantSortKey(
   depth: SnippetDepth,
@@ -510,6 +519,43 @@ function hasMatchingScalarSuggestion(
   return scalarSuggestionValues(schema, root).some((value) =>
     shouldShowEnumSuggestion(value, typed),
   );
+}
+
+function hasMatchingPropertyKeyPrefix(
+  schema: JsonSchema,
+  root: JsonSchema,
+  existingKeys: Set<string>,
+  prefix: string,
+): boolean {
+  if (!isValidPropertyKeyPrefix(prefix)) return false;
+  if (prefix.length === 0) return true;
+  const resolved = unwrapSchema(schema, root);
+  if (!resolved) return false;
+  const properties = asObject(resolved.properties) ?? {};
+  const lower = prefix.toLowerCase();
+  return Object.keys(properties).some(
+    (key) => !existingKeys.has(key) && key.toLowerCase().startsWith(lower),
+  );
+}
+
+function shouldOfferPropertyKeySuggestions(
+  model: Monaco.editor.ITextModel,
+  position: Monaco.Position,
+  ctx: YamlCompletionContext,
+  schema: JsonSchema | null,
+  rootSchema: JsonSchema,
+): boolean {
+  if (ctx.kind !== "property-key" || !schema) return false;
+  const line = model.getLineContent(position.lineNumber);
+  if (isArrayItemLine(line)) return false;
+  const prefix = typedPropertyKeyPrefix(line, position.column);
+  const existingKeys = existingKeysInScope(
+    model,
+    position.lineNumber,
+    position.column,
+    ctx.insideArrayItem,
+  );
+  return hasMatchingPropertyKeyPrefix(schema, rootSchema, existingKeys, prefix);
 }
 
 function matchesEnumPrefix(value: string, prefix: string): boolean {
@@ -1306,6 +1352,33 @@ function findEnclosingArrayItemIndent(
   return best;
 }
 
+function enclosingArrayItemStartLine(
+  model: Monaco.editor.ITextModel,
+  lineNumber: number,
+  arrayItemIndent: number,
+): number | null {
+  const currentLine = model.getLineContent(lineNumber);
+  if (isArrayItemLine(currentLine)) {
+    const currentIndent = currentLine.search(/\S/);
+    if (currentIndent === arrayItemIndent) {
+      return lineNumber;
+    }
+  }
+
+  for (let ln = lineNumber - 1; ln >= 1; ln--) {
+    const line = model.getLineContent(ln);
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const currentIndent = line.search(/\S/);
+    if (currentIndent < arrayItemIndent) break;
+    if (currentIndent === arrayItemIndent && isArrayItemLine(line)) {
+      return ln;
+    }
+  }
+
+  return null;
+}
+
 function yamlFieldValuesInArrayItemScope(
   model: Monaco.editor.ITextModel,
   lineNumber: number,
@@ -1316,19 +1389,19 @@ function yamlFieldValuesInArrayItemScope(
     return values;
   }
 
-  for (let ln = lineNumber; ln >= 1; ln--) {
+  const arrayItemStartLine = enclosingArrayItemStartLine(
+    model,
+    lineNumber,
+    arrayItemIndent,
+  );
+  if (arrayItemStartLine === null) {
+    return values;
+  }
+
+  for (let ln = lineNumber; ln >= arrayItemStartLine; ln--) {
     const line = model.getLineContent(ln);
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) continue;
-    const currentIndent = line.search(/\S/);
-    if (currentIndent < arrayItemIndent) break;
-    if (
-      currentIndent === arrayItemIndent &&
-      isArrayItemLine(line) &&
-      ln < lineNumber
-    ) {
-      break;
-    }
 
     const key = lineArrayItemKey(line) ?? lineKey(line);
     if (!key) continue;
@@ -1417,6 +1490,36 @@ function resolveOneOfPropertySchema(
   return { anyOf: propSchemas };
 }
 
+function resolveAnyOfArrayItemBranch(
+  schema: JsonSchema,
+  root: JsonSchema,
+  values: Record<string, string>,
+): JsonSchema | null {
+  const branches = anyOfBranches(schema, root);
+  if (branches.length <= 1) return null;
+  for (const branch of branches) {
+    if (!isObjectSchema(branch)) continue;
+    const props = asObject(branch.properties) ?? {};
+    if (Object.keys(values).some((key) => key in props)) {
+      return branch;
+    }
+  }
+  return null;
+}
+
+/** Include the property currently being edited so anyOf object branches resolve before a value is typed. */
+function yamlFieldValuesForArrayItemBranchResolution(
+  model: Monaco.editor.ITextModel,
+  lineNumber: number,
+  valuePropertyKey?: string,
+): Record<string, string> {
+  const values = yamlFieldValuesInArrayItemScope(model, lineNumber);
+  if (valuePropertyKey && !(valuePropertyKey in values)) {
+    return { ...values, [valuePropertyKey]: "" };
+  }
+  return values;
+}
+
 function resolveArrayItemSchema(
   itemsSchema: JsonSchema,
   root: JsonSchema,
@@ -1425,6 +1528,13 @@ function resolveArrayItemSchema(
 ): JsonSchema | null {
   const resolved = resolveRef(itemsSchema, root);
   const values = yamlFieldValuesInArrayItemScope(model, lineNumber);
+
+  const anyOfBranch = resolveAnyOfArrayItemBranch(resolved, root, values);
+  if (anyOfBranch) return anyOfBranch;
+  if (anyOfBranches(resolved, root).length > 1) {
+    return resolved;
+  }
+
   const branch = resolveOneOfBranch(resolved, root, values);
   if (branch) return branch;
   if (oneOfBranches(resolved, root).length > 1) {
@@ -1479,14 +1589,21 @@ function resolveTargetSchema(
         (column !== undefined &&
           isWithinArrayItemObject(model, lineNumber, column));
       if (inArrayObject) {
-        const branch = resolveOneOfBranch(
-          base,
-          root,
-          yamlFieldValuesInArrayItemScope(model, lineNumber),
+        const branchValues = yamlFieldValuesForArrayItemBranchResolution(
+          model,
+          lineNumber,
+          ctx.valuePropertyKey,
         );
-        if (branch) {
-          resolvedOneOfBranch = branch;
-          base = branch;
+        const anyOfBranch = resolveAnyOfArrayItemBranch(base, root, branchValues);
+        if (anyOfBranch) {
+          resolvedOneOfBranch = anyOfBranch;
+          base = anyOfBranch;
+        } else {
+          const branch = resolveOneOfBranch(base, root, branchValues);
+          if (branch) {
+            resolvedOneOfBranch = branch;
+            base = branch;
+          }
         }
       }
     }
@@ -1738,6 +1855,10 @@ function isAtArrayElementRow(
   objectPath: string[],
 ): boolean {
   const line = model.getLineContent(position.lineNumber);
+  // Array-item suggestions only after the user starts the row with "-".
+  if (!isArrayItemLine(line)) {
+    return false;
+  }
   if (isScalarArrayItemLine(line)) {
     return true;
   }
@@ -2608,16 +2729,142 @@ function propertySuggestions(
   );
 }
 
+function arrayItemObjectBranches(
+  itemSchema: JsonSchema,
+  root: JsonSchema,
+): JsonSchema[] {
+  const resolved = resolveRef(itemSchema, root);
+  const oneOf = oneOfBranches(resolved, root);
+  if (oneOf.length > 1) {
+    return oneOf.filter((branch) => isObjectSchema(branch));
+  }
+  const mixed = mixedAnyOfObjectBranches(resolved, root);
+  if (mixed.length > 0) {
+    return mixed;
+  }
+  const unwrapped = unwrapSchema(resolved, root);
+  return unwrapped && isObjectSchema(unwrapped) ? [unwrapped] : [];
+}
+
+function partitionUnionObjectBranches(
+  branches: JsonSchema[],
+  root: JsonSchema,
+): JsonSchema[] {
+  if (branches.length <= 1) return [];
+  const resolved = branches.map((branch) => resolveRef(branch, root));
+  const objects = resolved.filter((branch) => isObjectSchema(branch));
+  const scalars = resolved.filter(
+    (branch) => !isObjectSchema(branch) && !isArraySchema(branch),
+  );
+  if (objects.length === 0 || scalars.length === 0) return [];
+  return objects;
+}
+
+/** Object branches of a scalar|object union (``anyOf`` / ``oneOf``, e.g. extend refs). */
+function mixedAnyOfObjectBranches(
+  schema: JsonSchema,
+  root: JsonSchema,
+): JsonSchema[] {
+  const resolved = resolveRef(schema, root);
+  const anyOf = anyOfBranches(resolved, root);
+  if (anyOf.length > 1) {
+    return partitionUnionObjectBranches(anyOf, root);
+  }
+  const oneOf = oneOfBranches(resolved, root);
+  if (oneOf.length > 1) {
+    return partitionUnionObjectBranches(oneOf, root);
+  }
+  return [];
+}
+
+function isExtendObjectRefBranch(branch: JsonSchema): boolean {
+  const props = asObject(branch.properties) ?? {};
+  return "path" in props && ("skip_missing" in props || "key" in props);
+}
+
+function decorateExtendObjectSnippetItem<
+  T extends Monaco.languages.CompletionItem,
+>(item: T, index: number): T {
+  return {
+    ...item,
+    sortText: SORT_TEXT.extendObjectSnippet(index),
+    filterText: EXTEND_OBJECT_SNIPPET_FILTER_TEXT,
+  };
+}
+
+function arrayItemBranchLabel(branch: JsonSchema, index: number): string {
+  const props = asObject(branch.properties) ?? {};
+  if ("path" in props && ("skip_missing" in props || "key" in props)) {
+    return "object (path, key, as, skip_missing)";
+  }
+  return oneOfVariantLabel(branch, index);
+}
+
+function mergeCompletionItems(
+  primary: Monaco.languages.CompletionItem[],
+  secondary: Monaco.languages.CompletionItem[],
+): Monaco.languages.CompletionItem[] {
+  if (secondary.length === 0) return primary;
+  if (primary.length === 0) return secondary;
+  const seen = new Set(primary.map((item) => String(item.insertText)));
+  const merged = [...primary];
+  for (const item of secondary) {
+    const key = String(item.insertText);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+  }
+  return merged;
+}
+
+function extendConfigRefSchemaFromRoot(root: JsonSchema): JsonSchema | null {
+  const defs = asObject(root.$defs);
+  const ref = asObject(defs?.ConfigExtendRefSchema);
+  return ref && isObjectSchema(ref) ? ref : null;
+}
+
+function isExtendConfigsArrayPath(
+  objectPath: string[],
+  metadataKey: string | null,
+): boolean {
+  return (
+    Boolean(metadataKey) &&
+    objectPath.length === 3 &&
+    objectPath[0] === metadataKey &&
+    objectPath[1] === "extend" &&
+    objectPath[2] === "configs"
+  );
+}
+
+function resolveArrayItemObjectBranches(
+  itemSchema: JsonSchema,
+  root: JsonSchema,
+  objectPath: string[],
+  metadataKey: string | null,
+): JsonSchema[] {
+  const branches = arrayItemObjectBranches(itemSchema, root);
+  if (branches.length > 0) {
+    return branches;
+  }
+  if (isExtendConfigsArrayPath(objectPath, metadataKey)) {
+    const extendRef = extendConfigRefSchemaFromRoot(root);
+    if (extendRef) {
+      return [extendRef];
+    }
+  }
+  return [];
+}
+
 function shouldOfferArrayItemObjectSnippets(
   itemSchema: JsonSchema,
   root: JsonSchema,
+  objectPath: string[] = [],
+  metadataKey: string | null = null,
 ): boolean {
-  const branches = oneOfBranches(itemSchema, root);
-  if (branches.length > 1) {
-    return branches.some((branch) => isObjectSchema(branch));
-  }
-  const resolved = unwrapSchema(resolveRef(itemSchema, root), root);
-  return resolved ? isObjectSchema(resolved) : false;
+  return (
+    resolveArrayItemObjectBranches(itemSchema, root, objectPath, metadataKey)
+      .length > 0
+  );
 }
 
 function oneOfConstDiscriminatorSuggestions(
@@ -2754,23 +3001,68 @@ function arrayItemSuggestions(
     ctx.objectPath,
   );
 
+  const mixedObjects = mixedAnyOfObjectBranches(resolved, root);
+  if (mixedObjects.length > 0) {
+    let snippetIndex = 0;
+    return mixedObjects.flatMap((branch, branchIndex) => {
+      const branchLabel = arrayItemBranchLabel(branch, branchIndex);
+      const variants = buildSnippetVariants(branch, root, "", (options) =>
+        buildArrayItemLines(branch, root, effectiveIndent, 1, options, ""),
+      );
+      return variants.map((variant) => {
+        const insertText = formatArrayItemInsertText(variant.lines, lineContent);
+        const label = isExtendObjectRefBranch(branch)
+          ? `Extend source (${variant.depth === "required" ? "path only" : "path, key, as, skip_missing"})`
+          : `${variant.label} (${branchLabel})`;
+        const item: Monaco.languages.CompletionItem = {
+          label,
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText,
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          range,
+          detail: formatCompletionPreviewDetail(label, variant.preview),
+          documentation: completionDocumentation(
+            variant.description ?? branch.description,
+          ),
+          sortText: variant.sortText,
+        };
+        if (!isExtendObjectRefBranch(branch)) {
+          return item;
+        }
+        const decorated = decorateExtendObjectSnippetItem(item, snippetIndex);
+        snippetIndex += 1;
+        return decorated;
+      });
+    });
+  }
+
   const variants = buildSnippetVariants(resolved, root, "", (options) =>
     buildArrayItemLines(resolved, root, effectiveIndent, 1, options, ""),
   );
 
+  const extendRef = isExtendObjectRefBranch(resolved);
+  let snippetIndex = 0;
   return variants.map((variant) => {
     const insertText = formatArrayItemInsertText(variant.lines, lineContent);
-    return {
-      label: variant.label,
+    const label = extendRef
+      ? `Extend source (${variant.depth === "required" ? "path only" : "path, key, as, skip_missing"})`
+      : variant.label;
+    const item: Monaco.languages.CompletionItem = {
+      label,
       kind: monaco.languages.CompletionItemKind.Snippet,
       insertText,
       insertTextRules:
         monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
       range,
-      detail: formatCompletionPreviewDetail(variant.label, variant.preview),
+      detail: formatCompletionPreviewDetail(label, variant.preview),
       documentation: completionDocumentation(variant.description),
       sortText: variant.sortText,
     };
+    if (!extendRef) return item;
+    const decorated = decorateExtendObjectSnippetItem(item, snippetIndex);
+    snippetIndex += 1;
+    return decorated;
   });
 }
 
@@ -3105,6 +3397,7 @@ function syncArrayElementSuggestions(
   model: Monaco.editor.ITextModel,
   position: Monaco.Position,
   lineContent: string,
+  metadataKey: string | null = null,
 ): Monaco.languages.CompletionItem[] {
   const discriminator = oneOfConstDiscriminatorSuggestions(
     monaco,
@@ -3114,6 +3407,44 @@ function syncArrayElementSuggestions(
     lineContent,
   );
   if (discriminator?.length) return discriminator;
+
+  const objectBranches = resolveArrayItemObjectBranches(
+    itemSchema,
+    rootSchema,
+    ctx.objectPath,
+    metadataKey,
+  );
+  const mixedScalarObject = mixedAnyOfObjectBranches(
+    resolveRef(itemSchema, rootSchema),
+    rootSchema,
+  ).length > 0;
+  const objectSnippets =
+    objectBranches.length === 0
+      ? []
+      : objectBranches.length === 1 || mixedScalarObject
+        ? objectBranches.flatMap((branch) =>
+            arrayItemSuggestions(
+              monaco,
+              branch,
+              rootSchema,
+              range,
+              ctx,
+              model,
+              position.lineNumber,
+              lineContent,
+            ),
+          )
+        : arrayItemSuggestions(
+            monaco,
+            itemSchema,
+            rootSchema,
+            range,
+            ctx,
+            model,
+            position.lineNumber,
+            lineContent,
+          );
+
   if (hasScalarValueSuggestions(itemSchema, rootSchema)) {
     const scalars = scalarArrayItemValueSuggestions(
       monaco,
@@ -3125,19 +3456,13 @@ function syncArrayElementSuggestions(
       position,
       lineContent,
     );
-    if (scalars !== null) return scalars;
+    if (scalars !== null) {
+      return mergeCompletionItems(scalars, objectSnippets);
+    }
   }
-  if (!shouldOfferArrayItemObjectSnippets(itemSchema, rootSchema)) return [];
-  return arrayItemSuggestions(
-    monaco,
-    itemSchema,
-    rootSchema,
-    range,
-    ctx,
-    model,
-    position.lineNumber,
-    lineContent,
-  );
+
+  if (objectSnippets.length > 0) return objectSnippets;
+  return [];
 }
 
 function buildYamlCompletionSuggestions(
@@ -3304,9 +3629,13 @@ function buildYamlCompletionSuggestions(
         uriOptions.allowOutsideMetadata);
     if (scalarUriReference) {
       const typed = extractTypedUriReference(model, position, ctx);
+      const inMetadata = isInOcmoMetadata(
+        ctx.objectPath,
+        uriOptions.metadataKey,
+      );
       const canBrowseEmpty =
-        uriOptions.allowOutsideMetadata &&
-        (typed === null || typed.pathPart === "");
+        (typed === null || typed.pathPart === "") &&
+        (uriOptions.allowOutsideMetadata || inMetadata);
       if (typed?.pathPart || canBrowseEmpty) {
         return buildUriReferenceSuggestions(
           monaco,
@@ -3318,8 +3647,7 @@ function buildYamlCompletionSuggestions(
           uriOptions!,
           abortSignalFromToken(token),
         ).then((uriSuggestions) => {
-          if (uriSuggestions.length > 0) return uriSuggestions;
-          return syncArrayElementSuggestions(
+          const other = syncArrayElementSuggestions(
             monaco,
             targetSchema,
             rootSchema,
@@ -3328,7 +3656,10 @@ function buildYamlCompletionSuggestions(
             model,
             position,
             lineContent,
+            metadataKey,
           );
+          // Object snippets first — URI browse can return many paths and hide them.
+          return mergeCompletionItems(other, uriSuggestions);
         });
       }
     }
@@ -3341,6 +3672,7 @@ function buildYamlCompletionSuggestions(
       model,
       position,
       lineContent,
+      metadataKey,
     );
   }
 
@@ -3373,6 +3705,7 @@ function buildYamlCompletionSuggestions(
           model,
           position,
           lineContent,
+          metadataKey,
         );
       }
     }
@@ -3419,6 +3752,19 @@ function buildYamlCompletionSuggestions(
   }
 
   if (!effectiveTargetSchema) {
+    return [];
+  }
+
+  if (
+    ctx.kind === "property-key" &&
+    !shouldOfferPropertyKeySuggestions(
+      model,
+      position,
+      ctx,
+      effectiveTargetSchema,
+      rootSchema,
+    )
+  ) {
     return [];
   }
 
@@ -3495,14 +3841,31 @@ function hasYamlCompletionSuggestions(
     (ctx.kind === "property-value" || ctx.kind === "array-item") &&
     hasScalarValueSuggestions(targetSchema, rootSchema)
   ) {
-    if (!canSuggestEnumAtPosition(model, position, ctx)) {
-      return false;
+    const mixedObjects = mixedAnyOfObjectBranches(targetSchema, rootSchema);
+    if (ctx.kind === "array-item") {
+      if (
+        resolveArrayItemObjectBranches(
+          targetSchema,
+          rootSchema,
+          ctx.objectPath,
+          metadataKey,
+        ).length > 0 ||
+        mixedObjects.length > 0
+      ) {
+        return true;
+      }
+    } else {
+      if (!canSuggestEnumAtPosition(model, position, ctx)) {
+        return false;
+      }
+      const typed =
+        ctx.kind === "property-value"
+          ? (extractTypedPropertyValue(model, position, ctx) ?? "")
+          : (extractTypedScalarArrayItem(model, position) ?? "");
+      if (hasMatchingScalarSuggestion(targetSchema, rootSchema, typed)) {
+        return true;
+      }
     }
-    const typed =
-      ctx.kind === "property-value"
-        ? (extractTypedPropertyValue(model, position, ctx) ?? "")
-        : (extractTypedScalarArrayItem(model, position) ?? "");
-    return hasMatchingScalarSuggestion(targetSchema, rootSchema, typed);
   }
   if (
     ctx.kind === "property-key" &&
@@ -3515,6 +3878,17 @@ function hasYamlCompletionSuggestions(
         position,
         ctx.objectPath,
         metadataKey,
+      )
+    ) {
+      return false;
+    }
+    if (
+      !shouldOfferPropertyKeySuggestions(
+        model,
+        position,
+        ctx,
+        targetSchema,
+        rootSchema,
       )
     ) {
       return false;
@@ -3622,6 +3996,19 @@ export function shouldAutoTriggerYamlSuggest(
       }
     }
     if (ctx.kind === "property-value") return false;
+    if (
+      ctx.kind === "property-key" &&
+      rootSchema &&
+      !shouldOfferPropertyKeySuggestions(
+        model,
+        position,
+        ctx,
+        analyzePosition(model, position, rootSchema).targetSchema,
+        rootSchema,
+      )
+    ) {
+      return false;
+    }
   }
   // After a colon or at line start: use memoized analysis when possible.
   const analysis = rootSchema
@@ -3695,7 +4082,27 @@ export function shouldAutoTriggerYamlSuggest(
   ) {
     return false;
   }
-  return isAtPropertyRow(model, position, ctx);
+  if (ctx.kind === "array-item") {
+    return isAtArrayElementRow(model, position, ctx.objectPath);
+  }
+  if (!isAtPropertyRow(model, position, ctx)) {
+    return false;
+  }
+  if (
+    ctx.kind === "property-key" &&
+    rootSchema &&
+    analysis?.targetSchema &&
+    !shouldOfferPropertyKeySuggestions(
+      model,
+      position,
+      ctx,
+      analysis.targetSchema,
+      rootSchema,
+    )
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function hideSuggestWidget(editor: Monaco.editor.IStandaloneCodeEditor): void {
@@ -3864,11 +4271,15 @@ export const __testing = {
   formatPropertyInsertForSnippet,
   shouldAutoTriggerYamlSuggest,
   hasYamlCompletionSuggestions,
+  mixedAnyOfObjectBranches,
+  mergeCompletionItems,
   buildYamlCompletionSuggestions,
   editorHasSelection,
   hideSuggestWidget,
   enclosingArrayItemKeyLineIndent,
   isWithinArrayItemObject,
+  anyOfBranches,
+  arrayItemObjectBranches,
   oneOfBranches,
   oneOfVariantLabel,
   resolveOneOfBranch,
