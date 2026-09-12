@@ -581,7 +581,7 @@ wheels = [
 
 [[package]]
 name = "ocmo-api"
-version = "0.8.21"
+version = "0.8.22"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

@@ -6,7 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from `1.0.0` onward.
 Before `1.0.0`, minor releases may include breaking API or behavior changes.
 
-## [0.8.21] - 2026-09-11
+## [0.8.22]
+
+### Changed (breaking)
+
+- **[feat] Output naming:** `_ocmo.name` is evaluated after extend merge using `{.selector}` placeholders (merged data + `{._ocmo.*}` metadata). `{!param}` in names is rejected. Extend `replicate` no longer auto-suffixes; dedup adds `-1`, `-2` only on name collisions.
+
+### Added
+
+- **[feat] API:** name-owner rules per extend mode (`stack`, `broadcast`, `zip`, `replicate`) and render precedence documented in `docs/features/resolving/output-naming.md`.
+- **[feat] Frontend:** `_ocmo.name` metadata placeholder autocomplete in the YAML editor.
+- **[feat] Frontend:** double-click the current tree item to collapse all branches except the path to it.
+- **[feat] Frontend:** compact tree header with whole-tree reload control.
+- **[chore] Smoke:** naming coverage for plain, extend, render, and extend+render scenarios.
+
+### Fixed
+
+- **[fix] API:** extend+render resolve uses extend-resolved `_ocmo.name` when the template has no `# ocmo.name:` header (instead of always using the template filename leaf).
+
+## [0.8.21]
 
 ### Changed (breaking)
 
@@ -48,6 +66,7 @@ Legacy mode values are no longer accepted.
 - Initial open-source monorepo publication: API, SDK, CLI, frontend, gateway, and documentation.
 - Apache 2.0 license, contributor guidelines, and security policy.
 
+[0.8.22]: https://github.com/ocmo-oss/ocmo/compare/v0.8.21...v0.8.22
 [0.8.21]: https://github.com/ocmo-oss/ocmo/compare/v0.8.20...v0.8.21
 [0.8.20]: https://github.com/ocmo-oss/ocmo/compare/v0.8.19...v0.8.20
 [0.8.19]: https://github.com/ocmo-oss/ocmo/releases/tag/v0.8.19
