@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from `1.0.0` onward.
 Before `1.0.0`, minor releases may include breaking API or behavior changes.
 
+## [0.8.23]
+
+### Added
+
+- **[feat] API:** `skip_missing` on extend config references — optional sources may be absent; replicate with a missing optional base yields empty outputs.
+- **[feat] CLI:** exit code `10` when resolve produces empty output.
+- **[feat] Frontend:** object-form extend completion snippets and narrowed URI reference scopes (configs for extend/validation/propagation, templates for render).
+- **[feat] Frontend:** larger completion documentation panel for suggest items.
+
+### Fixed
+
+- **[fix] Frontend:** suppress `_ocmo` property suggestions when the typed key prefix is invalid on an empty document.
+- **[fix] Frontend:** URI suggestions for scalar extend refs after an object-form array item.
+- **[fix] Frontend:** do not suggest array items before typing `-`.
+- **[fix] Frontend:** nested anchor warning in tree folder labels.
+- **[fix] Docker/HMR:** gateway frontend upstream env for Vite dev server after container recreate.
+
+### Changed
+
+- **[chore] Docs:** extend `skip_missing`, CLI exit codes, and resolve troubleshooting notes.
+
 ## [0.8.22]
 
 ### Changed (breaking)

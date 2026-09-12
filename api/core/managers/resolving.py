@@ -41,12 +41,16 @@ from ..decorators import PermCheck, arg, require_permissions
 from ..exceptions import (
     CannotCast,
     CannotResolveConfig,
-    CapabilityDenied,
     InvalidCastOption,
     NotFound,
     TemplateRenderError,
     UnknownCastFormat,
     UnknownCastOption,
+)
+from ..extend_refs import (
+    classify_extend_source,
+    extend_source_missing_message,
+    extend_source_trace_key,
 )
 from ..models import Config, Template, TreeItem
 from ..schemas import (
@@ -488,6 +492,79 @@ class ResolvePipelineManager:
             return {}
         return value
 
+    def _record_skipped_extend_source(
+        self,
+        trace: dict[str, Any],
+        resolved_path: str,
+        version: str,
+    ) -> None:
+        trace[extend_source_trace_key(resolved_path, version)] = {
+            "skipped": True,
+            "reason": "not_found",
+        }
+
+    def _resolve_extend_source_outputs(
+        self,
+        norm: ConfigExtendRefSchema,
+        chain: list[str],
+        trace: dict[str, Any],
+    ) -> list[_ResolvedOutput] | None:
+        path, version = parse_ref(norm.path)
+        resolved_path = resolve_relative_path(self.base_folder, path)
+        status = classify_extend_source(
+            self.namespace,
+            resolved_path,
+            version,
+            auth=self.auth,
+        )
+        if status == "missing":
+            if norm.skip_missing:
+                self._record_skipped_extend_source(trace, resolved_path, version)
+                return None
+            raise CannotResolveConfig(extend_source_missing_message(resolved_path, version))
+        if status == "invalid":
+            raise CannotResolveConfig(f"Extend source {resolved_path!r} is not a config")
+
+        sub_mgr = ResolvePipelineManager(
+            self.namespace,
+            resolved_path,
+            version,
+            dynamic_params=self.dynamic_params,
+            auth=self.auth,
+            no_creds=self.no_creds,
+            defer_output_naming=True,
+        )
+        sub_items = sub_mgr.resolve_data_only(chain=chain)
+        self._participants.extend(sub_mgr._participants)
+        ref_trace: dict[str, Any] = {}
+        if norm.key is not None:
+            ref_trace["key"] = norm.key
+        if norm.as_ is not None:
+            ref_trace["as"] = norm.as_
+        trace_entry = self._collect_trace(sub_items)
+        if ref_trace:
+            trace_entry = {**trace_entry, **ref_trace}
+        trace[sub_mgr._trace_key()] = trace_entry
+        outputs: list[_ResolvedOutput] = []
+        for item in sub_items:
+            fragment = self._prepare_extend_fragment(
+                norm,
+                item["data"],
+                source_path=resolved_path,
+            )
+            outputs.append(
+                _ResolvedOutput(
+                    name_template=item.get("name_template"),
+                    name_owner=item.get("name_owner"),
+                    version=sub_mgr.version_obj.version,
+                    format="yaml",
+                    data_text=None,
+                    raw_data=fragment,
+                    trace=item["trace"],
+                )
+            )
+        return outputs
+
     def _apply_extend(
         self,
         extend: ConfigExtendSchema,
@@ -503,52 +580,65 @@ class ResolvePipelineManager:
         current_data = current.raw_data
         mode = extend.mode
 
+        if mode == "replicate" and len(extend.configs) == 1:
+            norm = normalize_extend_ref(extend.configs[0])
+            path, version = parse_ref(norm.path)
+            resolved_path = resolve_relative_path(self.base_folder, path)
+            status = classify_extend_source(
+                self.namespace,
+                resolved_path,
+                version,
+                auth=self.auth,
+            )
+            if status == "missing" and norm.skip_missing:
+                self._record_skipped_extend_source(trace, resolved_path, version)
+                return []
+
+        patch_value = json_path(current_data, extend.by) if extend.by else current_data
+
+        if mode == "zip":
+            if not isinstance(patch_value, list):
+                raise CannotResolveConfig(f"extend mode 'zip' requires by={extend.by!r} to resolve to a list")
+            if len(patch_value) != len(extend.configs):
+                raise CannotResolveConfig(
+                    f"extend 'zip' length mismatch: {len(extend.configs)} configs vs "
+                    f"{len(patch_value)} items at {extend.by!r}"
+                )
+            zip_outputs: list[_ResolvedOutput] = []
+            for i, ref in enumerate(extend.configs):
+                norm = normalize_extend_ref(ref)
+                resolved_outputs = self._resolve_extend_source_outputs(norm, chain, trace)
+                if resolved_outputs is None:
+                    continue
+                if len(resolved_outputs) != 1:
+                    raise CannotResolveConfig(
+                        f"extend mode 'zip' requires each config to resolve to exactly one output "
+                        f"({norm.path!r} produced {len(resolved_outputs)})"
+                    )
+                b = resolved_outputs[0]
+                zip_merged = deep_merge(b.raw_data, patch_value[i])
+                output = _ResolvedOutput(
+                    name_template=b.name_template,
+                    name_owner=b.name_owner,
+                    version=b.version,
+                    format="yaml",
+                    data_text=None,
+                    raw_data=strip_omit(zip_merged),
+                    trace=trace,
+                )
+                if not self.defer_output_naming:
+                    self._finalize_output_name(output)
+                zip_outputs.append(output)
+            return zip_outputs
+
         # Resolve each entry — each may itself expand to multiple outputs.
         base_outputs: list[_ResolvedOutput] = []
         for ref in extend.configs:
             norm = normalize_extend_ref(ref)
-            path, version = parse_ref(norm.path)
-            resolved_path = resolve_relative_path(self.base_folder, path)
-            if not TreeManager(self.namespace, resolved_path, auth=self.auth).is_extend_target:
-                raise CapabilityDenied(f"Config '{resolved_path}' cannot be used in extend")
-            sub_mgr = ResolvePipelineManager(
-                self.namespace,
-                resolved_path,
-                version,
-                dynamic_params=self.dynamic_params,
-                auth=self.auth,
-                no_creds=self.no_creds,
-                defer_output_naming=True,
-            )
-            sub_items = sub_mgr.resolve_data_only(chain=chain)
-            # Merge sub-manager participants into ours.
-            self._participants.extend(sub_mgr._participants)
-            ref_trace: dict[str, Any] = {}
-            if norm.key is not None:
-                ref_trace["key"] = norm.key
-            if norm.as_ is not None:
-                ref_trace["as"] = norm.as_
-            trace_entry = self._collect_trace(sub_items)
-            if ref_trace:
-                trace_entry = {**trace_entry, **ref_trace}
-            trace[sub_mgr._trace_key()] = trace_entry
-            for item in sub_items:
-                fragment = self._prepare_extend_fragment(
-                    norm,
-                    item["data"],
-                    source_path=resolved_path,
-                )
-                base_outputs.append(
-                    _ResolvedOutput(
-                        name_template=item.get("name_template"),
-                        name_owner=item.get("name_owner"),
-                        version=sub_mgr.version_obj.version,
-                        format="yaml",
-                        data_text=None,
-                        raw_data=fragment,
-                        trace=item["trace"],
-                    )
-                )
+            resolved_outputs = self._resolve_extend_source_outputs(norm, chain, trace)
+            if resolved_outputs is None:
+                continue
+            base_outputs.extend(resolved_outputs)
 
         if mode == "stack":
             merged: Any = {}
@@ -562,41 +652,10 @@ class ResolvePipelineManager:
                 self._finalize_output_name(current)
             return [current]
 
-        # broadcast, zip, and replicate need the "patch" payload from current data.
-        if extend.by:
-            patch_value = json_path(current_data, extend.by)
-        else:
-            patch_value = current_data
-
         if mode == "broadcast":
             results: list[_ResolvedOutput] = []
             for b in base_outputs:
                 merged = deep_merge(b.raw_data, patch_value)
-                output = _ResolvedOutput(
-                    name_template=b.name_template,
-                    name_owner=b.name_owner,
-                    version=b.version,
-                    format="yaml",
-                    data_text=None,
-                    raw_data=strip_omit(merged),
-                    trace=trace,
-                )
-                if not self.defer_output_naming:
-                    self._finalize_output_name(output)
-                results.append(output)
-            return results
-
-        if mode == "zip":
-            if not isinstance(patch_value, list):
-                raise CannotResolveConfig(f"extend mode 'zip' requires by={extend.by!r} to resolve to a list")
-            if len(patch_value) != len(base_outputs):
-                raise CannotResolveConfig(
-                    f"extend 'zip' length mismatch: {len(base_outputs)} configs vs "
-                    f"{len(patch_value)} items at {extend.by!r}"
-                )
-            results = []
-            for b, patch in zip(base_outputs, patch_value):
-                merged = deep_merge(b.raw_data, patch)
                 output = _ResolvedOutput(
                     name_template=b.name_template,
                     name_owner=b.name_owner,

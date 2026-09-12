@@ -28,7 +28,7 @@ from .._address import parse_address_or_exit
 from .._click_groups import DefaultCommandGroup
 from .._client import OcmoCtx
 from .._errors import sdk_command
-from .._exit import FAILURE, HOOK_FAILURE, USAGE_ERROR, VALIDATION_ERROR
+from .._exit import FAILURE, HOOK_FAILURE, RESOLVE_EMPTY, USAGE_ERROR, VALIDATION_ERROR
 from .._options import namespace_option
 from .._output import err, warn
 from .._resolve_options import resolve_options
@@ -224,7 +224,7 @@ def run_resolve_pipeline(
 
     if not items:
         warn("Resolve returned no items.")
-        return
+        raise SystemExit(RESOLVE_EMPTY)
 
     output_fmt = resolve_output_format(output_fmt, ctx.output)
 

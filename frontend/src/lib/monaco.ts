@@ -19,6 +19,7 @@ import {
   jinja2MonarchLanguage,
 } from "./jinja2Language";
 import { defineMonacoThemes } from "./monacoTheme";
+import "./monacoSuggest.css";
 
 // Eagerly wire YAML instead of Monaco's lazy import('./yaml.js'), which Vite
 // pre-bundles into node_modules/.vite/deps and can 504 as "Outdated Optimize Dep".

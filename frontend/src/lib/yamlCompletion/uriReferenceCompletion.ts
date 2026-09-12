@@ -20,14 +20,18 @@ import { formatYamlScalar } from "../yamlScalar";
 import { asObject, resolveRef } from "./jsonSchema";
 import {
   isScalarArrayItemLine,
+  lineArrayItemKey,
   arrayItemValueStartColumn,
   stripYamlScalarQuotes as stripYamlQuotes,
 } from "./lineSyntax";
 
 type JsonSchema = Record<string, unknown>;
 
-export type OcmoUriReferenceScope = "config" | "resolver" | "resource";
+export type OcmoUriReferenceScope =
+  "config" | "config-only" | "template-only" | "resolver" | "resource";
 
+const CONFIG_ONLY_REFERENCE_ITEM_TYPES = new Set<ItemType>(["config"]);
+const TEMPLATE_ONLY_REFERENCE_ITEM_TYPES = new Set<ItemType>(["template"]);
 const CONFIG_REFERENCE_ITEM_TYPES = new Set<ItemType>([
   "config",
   "template",
@@ -101,7 +105,14 @@ export function resolveUriReferenceScope(
 ): OcmoUriReferenceScope {
   const resolved = unwrapSchemaForUriRef(schema, root);
   const scope = resolved?.["x-ocmo-uri-reference"];
-  if (scope === "resolver" || scope === "resource") return scope;
+  if (
+    scope === "resolver" ||
+    scope === "resource" ||
+    scope === "config-only" ||
+    scope === "template-only"
+  ) {
+    return scope;
+  }
   return "config";
 }
 
@@ -111,6 +122,10 @@ function allowedItemTypes(scope: OcmoUriReferenceScope): Set<ItemType> {
       return RESOLVER_REFERENCE_ITEM_TYPES;
     case "resource":
       return RESOURCE_REFERENCE_ITEM_TYPES;
+    case "config-only":
+      return CONFIG_ONLY_REFERENCE_ITEM_TYPES;
+    case "template-only":
+      return TEMPLATE_ONLY_REFERENCE_ITEM_TYPES;
     default:
       return CONFIG_REFERENCE_ITEM_TYPES;
   }
@@ -194,7 +209,10 @@ export function extractTypedUriReference(
     const start = arrayItemValueStartColumn(line);
     if (start === null) return null;
     valueStartColumn = start;
-    if (!isScalarArrayItemLine(line)) return null;
+    // Empty ``- `` rows and object-form rows (``- path:``) are not scalar refs.
+    if (!isScalarArrayItemLine(line) && lineArrayItemKey(line)) {
+      return null;
+    }
   } else {
     return null;
   }
@@ -232,7 +250,8 @@ export function uriReferenceCompletionRange(
     }
   } else if (ctx.kind === "array-item") {
     const start = arrayItemValueStartColumn(line);
-    if (start === null || !isScalarArrayItemLine(line)) return null;
+    if (start === null) return null;
+    if (!isScalarArrayItemLine(line) && lineArrayItemKey(line)) return null;
     valueStartColumn = start;
   } else {
     return null;
@@ -560,9 +579,17 @@ export function shouldSuggestUriReferences(
 
   const scope = resolveUriReferenceScope(schema, root);
   const absoluteOnly = requiresAbsoluteReferences(options, scope);
+  const narrowedMetadataScope =
+    scope === "config-only" || scope === "template-only";
   const allowEmptyBrowse =
-    Boolean(options.allowOutsideMetadata) &&
-    (scope === "resource" || scope === "resolver");
+    (Boolean(options.allowOutsideMetadata) &&
+      (scope === "resource" || scope === "resolver")) ||
+    (isInOcmoMetadata(ctx.objectPath, options.metadataKey) &&
+      ((scope === "config" &&
+        (ctx.kind === "array-item" ||
+          (ctx.kind === "property-value" && ctx.insideArrayItem))) ||
+        (narrowedMetadataScope &&
+          (ctx.kind === "array-item" || ctx.kind === "property-value"))));
 
   if (!typed || !typed.pathPart) {
     return allowEmptyBrowse;

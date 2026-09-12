@@ -1,11 +1,15 @@
 # Development overlay — live HMR for the frontend.
 #
 # Usage:
-#   docker compose -f docker-compose.dev.yml -f docker-compose.hmr.yml up
+#   docker compose -f docker-compose.dev.yml -f docker-compose.hmr.yml up --build
 #
 # What changes compared to the base dev compose:
 #   - frontend: Vite dev server (source bind-mounted, node_modules in a named volume)
-#   - gateway:  nginx proxies to port 3000 (Vite) instead of 80 (nginx static)
+#   - gateway:  OCMO_FRONTEND_UPSTREAM=http://frontend:3000 (Vite instead of static :80)
+#
+# When enabling HMR or restarting the frontend dev server, recreate gateway too so
+# it picks up the Vite upstream (502 if gateway still points at :80):
+#   docker compose -f docker-compose.dev.yml -f docker-compose.hmr.yml up -d --force-recreate frontend gateway
 #
 # HMR WebSocket connects through the gateway on :8080 (Vite hmr.clientPort).
 # Port 3000 is still exposed for direct Vite access if needed.
@@ -27,13 +31,25 @@ services:
       VITE_API_BASE_URL: ""
       VITE_API_PROXY_TARGET: http://api:8000
       VITE_DEV_SERVER_ORIGIN: http://localhost:8080
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "node -e \"fetch('http://127.0.0.1:3000').then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
     networks:
       - ocmo-network
 
   gateway:
-    volumes:
-      - ./docker/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
-      - ocmo_artifacts:/tmp/ocmo/resolved:ro
+    environment:
+      OCMO_FRONTEND_UPSTREAM: http://frontend:3000
+    depends_on:
+      frontend:
+        condition: service_healthy
 
 volumes:
   frontend_node_modules:

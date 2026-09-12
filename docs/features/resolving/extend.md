@@ -79,6 +79,58 @@ Example — extract `.database` from a shared config and merge it under `.persis
   as: .persistence
 ```
 
+### Optional sources
+
+An extend source can be marked optional so resolve continues when the config path or version/tag is absent.
+
+**String form** — append `?` to the whole reference:
+```yaml
+- ../env-overlays/prod@stable?
+- ../optional/base?
+```
+
+**Object form** — set `skip_missing: true` (default `false`). Do not put `?` on `path`; use the field instead:
+```yaml
+- path: ../env-overlays/prod@stable
+  skip_missing: true
+```
+
+| Situation | Required ref | Optional ref (`?` / `skip_missing`) |
+|-----------|--------------|---------------------------------------|
+| Config path not found | Error | Skipped |
+| Config exists, version/tag missing | Error | Skipped |
+| Wrong node type (template/secret/folder) | Error | Error |
+| Policy / capability denied | Error | Error |
+| Sub-config resolve failure (bad YAML, cycle, etc.) | Error | Error |
+
+Skipped sources appear in the resolve trace as `{"skipped": true, "reason": "not_found"}`.
+
+**Per-mode behavior when skipped:**
+
+| Mode | Effect |
+|------|--------|
+| `stack` | Omit that merge layer |
+| `broadcast` | Omit that output (zero outputs if all bases are skipped) |
+| `zip` | Skip `configs[i]` and the matching `by[i]` entry (index-aligned) |
+| `replicate` | If the single base is skipped, resolve produces zero outputs (empty list) |
+
+When resolve returns `length: 0`, the CLI exits with code **10** (see [CLI exit codes](../../reference/cli.md#exit-codes)). The API still returns HTTP 200 — zero outputs are intentional, not a failure.
+
+Optional refs skip existence/version checks on save. A typo in an optional path is not caught until resolve — use `?` only when absence is expected (for example environment-specific overlays).
+
+Example — optional prod overlay:
+```yaml
+_ocmo:
+  extend:
+    configs:
+      - ../../base/global@stable
+      - ../overlays/prod@stable?
+    mode: stack
+
+database:
+  pool_size: 20
+```
+
 ---
 
 ## Mode: `stack` (default)

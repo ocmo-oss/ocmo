@@ -1,0 +1,37 @@
+/* Completion suggestion documentation panel (Ctrl+Space → focus item → details). */
+
+.monaco-editor .suggest-details:not(.no-docs) {
+  min-width: 380px;
+  max-width: min(520px, 90vw);
+  min-height: 9rem;
+  max-height: min(360px, 42vh);
+}
+
+.monaco-editor .suggest-details > .monaco-scrollable-element > .body > .docs {
+  line-height: 1.55;
+}
+
+.monaco-editor
+  .suggest-details
+  > .monaco-scrollable-element
+  > .body
+  > .docs.markdown-docs
+  > div,
+.monaco-editor
+  .suggest-details
+  > .monaco-scrollable-element
+  > .body
+  > .docs.markdown-docs
+  > span:not(:empty) {
+  padding: 8px 10px;
+}
+
+.monaco-editor
+  .suggest-details
+  > .monaco-scrollable-element
+  > .body
+  > .header
+  > .type {
+  padding: 6px 10px 4px;
+  line-height: 1.45;
+}
