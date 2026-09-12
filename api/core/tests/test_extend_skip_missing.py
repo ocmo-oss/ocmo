@@ -130,7 +130,6 @@ value: ok
             )
 
 
-
 class ExtendSkipMissingResolveTests(TestCase):
     def setUp(self):
         self.ns = create_test_namespace("extend-skip-resolve")

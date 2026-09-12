@@ -1594,7 +1594,11 @@ function resolveTargetSchema(
           lineNumber,
           ctx.valuePropertyKey,
         );
-        const anyOfBranch = resolveAnyOfArrayItemBranch(base, root, branchValues);
+        const anyOfBranch = resolveAnyOfArrayItemBranch(
+          base,
+          root,
+          branchValues,
+        );
         if (anyOfBranch) {
           resolvedOneOfBranch = anyOfBranch;
           base = anyOfBranch;
@@ -3010,7 +3014,10 @@ function arrayItemSuggestions(
         buildArrayItemLines(branch, root, effectiveIndent, 1, options, ""),
       );
       return variants.map((variant) => {
-        const insertText = formatArrayItemInsertText(variant.lines, lineContent);
+        const insertText = formatArrayItemInsertText(
+          variant.lines,
+          lineContent,
+        );
         const label = isExtendObjectRefBranch(branch)
           ? `Extend source (${variant.depth === "required" ? "path only" : "path, key, as, skip_missing"})`
           : `${variant.label} (${branchLabel})`;
@@ -3023,7 +3030,7 @@ function arrayItemSuggestions(
           range,
           detail: formatCompletionPreviewDetail(label, variant.preview),
           documentation: completionDocumentation(
-            variant.description ?? branch.description,
+            variant.description ?? schemaDescription(branch),
           ),
           sortText: variant.sortText,
         };
@@ -3414,10 +3421,9 @@ function syncArrayElementSuggestions(
     ctx.objectPath,
     metadataKey,
   );
-  const mixedScalarObject = mixedAnyOfObjectBranches(
-    resolveRef(itemSchema, rootSchema),
-    rootSchema,
-  ).length > 0;
+  const mixedScalarObject =
+    mixedAnyOfObjectBranches(resolveRef(itemSchema, rootSchema), rootSchema)
+      .length > 0;
   const objectSnippets =
     objectBranches.length === 0
       ? []
@@ -4081,9 +4087,6 @@ export function shouldAutoTriggerYamlSuggest(
     )
   ) {
     return false;
-  }
-  if (ctx.kind === "array-item") {
-    return isAtArrayElementRow(model, position, ctx.objectPath);
   }
   if (!isAtPropertyRow(model, position, ctx)) {
     return false;

@@ -29,7 +29,6 @@ from .generic import (
     RenderTemplateReference,
     ResolverConfigurationSchema,
     SelectorExpression,
-    UriReference,
 )
 from .propagation import ConfigPropagationSchema
 

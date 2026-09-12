@@ -51,6 +51,10 @@ function editorSchema(): JsonSchema {
   return buildConfigEditorSchema("_ocmo", ocmoMetadataSchema, null);
 }
 
+function schemaDefs(schema: JsonSchema): Record<string, JsonSchema> {
+  return (schema.$defs ?? {}) as Record<string, JsonSchema>;
+}
+
 const uriOptions = {
   namespace: "prod",
   configPath: "app/web",
@@ -60,9 +64,9 @@ const uriOptions = {
 describe("validation and propagation URI completion", () => {
   it("uses config-only scope for validation.schema", () => {
     const schema = editorSchema();
-    const validationSchema = (
-      schema.$defs?.ConfigValidationSchema?.properties?.schema ?? null
-    ) as JsonSchema | null;
+    const validationProperties = schemaDefs(schema).ConfigValidationSchema
+      ?.properties as Record<string, JsonSchema> | undefined;
+    const validationSchema = validationProperties?.schema ?? null;
     expect(validationSchema?.["x-ocmo-uri-reference"]).toBe("config-only");
     expect(resolveUriReferenceScope(validationSchema, schema)).toBe(
       "config-only",
@@ -96,12 +100,9 @@ describe("validation and propagation URI completion", () => {
   });
 
   it("allows URI browse on empty propagation.targets array item", () => {
-    const yaml = [
-      "_ocmo:",
-      "  propagation:",
-      "    targets:",
-      "      - ",
-    ].join("\n");
+    const yaml = ["_ocmo:", "  propagation:", "    targets:", "      - "].join(
+      "\n",
+    );
     const schema = editorSchema();
     const model = textModel(yaml);
     const position = makePosition(4, 9);

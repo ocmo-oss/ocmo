@@ -377,7 +377,13 @@ describe("property key prefix filtering", () => {
           paramOpts,
         ),
       ).toBe(false);
-      const items = await getSuggestions(schema, yaml, 1, yaml.length + 1, paramOpts);
+      const items = await getSuggestions(
+        schema,
+        yaml,
+        1,
+        yaml.length + 1,
+        paramOpts,
+      );
       expect(items.some((item) => item.label === "_ocmo")).toBe(false);
     }
   });

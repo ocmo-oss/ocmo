@@ -28,11 +28,7 @@ import {
 type JsonSchema = Record<string, unknown>;
 
 export type OcmoUriReferenceScope =
-  | "config"
-  | "config-only"
-  | "template-only"
-  | "resolver"
-  | "resource";
+  "config" | "config-only" | "template-only" | "resolver" | "resource";
 
 const CONFIG_ONLY_REFERENCE_ITEM_TYPES = new Set<ItemType>(["config"]);
 const TEMPLATE_ONLY_REFERENCE_ITEM_TYPES = new Set<ItemType>(["template"]);

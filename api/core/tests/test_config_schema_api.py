@@ -45,9 +45,7 @@ class ConfigMetadataSchemaEndpointTests(TestCase):
         self.assertIn("schema", validation_props)
         self.assertNotIn("schema_path", validation_props)
         self.assertEqual(validation_props["schema"].get("format"), "uri-reference")
-        self.assertEqual(
-            validation_props["schema"].get("x-ocmo-uri-reference"), "config-only"
-        )
+        self.assertEqual(validation_props["schema"].get("x-ocmo-uri-reference"), "config-only")
 
     def test_path_reference_fields_use_uri_reference_format(self):
         response = self.client.get("/api/v1/~config-metadata-schema")
@@ -63,24 +61,16 @@ class ConfigMetadataSchemaEndpointTests(TestCase):
         extend_ref_path = schema["$defs"]["ConfigExtendRefSchema"]["properties"]["path"]
         self.assertEqual(extend_ref_path.get("format"), "uri-reference")
         self.assertEqual(extend_ref_path.get("x-ocmo-uri-reference"), "config-only")
-        extend_string_branch = next(
-            item
-            for item in extend_configs["items"]["anyOf"]
-            if item.get("type") == "string"
-        )
+        extend_string_branch = next(item for item in extend_configs["items"]["anyOf"] if item.get("type") == "string")
         self.assertEqual(extend_string_branch.get("x-ocmo-uri-reference"), "config-only")
 
         render_templates = schema["$defs"]["ConfigRenderSchema"]["properties"]["templates"]
         self.assertEqual(render_templates["items"].get("format"), "uri-reference")
-        self.assertEqual(
-            render_templates["items"].get("x-ocmo-uri-reference"), "template-only"
-        )
+        self.assertEqual(render_templates["items"].get("x-ocmo-uri-reference"), "template-only")
 
         propagation_targets = schema["$defs"]["ConfigPropagationSchema"]["properties"]["targets"]
         self.assertEqual(propagation_targets["items"].get("format"), "uri-reference")
-        self.assertEqual(
-            propagation_targets["items"].get("x-ocmo-uri-reference"), "config-only"
-        )
+        self.assertEqual(propagation_targets["items"].get("x-ocmo-uri-reference"), "config-only")
 
         parameter_transformers = schema["$defs"]["ConfigParameterSchema"]["properties"]["transformers"]
         self.assertEqual(

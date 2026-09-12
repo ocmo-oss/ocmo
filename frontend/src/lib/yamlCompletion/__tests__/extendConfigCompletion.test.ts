@@ -81,6 +81,10 @@ function editorSchema(): JsonSchema {
   return buildConfigEditorSchema("_ocmo", ocmoMetadataSchema, null);
 }
 
+function schemaDefs(schema: JsonSchema): Record<string, JsonSchema> {
+  return (schema.$defs ?? {}) as Record<string, JsonSchema>;
+}
+
 async function getSuggestionItems(
   yaml: string,
   lineNumber: number,
@@ -110,21 +114,22 @@ const uriOptions = {
 describe("extend configs array completion", () => {
   it("uses config-only URI scope for extend refs", () => {
     const schema = editorSchema();
-    const extendRefPath =
-      schema.$defs?.ConfigExtendRefSchema?.properties?.path ?? {};
+    const extendRefProperties = schemaDefs(schema).ConfigExtendRefSchema
+      ?.properties as Record<string, JsonSchema> | undefined;
+    const extendRefPath = extendRefProperties?.path ?? {};
     expect(extendRefPath["x-ocmo-uri-reference"]).toBe("config-only");
+    const extendProperties = schemaDefs(schema).ConfigExtendSchema
+      ?.properties as Record<string, JsonSchema> | undefined;
     const configsItems = (
-      schema.$defs?.ConfigExtendSchema?.properties?.configs as {
-        items?: { anyOf?: JsonSchema[] };
-      }
+      extendProperties?.configs as { items?: { anyOf?: JsonSchema[] } }
     )?.items;
     const stringBranch = configsItems?.anyOf?.find(
       (branch) => branch.format === "uri-reference",
     );
     expect(stringBranch?.["x-ocmo-uri-reference"]).toBe("config-only");
-    expect(
-      resolveUriReferenceScope(stringBranch ?? null, schema),
-    ).toBe("config-only");
+    expect(resolveUriReferenceScope(stringBranch ?? null, schema)).toBe(
+      "config-only",
+    );
   });
 
   it("allows URI browse on empty array-item dash in metadata", () => {
@@ -140,14 +145,14 @@ describe("extend configs array completion", () => {
       4,
       9,
     );
-    expect(extractTypedUriReference(model as never, position as never, ctx)).toEqual(
-      {
-        raw: "",
-        pathPart: "",
-        suffix: "",
-        resolvedPrefix: "",
-      },
-    );
+    expect(
+      extractTypedUriReference(model as never, position as never, ctx),
+    ).toEqual({
+      raw: "",
+      pathPart: "",
+      suffix: "",
+      resolvedPrefix: "",
+    });
     expect(
       shouldSuggestUriReferences(target!, schema, ctx, uriOptions, {
         raw: "",
@@ -182,12 +187,9 @@ describe("extend configs array completion", () => {
   });
 
   it("resolves path property schema inside object-form extend refs", () => {
-    const yaml = [
-      "_ocmo:",
-      "  extend:",
-      "    configs:",
-      "      - path: ",
-    ].join("\n");
+    const yaml = ["_ocmo:", "  extend:", "    configs:", "      - path: "].join(
+      "\n",
+    );
     const schema = editorSchema();
     const model = textModel(yaml);
     const position = makePosition(4, 16);
@@ -347,7 +349,9 @@ describe("extend configs array completion", () => {
     expect(extendItems[0]?.sortText?.startsWith("!!")).toBe(true);
     expect(extendItems[0]?.filterText).toContain("object");
     expect(
-      extendItems.some((item) => String(item.insertText).includes("skip_missing")),
+      extendItems.some((item) =>
+        String(item.insertText).includes("skip_missing"),
+      ),
     ).toBe(true);
   });
 });

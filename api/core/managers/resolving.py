@@ -41,12 +41,16 @@ from ..decorators import PermCheck, arg, require_permissions
 from ..exceptions import (
     CannotCast,
     CannotResolveConfig,
-    CapabilityDenied,
     InvalidCastOption,
     NotFound,
     TemplateRenderError,
     UnknownCastFormat,
     UnknownCastOption,
+)
+from ..extend_refs import (
+    classify_extend_source,
+    extend_source_missing_message,
+    extend_source_trace_key,
 )
 from ..models import Config, Template, TreeItem
 from ..schemas import (
@@ -55,11 +59,6 @@ from ..schemas import (
     ConfigExtendSchema,
     ConfigRenderSchema,
     normalize_extend_ref,
-)
-from ..extend_refs import (
-    classify_extend_source,
-    extend_source_missing_message,
-    extend_source_trace_key,
 )
 from ..shortcuts import (
     SelectorLookupError,
@@ -605,7 +604,7 @@ class ResolvePipelineManager:
                     f"extend 'zip' length mismatch: {len(extend.configs)} configs vs "
                     f"{len(patch_value)} items at {extend.by!r}"
                 )
-            results = []
+            zip_outputs: list[_ResolvedOutput] = []
             for i, ref in enumerate(extend.configs):
                 norm = normalize_extend_ref(ref)
                 resolved_outputs = self._resolve_extend_source_outputs(norm, chain, trace)
@@ -617,20 +616,20 @@ class ResolvePipelineManager:
                         f"({norm.path!r} produced {len(resolved_outputs)})"
                     )
                 b = resolved_outputs[0]
-                merged = deep_merge(b.raw_data, patch_value[i])
+                zip_merged = deep_merge(b.raw_data, patch_value[i])
                 output = _ResolvedOutput(
                     name_template=b.name_template,
                     name_owner=b.name_owner,
                     version=b.version,
                     format="yaml",
                     data_text=None,
-                    raw_data=strip_omit(merged),
+                    raw_data=strip_omit(zip_merged),
                     trace=trace,
                 )
                 if not self.defer_output_naming:
                     self._finalize_output_name(output)
-                results.append(output)
-            return results
+                zip_outputs.append(output)
+            return zip_outputs
 
         # Resolve each entry — each may itself expand to multiple outputs.
         base_outputs: list[_ResolvedOutput] = []

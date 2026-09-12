@@ -46,6 +46,10 @@ function editorSchema(): JsonSchema {
   return buildConfigEditorSchema("_ocmo", ocmoMetadataSchema, null);
 }
 
+function schemaDefs(schema: JsonSchema): Record<string, JsonSchema> {
+  return (schema.$defs ?? {}) as Record<string, JsonSchema>;
+}
+
 const uriOptions = {
   namespace: "prod",
   configPath: "app/web",
@@ -55,10 +59,10 @@ const uriOptions = {
 describe("render templates array completion", () => {
   it("uses template-only URI scope for render template refs", () => {
     const schema = editorSchema();
+    const renderProperties = schemaDefs(schema).ConfigRenderSchema
+      ?.properties as Record<string, JsonSchema> | undefined;
     const templatesItems = (
-      schema.$defs?.ConfigRenderSchema?.properties?.templates as {
-        items?: JsonSchema;
-      }
+      renderProperties?.templates as { items?: JsonSchema }
     )?.items;
     expect(templatesItems?.["x-ocmo-uri-reference"]).toBe("template-only");
     expect(resolveUriReferenceScope(templatesItems ?? null, schema)).toBe(
