@@ -118,6 +118,8 @@ When resolve returns `length: 0`, the CLI exits with code **10** (see [CLI exit 
 
 Optional refs skip existence/version checks on save. A typo in an optional path is not caught until resolve — use `?` only when absence is expected (for example environment-specific overlays).
 
+Resolve cache entries record skipped optional sources and are invalidated when such a config later appears (including parameterized paths after `{!param}` substitution). Creating the overlay does not require bumping the root config version.
+
 Example — optional prod overlay:
 ```yaml
 _ocmo:

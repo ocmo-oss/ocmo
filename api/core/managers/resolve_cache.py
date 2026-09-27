@@ -43,6 +43,10 @@ A JSON-serialisable dict::
             {"kind": str, "path": str, "ref": str, "version": int},
             ...
         ],
+        "skipped_optional_extend": [
+            {"path": str, "ref": str},
+            ...
+        ],
     }
 
 Layer 2 entry
@@ -65,12 +69,20 @@ A JSON-serialisable dict::
             {"kind": str, "path": str, "ref": str, "version": int},
             ...
         ],
+        "skipped_optional_extend": [
+            {"path": str, "ref": str},
+            ...
+        ],
     }
 
 Revalidation
 ------------
-Layer 1 — participants only (no artifact check, content not yet stored).
-Layer 2 — participants + artifact existence in the backend.
+Layer 1 — participants and optional-extend watchers (no artifact check).
+Layer 2 — participants, optional-extend watchers, and artifact existence.
+
+``skipped_optional_extend`` records optional extend sources (``skip_missing``)
+that were absent when the entry was written. Revalidation fails when any such
+path becomes present so a newly created overlay is merged on the next resolve.
 
 On every cache hit (Layer 1 or Layer 2), after version revalidation:
 - **Version check** — each participant still resolves to its stored version.
@@ -95,6 +107,7 @@ from django.conf import settings
 from django.core.cache import caches
 
 from ..exceptions import VersionNotFound
+from ..extend_refs import classify_extend_source
 from .artifacts import get_backend
 from .tree import TreeManager
 
@@ -102,7 +115,7 @@ logger = logging.getLogger(__name__)
 
 _CACHE_ALIAS = "resolve"
 # Bump when resolve semantics change so stale cache entries are not reused.
-RESOLVE_CACHE_SCHEMA_VERSION = 2
+RESOLVE_CACHE_SCHEMA_VERSION = 3
 
 
 def extend_cache_fingerprint(metadata) -> str:
@@ -209,6 +222,14 @@ def _check_participant(participant: dict[str, Any], namespace) -> bool:
     return current == stored_version
 
 
+def skipped_optional_extend_valid(entry: dict, namespace) -> bool:
+    """Return False when a cached skipped optional extend source is now present."""
+    for skipped in entry.get("skipped_optional_extend", []):
+        if classify_extend_source(namespace, skipped["path"], skipped["ref"], auth=None) == "present":
+            return False
+    return True
+
+
 class ResolveCacheManager:
     """Short-circuit resolve cache (two-layer)."""
 
@@ -298,6 +319,8 @@ class ResolveCacheManager:
 
         Used for Layer 1 validation (no artifact check needed).
         """
+        if not skipped_optional_extend_valid(entry, namespace):
+            return False
         for p in entry.get("participants", []):
             if not _check_participant(p, namespace):
                 return False

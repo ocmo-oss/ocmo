@@ -784,6 +784,7 @@ class ResolutionManager:
                     participants = [
                         {"kind": p.kind, "path": p.path, "ref": p.ref, "version": p.version} for p in mgr._participants
                     ]
+                    skipped_optional_extend = list(mgr._skipped_optional_extend)
                     has_secrets = any(p["kind"] == "secret" for p in participants)
 
                     if not self.trace_only and art_key and art_cache_outputs:
@@ -792,6 +793,7 @@ class ResolutionManager:
                             {
                                 "outputs": art_cache_outputs,
                                 "participants": participants,
+                                "skipped_optional_extend": skipped_optional_extend,
                             },
                         )
 
@@ -808,6 +810,7 @@ class ResolutionManager:
                                 "metadata_cast": metadata_cast_dict,
                                 "outputs": res_cache_outputs,
                                 "participants": participants,
+                                "skipped_optional_extend": skipped_optional_extend,
                             },
                         )
 

@@ -251,6 +251,8 @@ class ResolvePipelineManager:
         # resolution (including recursive sub-resolves). Populated during
         # resolve() / resolve_data_only(); read by ResolutionManager for cache.
         self._participants: list[CacheParticipant] = []
+        # Optional extend sources skipped as absent; used for resolve-cache revalidation.
+        self._skipped_optional_extend: list[dict[str, str]] = []
 
         # Per-config _ocmo.cast default, captured during the top-level
         # _resolve_recursive call. None until resolve() completes.
@@ -502,6 +504,7 @@ class ResolvePipelineManager:
             "skipped": True,
             "reason": "not_found",
         }
+        self._skipped_optional_extend.append({"path": resolved_path, "ref": version})
 
     def _resolve_extend_source_outputs(
         self,
@@ -536,6 +539,7 @@ class ResolvePipelineManager:
         )
         sub_items = sub_mgr.resolve_data_only(chain=chain)
         self._participants.extend(sub_mgr._participants)
+        self._skipped_optional_extend.extend(sub_mgr._skipped_optional_extend)
         ref_trace: dict[str, Any] = {}
         if norm.key is not None:
             ref_trace["key"] = norm.key

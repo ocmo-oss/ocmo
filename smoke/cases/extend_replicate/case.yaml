@@ -5,7 +5,7 @@ expect:
   status: 200
   sort_by_name: true
   items:
+    - name: myconf.yaml
+      file: myconf.yaml
     - name: myconf-1.yaml
       file: myconf-1.yaml
-    - name: myconf-2.yaml
-      file: myconf-2.yaml

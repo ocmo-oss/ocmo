@@ -151,7 +151,7 @@ OCMO caches resolved artifacts to avoid redundant pipeline work. When the cache 
 | Cache backend | `OCMO_RESOLVE_CACHE_BACKEND` | `locmem` (use `redis` for multi-worker) |
 | Cache TTL | `OCMO_RESOLVE_CACHE_TTL` | 3600 s |
 
-**Cache bust:** changing any parameter, version, or cast option produces a cache miss. Updating the config content (even to the same version string) also busts the cache.
+**Cache bust:** changing any parameter, version, or cast option produces a cache miss. Updating the config content (even to the same version string) also busts the cache. Optional extend sources marked `skip_missing` / `?` are tracked while absent; creating that config later invalidates the cache even when the resolving config is unchanged.
 
 ---
 

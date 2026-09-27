@@ -3,7 +3,7 @@
 import yaml
 from django.core.cache import caches
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import Client, TestCase
 from pydantic import ValidationError as PydanticValidationError
 
 from core.exceptions import CannotResolveConfig
@@ -398,3 +398,111 @@ value: ok
         _, trace = self._resolve_with_trace("app/root")
         self.assertIn("optional/base@latest", trace)
         self.assertEqual(trace["optional/base@latest"], {"skipped": True, "reason": "not_found"})
+
+
+_CACHE_HEADER = "X-Ocmo-Resolve-Cache"
+
+
+class ExtendSkipMissingCacheTests(TestCase):
+    """Resolve cache revalidates when a skipped optional extend source appears."""
+
+    def setUp(self):
+        caches["resolve"].clear()
+        self.client = Client()
+        self.ns = create_test_namespace("extend-skip-cache")
+
+    def _create(self, path: str, body: str) -> None:
+        TreeManager(self.ns, path, auth=None).create_item(body, "config")
+
+    def _resolve(self, path: str, **params):
+        from urllib.parse import urlencode
+
+        qs = urlencode(params)
+        url = f"/api/v1/ns/{self.ns.name}/~resolve/{path}"
+        if qs:
+            url += f"?{qs}"
+        return self.client.get(url)
+
+    def test_cache_hit_while_optional_still_missing(self):
+        self._create("shared/required", "tier: basic\n")
+        self._create(
+            "app/prod",
+            """\
+_ocmo:
+  extend:
+    configs:
+      - ../optional/base?
+      - ../shared/required
+    mode: stack
+value: local
+""",
+        )
+        r1 = self._resolve("app/prod")
+        self.assertEqual(r1.status_code, 200, r1.content)
+        r2 = self._resolve("app/prod")
+        self.assertEqual(r2.status_code, 200, r2.content)
+        self.assertEqual(r1.headers.get(_CACHE_HEADER), "miss")
+        self.assertEqual(r2.headers.get(_CACHE_HEADER), "hit")
+
+    def test_cache_miss_when_optional_overlay_created(self):
+        self._create("shared/required", "tier: basic\n")
+        self._create(
+            "app/prod",
+            """\
+_ocmo:
+  extend:
+    configs:
+      - ../optional/base?
+      - ../shared/required
+    mode: stack
+value: local
+""",
+        )
+        warm = self._resolve("app/prod")
+        self.assertEqual(warm.status_code, 200, warm.content)
+        cached = self._resolve("app/prod")
+        self.assertEqual(cached.headers.get(_CACHE_HEADER), "hit")
+        cached_trace = cached.json()["items"][0]["trace"]
+        skipped_keys = [k for k in cached_trace if k.startswith("optional/base@")]
+        self.assertEqual(len(skipped_keys), 1)
+        self.assertEqual(cached_trace[skipped_keys[0]], {"skipped": True, "reason": "not_found"})
+
+        self._create("optional/base", "overlay: enabled\n")
+        after = self._resolve("app/prod")
+        self.assertEqual(after.status_code, 200, after.content)
+        self.assertEqual(after.headers.get(_CACHE_HEADER), "miss")
+        trace = after.json()["items"][0]["trace"]
+        merged_keys = [k for k in trace if k.startswith("optional/base@")]
+        self.assertEqual(len(merged_keys), 1)
+        self.assertNotEqual(trace[merged_keys[0]], {"skipped": True, "reason": "not_found"})
+
+    def test_cache_miss_when_param_substituted_optional_config_created(self):
+        self._create(
+            "app/root",
+            """\
+_ocmo:
+  parameters:
+    env:
+      type: dynamic
+      value: staging
+      description: Environment name
+  extend:
+    configs:
+      - ../bases/{!env}?
+    mode: stack
+value: ok
+""",
+        )
+        warm = self._resolve("app/root", param_env="staging")
+        self.assertEqual(warm.status_code, 200, warm.content)
+        hit = self._resolve("app/root", param_env="staging")
+        self.assertEqual(hit.headers.get(_CACHE_HEADER), "hit")
+
+        self._create("bases/staging", "tier: staging\n")
+        after = self._resolve("app/root", param_env="staging")
+        self.assertEqual(after.status_code, 200, after.content)
+        self.assertEqual(after.headers.get(_CACHE_HEADER), "miss")
+        trace = after.json()["items"][0]["trace"]
+        merged_keys = [k for k in trace if k.startswith("bases/staging@")]
+        self.assertEqual(len(merged_keys), 1)
+        self.assertNotEqual(trace[merged_keys[0]], {"skipped": True, "reason": "not_found"})
