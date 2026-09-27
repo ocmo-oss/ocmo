@@ -290,9 +290,11 @@ export interface ResolveArtifact {
 export interface ResolveParticipant {
   resource_type: "config" | "template" | "secret";
   path: string;
-  version: number;
+  version?: number;
   resolve_role: "direct" | "transitive";
   from_cache: boolean;
+  /** Optional extend source absent at resolve time (``skip_missing``). */
+  skipped?: boolean;
 }
 
 export interface ResolveResponse {

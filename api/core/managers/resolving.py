@@ -47,11 +47,6 @@ from ..exceptions import (
     UnknownCastFormat,
     UnknownCastOption,
 )
-from ..extend_refs import (
-    classify_extend_source,
-    extend_source_missing_message,
-    extend_source_trace_key,
-)
 from ..models import Config, Template, TreeItem
 from ..schemas import (
     ConfigCastSchema,
@@ -500,7 +495,7 @@ class ResolvePipelineManager:
         resolved_path: str,
         version: str,
     ) -> None:
-        trace[extend_source_trace_key(resolved_path, version)] = {
+        trace[f"{resolved_path}@{version}"] = {
             "skipped": True,
             "reason": "not_found",
         }
@@ -514,17 +509,12 @@ class ResolvePipelineManager:
     ) -> list[_ResolvedOutput] | None:
         path, version = parse_ref(norm.path)
         resolved_path = resolve_relative_path(self.base_folder, path)
-        status = classify_extend_source(
-            self.namespace,
-            resolved_path,
-            version,
-            auth=self.auth,
-        )
+        status = TreeManager(self.namespace, resolved_path, auth=self.auth).classify_extend_source(version)
         if status == "missing":
             if norm.skip_missing:
                 self._record_skipped_extend_source(trace, resolved_path, version)
                 return None
-            raise CannotResolveConfig(extend_source_missing_message(resolved_path, version))
+            raise CannotResolveConfig(f"Extend source config {resolved_path!r}@{version!r} not found")
         if status == "invalid":
             raise CannotResolveConfig(f"Extend source {resolved_path!r} is not a config")
 
@@ -588,12 +578,7 @@ class ResolvePipelineManager:
             norm = normalize_extend_ref(extend.configs[0])
             path, version = parse_ref(norm.path)
             resolved_path = resolve_relative_path(self.base_folder, path)
-            status = classify_extend_source(
-                self.namespace,
-                resolved_path,
-                version,
-                auth=self.auth,
-            )
+            status = TreeManager(self.namespace, resolved_path, auth=self.auth).classify_extend_source(version)
             if status == "missing" and norm.skip_missing:
                 self._record_skipped_extend_source(trace, resolved_path, version)
                 return []

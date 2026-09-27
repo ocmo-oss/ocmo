@@ -107,7 +107,6 @@ from django.conf import settings
 from django.core.cache import caches
 
 from ..exceptions import VersionNotFound
-from ..extend_refs import classify_extend_source
 from .artifacts import get_backend
 from .tree import TreeManager
 
@@ -225,7 +224,7 @@ def _check_participant(participant: dict[str, Any], namespace) -> bool:
 def skipped_optional_extend_valid(entry: dict, namespace) -> bool:
     """Return False when a cached skipped optional extend source is now present."""
     for skipped in entry.get("skipped_optional_extend", []):
-        if classify_extend_source(namespace, skipped["path"], skipped["ref"], auth=None) == "present":
+        if TreeManager(namespace, skipped["path"], auth=None).classify_extend_source(skipped["ref"]) == "present":
             return False
     return True
 

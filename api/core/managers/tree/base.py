@@ -1,5 +1,9 @@
+from typing import Literal
+
 from ._common import *
 from .mutate import TreeMutateMixin
+
+ExtendSourceStatus = Literal["present", "missing", "invalid"]
 
 
 class TreeManagerBaseMixin:
@@ -201,3 +205,27 @@ class TreeManagerBaseMixin:
             return True
         except VersionNotFound:
             return False
+
+    def classify_extend_source(self, version_ref: str) -> ExtendSourceStatus:
+        """Classify whether this path can be used as an extend source.
+
+        Returns ``missing`` when the path or version/tag is absent, ``invalid`` when
+        the path points at a non-config item, and ``present`` when the source exists
+        and is eligible for extend. Raises :class:`CapabilityDenied` when the
+        config exists but cannot be used as an extend target.
+        """
+        if self.get_item() is None:
+            return "missing"
+
+        try:
+            self.get_or_raise(["config"])
+        except TreeItem.DoesNotExist:
+            return "invalid"
+
+        if not self.is_extend_target:
+            raise CapabilityDenied(f"Config '{self.path}' cannot be used in extend")
+
+        if not self.version_resolvable(version_ref):
+            return "missing"
+
+        return "present"
