@@ -1,5 +1,27 @@
 /** Pure line-level syntax helpers — no imports, no Monaco, no schema logic. */
 
+/** Partial property key text before the cursor (no colon yet). */
+export function typedPropertyKeyPrefix(line: string, column: number): string {
+  const before = line.slice(0, Math.max(0, column - 1));
+  const leading = before.match(/^(\s*)/)?.[1].length ?? 0;
+  const withoutIndent = before.slice(leading);
+  const colon = withoutIndent.indexOf(":");
+  if (colon >= 0) {
+    const keyPart = withoutIndent.slice(0, colon).trim();
+    if (keyPart.length > 0) {
+      return keyPart;
+    }
+    // Lone ":" (or ":…" before a key) — not a property-key prefix.
+    return withoutIndent;
+  }
+  return withoutIndent;
+}
+
+export function isValidPropertyKeyPrefix(prefix: string): boolean {
+  if (prefix.length === 0) return true;
+  return /^[$\w@][\w@./-]*$/.test(prefix);
+}
+
 export function lineKey(line: string): string | null {
   const trimmed = line.trim();
   const quoted = trimmed.match(/^["']([^"']+)["']\s*:/);

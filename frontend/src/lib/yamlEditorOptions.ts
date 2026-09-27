@@ -7,6 +7,8 @@ export function yamlEditorOptions(
   return {
     minimap: { enabled: false },
     fontSize: 13,
+    suggestFontSize: 14,
+    suggestLineHeight: 21,
     lineNumbers: "on",
     scrollBeyondLastLine: false,
     wordWrap: "on",

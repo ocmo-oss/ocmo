@@ -315,13 +315,7 @@ exports[`property keys inside actors[] kind: User > suggests "claims" key under 
     "insertText": "claims:
   key: \${1:alice@example.com}",
     "kind": 14,
-    "label": "claims (kind: User)",
-    "sortText": "0:",
-  },
-  {
-    "insertText": "path: \${1:deploy/prod}",
-    "kind": 14,
-    "label": "path (kind: Resolver)",
+    "label": "claims",
     "sortText": "0:",
   },
 ]

@@ -151,6 +151,8 @@ When a config is created or updated, extend, render, schema, and secret referenc
 
 After substitution, the server validates that each resolved target exists (including the `@tag` or version suffix). Caller-supplied dynamic overrides (`?param_*=` / `--param`) are **not** checked on save — only at resolve time.
 
+**Optional extend sources** (`?` suffix on a string ref, or `skip_missing: true` on an object ref) skip path/version existence checks on save. Wrong node types and policy denials are still rejected. Use optional extend only when absence is intentional — typos in optional paths are not caught at save time.
+
 If a placeholder remains unresolved after substituting declared defaults, save fails with a validation error.
 
 ---

@@ -4,5 +4,5 @@ resolve_path: report/data
 expect:
   status: 200
   items:
-    - name: monthly.yaml
-      file: monthly.yaml
+    - name: output/monthly.yaml
+      file: output/monthly.yaml

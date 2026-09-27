@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ..shortcuts import parse_ref, validate_path_characters
-from .generic import UriReference
+from .generic import ConfigOnlyReference
 
 
 class ConfigPropagationSchema(BaseModel):
@@ -35,7 +35,7 @@ class ConfigPropagationSchema(BaseModel):
             "``whole``: merge source data and ``_ocmo``; target keeps its own ``propagation`` block."
         ),
     )
-    targets: list[UriReference] = Field(
+    targets: list[ConfigOnlyReference] = Field(
         ...,
         min_length=1,
         description=(

@@ -181,6 +181,27 @@ ocmo completion powershell >> $PROFILE
 
 ---
 
+## Exit codes
+
+| Code | Meaning |
+|------|---------|
+| 0 | Success |
+| 1 | Generic runtime failure |
+| 2 | Usage error |
+| 3 | Not found (404) |
+| 4 | Auth / permission failure (401, 403) |
+| 5 | Conflict (409) |
+| 6 | Path locked (423) |
+| 7 | Validation failure (422, 413) |
+| 8 | Hook execution failure |
+| 9 | Import/export verification failure |
+| 10 | Resolve returned no output items (`length: 0`) |
+| 130 | Interrupted |
+
+Exit code **10** is not an API error — the resolve call succeeded but produced zero artifacts. Common causes: [optional extend sources](../features/resolving/extend.md#optional-sources) were all skipped (for example `replicate` with a missing optional base), or folder resolve with `--ignore-missing-tags` skipped every config. Scripts can distinguish this from failures with `if [ $? -eq 10 ]; then …`.
+
+---
+
 ## Related
 
 - [Install the CLI](../quickstart/install-cli.md)

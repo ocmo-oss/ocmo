@@ -21,8 +21,8 @@ _ocmo:
       type: secret
       value: "secrets/db@stable:password"
   extend:
-    - path: base/database
-      version: stable
+    configs:
+      - base/database@stable
   cast:
     format: json
     options:
@@ -64,27 +64,39 @@ See [Parameters](../features/resolving/parameters.md) for the full reference.
 
 ### `extend`
 
-Merge other configs into this one before the artifact is produced. Configs in the list are deep-merged into the current config's data; the current config's values always win on conflict.
+Merge other configs into this one before the artifact is produced. Sources are deep-merged in order; the current config's data is merged last and always wins on conflict.
 
 ```yaml
 _ocmo:
   extend:
-    - path: base/database
-      version: stable
-    - path: base/logging
-      selector: logging   # take only the "logging" key from this config
+    configs:
+      - base/database@stable
+      - path: shared/all@stable
+        key: .database               # extract a subtree before merging
+        as: .persistence              # place it at a different key
+    mode: stack                        # stack | broadcast | zip | replicate
+    by: .some.key                      # required for zip and replicate; optional for broadcast
 ```
 
 | Sub-field | Required | Description |
 |-----------|----------|-------------|
-| `path` | Yes | Path to another config in the same namespace |
-| `version` | No | Tag or version number. Default: `latest` |
-| `selector` | No | Dot-path or list of dot-paths to extract a subset |
-| `remap` | No | `{old_key: new_key}` — rename keys before merging |
+| `configs` | Yes | List of config references to merge, in order |
+| `mode` | No | Merge strategy. Default: `stack` |
+| `by` | No | Selector into this config's data. Required for `zip` and `replicate`; optional for `broadcast` |
 
-Mode (`stack`, `broadcast`, `zip`, `replicate`) applies to the whole `extend` list. Default: `stack`.
+Each entry in `configs` is either a **path string** or an **object**:
 
-See [Extend](../features/resolving/extend.md) for modes and merge semantics.
+| Entry field | Required | Description |
+|-------------|----------|-------------|
+| *(string)* | — | Whole document at the given path. Pin with `@stable`, `@3`, etc. Append `?` to skip if path or version is absent |
+| `path` | Yes (object form) | Config path with optional `@version` suffix. Supports `{!param}` substitution |
+| `key` | No | Selector into the resolved source to extract a subset (e.g. `.database`). Append `?` to skip if key is missing |
+| `as` | No | Selector describing where to place the extracted value in the merge target |
+| `skip_missing` | No | When `true`, skip this source if the config path or version/tag is absent (default `false`) |
+
+`key` selects *what* to take; `as` selects *where* to put it.
+
+See [Extend](../features/resolving/extend.md) for modes, merge semantics, and examples.
 
 ---
 
@@ -95,13 +107,14 @@ Apply Jinja2 templates to this config's data. The template output becomes the ar
 ```yaml
 _ocmo:
   render:
-    - path: templates/nginx-vhost
-      version: latest
+    templates:
+      - templates/nginx-vhost@latest
+    mode: broadcast                    # broadcast | zip | replicate
 ```
 
 **Mutually exclusive with `cast`** — use one or the other.
 
-Mode (`broadcast`, `zip`, `replicate`) controls multi-template output.
+`mode` (`broadcast`, `zip`, `replicate`) controls multi-template output. `by` is required for `zip` and `replicate`.
 
 See [Render](../features/resolving/render.md).
 

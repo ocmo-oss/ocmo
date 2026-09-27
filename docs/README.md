@@ -77,6 +77,7 @@ OCMO is a YAML configuration management platform. Configs are stored in versione
   - [Troubleshoot resolving](how-to/troubleshoot-resolve.md)
 - [Tutorials](tutorials/README.md)
   - [Install a Kubernetes application](tutorials/install-k8s-application/README.md)
+  - [Generate nginx edge configs](tutorials/nginx-edge-configs/README.md)
 - [Reference](reference/README.md)
   - [REST API](reference/rest-api.md)
   - [CLI](reference/cli.md)

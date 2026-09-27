@@ -184,7 +184,9 @@ function TraceViewer({ trace }: { trace: ResolveResponse["trace"] }) {
               <Badge variant={p.resolve_role === "direct" ? "info" : "default"}>
                 {p.resolve_role}
               </Badge>
-              <span className="text-gray-400">v{p.version}</span>
+              <span className="text-gray-400">
+                {p.skipped ? "Not found" : `v${p.version}`}
+              </span>
             </div>
           ))}
         </div>

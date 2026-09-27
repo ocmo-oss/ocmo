@@ -148,6 +148,17 @@ class TreeConfigOpsMixin:
                     raise ValidationError(
                         f"Config {effective_path!r} cannot reference itself in _ocmo.extend (reference {norm.path!r})"
                     )
+                if norm.skip_missing:
+                    ref_mgr = type(self)(self.namespace, _db_path(resolved), auth=None)
+                    try:
+                        ref_mgr.get_or_raise(["config"])
+                    except NotFound:
+                        continue
+                    except TreeItem.DoesNotExist:
+                        raise ValidationError(f"Config {resolved!r} not found") from None
+                    if not self._capabilities_for(resolved).is_extend_target:
+                        raise CapabilityDenied(f"Config '{normalize_tree_path(resolved)}' cannot be used in extend")
+                    continue
                 if not self._capabilities_for(resolved).is_extend_target:
                     raise CapabilityDenied(f"Config '{normalize_tree_path(resolved)}' cannot be used in extend")
                 try:

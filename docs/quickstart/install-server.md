@@ -22,6 +22,14 @@ To also enable the Vite HMR frontend dev server (recommended for UI development)
 docker compose -f docker-compose.dev.yml -f docker-compose.hmr.yml up --build
 ```
 
+To restart only the HMR frontend after code changes:
+
+```bash
+docker compose -f docker-compose.dev.yml -f docker-compose.hmr.yml up -d --force-recreate frontend gateway
+```
+
+Recreate **gateway** as well — otherwise nginx may still proxy to `frontend:80` while Vite listens on `:3000` (502 Bad Gateway).
+
 To enable the async worker (required for Git sync, if used):
 
 ```bash

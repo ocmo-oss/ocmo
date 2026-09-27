@@ -188,6 +188,17 @@ def parse_ref(ref: str) -> tuple[str, str]:
     return ref, "latest"
 
 
+def parse_extend_config_ref_string(ref: str) -> tuple[str, bool]:
+    """Strip optional trailing ``?`` from an extend config reference string.
+
+    Returns ``(ref_without_suffix, skip_missing)``.
+    """
+    trimmed = ref.rstrip()
+    if trimmed.endswith("?"):
+        return trimmed[:-1], True
+    return ref, False
+
+
 def is_version_number_ref(ref: str) -> bool:
     """True when *ref* is an all-digit version number."""
     return bool(ref) and ref.isdigit()

@@ -87,6 +87,7 @@ ocmo config view
 | 7 | Validation failure (422, 413) |
 | 8 | Hook execution failure |
 | 9 | Import/export verification failure |
+| 10 | Resolve returned no output items (`length: 0`) |
 | 130 | Interrupted |
 
 ---

@@ -13,6 +13,7 @@ from ..constants import PROBE_OPERATIONS, ParameterTransformer
 from ..shortcuts import (
     assert_upload_size,
     make_template_environment,
+    parse_extend_config_ref_string,
     safe_yaml_load,
     validate_path_characters,
     validate_selector_syntax,
@@ -23,9 +24,11 @@ from .generic import (
     CastSchema as ConfigCastSchema,
 )
 from .generic import (
+    ConfigOnlyReference,
+    ExtendConfigReference,
+    RenderTemplateReference,
     ResolverConfigurationSchema,
     SelectorExpression,
-    UriReference,
 )
 from .propagation import ConfigPropagationSchema
 
@@ -390,7 +393,7 @@ class ConfigExtendRefSchema(BaseModel):
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    path: UriReference = Field(
+    path: ExtendConfigReference = Field(
         ...,
         description="Config path to merge (whole document when ``key`` is omitted).",
         examples=["../base-config@latest", "shared/all@stable"],
@@ -409,6 +412,22 @@ class ConfigExtendRefSchema(BaseModel):
         description=("Optional destination selector in the merge target; remaps the extracted ``key`` value."),
         examples=[".db", ".primary"],
     )
+    skip_missing: bool = Field(
+        False,
+        description=(
+            "When true, skip this source if the config path or version/tag is absent. "
+            "String references use a trailing ``?`` suffix instead."
+        ),
+    )
+
+    @field_validator("path")
+    @classmethod
+    def validate_path_no_optional_suffix(cls, v: str) -> str:
+        if v.endswith("?"):
+            raise ValueError(
+                "Optional extend sources use skip_missing: true in object form, not a trailing '?' on path"
+            )
+        return v
 
     @field_validator("key")
     @classmethod
@@ -434,7 +453,8 @@ def normalize_extend_ref(ref: str | ConfigExtendRefSchema) -> ConfigExtendRefSch
 
     if isinstance(ref, ConfigExtendRefSchema):
         return ref
-    return ConfigExtendRefSchema(path=ref)
+    path, skip_missing = parse_extend_config_ref_string(ref)
+    return ConfigExtendRefSchema(path=path, skip_missing=skip_missing)
 
 
 class ConfigExtendSchema(BaseModel):
@@ -442,7 +462,7 @@ class ConfigExtendSchema(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    configs: list[UriReference | ConfigExtendRefSchema] = Field(
+    configs: list[ExtendConfigReference | ConfigExtendRefSchema] = Field(
         ...,
         min_length=1,
         description=(
@@ -483,8 +503,8 @@ class ConfigExtendSchema(BaseModel):
     @field_validator("configs")
     @classmethod
     def validate_configs_limit(
-        cls, v: list[UriReference | ConfigExtendRefSchema]
-    ) -> list[UriReference | ConfigExtendRefSchema]:
+        cls, v: list[ExtendConfigReference | ConfigExtendRefSchema]
+    ) -> list[ExtendConfigReference | ConfigExtendRefSchema]:
         limit = settings.OCMO_MAX_EXTEND_CONFIGS
         if len(v) > limit:
             raise ValueError(f"_ocmo.extend.configs cannot list more than {limit} config references")
@@ -504,7 +524,7 @@ class ConfigRenderSchema(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    templates: list[UriReference] = Field(
+    templates: list[RenderTemplateReference] = Field(
         ...,
         min_length=1,
         description=(
@@ -602,7 +622,7 @@ class ConfigValidationSchema(BaseModel):
 
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
 
-    schema_path: UriReference = Field(
+    schema_path: ConfigOnlyReference = Field(
         ...,
         alias="schema",
         description=(

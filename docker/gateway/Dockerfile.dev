@@ -33,9 +33,11 @@ RUN apk add --no-cache gettext
 
 COPY --from=builder /tmp/nginx-*/objs/ngx_http_redis_module.so /usr/lib/nginx/modules/
 COPY docker/gateway/nginx-main.conf /etc/nginx/nginx.conf
+COPY docker/nginx.conf.template /etc/nginx/ocmo/default.conf.template
 COPY docker/nginx-redis.conf.template /etc/nginx/ocmo/redis.conf.template
+COPY docker/gateway/10-ocmo-frontend-upstream.sh /docker-entrypoint.d/10-ocmo-frontend-upstream.sh
 COPY docker/gateway/99-ocmo-redis.sh /docker-entrypoint.d/99-ocmo-redis.sh
-RUN chmod +x /docker-entrypoint.d/99-ocmo-redis.sh \
+RUN chmod +x /docker-entrypoint.d/10-ocmo-frontend-upstream.sh /docker-entrypoint.d/99-ocmo-redis.sh \
     && mkdir -p /etc/nginx/conf.d/ocmo-redis
 
 EXPOSE 80

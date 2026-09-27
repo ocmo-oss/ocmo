@@ -78,6 +78,8 @@ GET /api/v1/ns/{namespace}/~resolve/{path}
 
 The SDK and CLI download each URL automatically. Raw REST callers must fetch `item.url` as a second request.
 
+An empty `items` list (`length: 0`) is a valid success response — not an error. It can happen when [optional extend sources](extend.md#optional-sources) are all skipped (for example `replicate` with a missing optional base). The CLI exits with code **10** in that case; the SDK returns an empty `ResolveResult`.
+
 ---
 
 ## Walkthrough: resolve a config to JSON
@@ -149,7 +151,7 @@ OCMO caches resolved artifacts to avoid redundant pipeline work. When the cache 
 | Cache backend | `OCMO_RESOLVE_CACHE_BACKEND` | `locmem` (use `redis` for multi-worker) |
 | Cache TTL | `OCMO_RESOLVE_CACHE_TTL` | 3600 s |
 
-**Cache bust:** changing any parameter, version, or cast option produces a cache miss. Updating the config content (even to the same version string) also busts the cache.
+**Cache bust:** changing any parameter, version, or cast option produces a cache miss. Updating the config content (even to the same version string) also busts the cache. Optional extend sources marked `skip_missing` / `?` are tracked while absent; creating that config later invalidates the cache even when the resolving config is unchanged.
 
 ---
 

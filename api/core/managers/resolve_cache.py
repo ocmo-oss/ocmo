@@ -43,6 +43,10 @@ A JSON-serialisable dict::
             {"kind": str, "path": str, "ref": str, "version": int},
             ...
         ],
+        "skipped_optional_extend": [
+            {"path": str, "ref": str},
+            ...
+        ],
     }
 
 Layer 2 entry
@@ -65,12 +69,20 @@ A JSON-serialisable dict::
             {"kind": str, "path": str, "ref": str, "version": int},
             ...
         ],
+        "skipped_optional_extend": [
+            {"path": str, "ref": str},
+            ...
+        ],
     }
 
 Revalidation
 ------------
-Layer 1 — participants only (no artifact check, content not yet stored).
-Layer 2 — participants + artifact existence in the backend.
+Layer 1 — participants and optional-extend watchers (no artifact check).
+Layer 2 — participants, optional-extend watchers, and artifact existence.
+
+``skipped_optional_extend`` records optional extend sources (``skip_missing``)
+that were absent when the entry was written. Revalidation fails when any such
+path becomes present so a newly created overlay is merged on the next resolve.
 
 On every cache hit (Layer 1 or Layer 2), after version revalidation:
 - **Version check** — each participant still resolves to its stored version.
@@ -101,6 +113,34 @@ from .tree import TreeManager
 logger = logging.getLogger(__name__)
 
 _CACHE_ALIAS = "resolve"
+# Bump when resolve semantics change so stale cache entries are not reused.
+RESOLVE_CACHE_SCHEMA_VERSION = 3
+
+
+def extend_cache_fingerprint(metadata) -> str:
+    """Stable hash of ``_ocmo.extend`` for cache keying."""
+    if metadata.extend is None:
+        return ""
+    configs: list[dict[str, object]] = []
+    for ref in metadata.extend.configs:
+        from ..schemas.requests import normalize_extend_ref
+
+        norm = normalize_extend_ref(ref)
+        configs.append(
+            {
+                "path": norm.path,
+                "skip_missing": norm.skip_missing,
+                "key": norm.key,
+                "as": norm.as_,
+            }
+        )
+    payload = {
+        "mode": metadata.extend.mode,
+        "by": metadata.extend.by,
+        "configs": configs,
+    }
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
 def _hash(parts: dict) -> str:
@@ -115,11 +155,16 @@ def _make_resolution_key(
     dynamic_params: dict[str, Any] | None,
     *,
     no_creds: bool = False,
+    content_version: int | None = None,
+    extend_fingerprint: str = "",
 ) -> str:
     parts = {
         "ns": namespace_name,
         "p": path,
         "v": version,
+        "cv": content_version,
+        "ext": extend_fingerprint,
+        "csv": RESOLVE_CACHE_SCHEMA_VERSION,
         "params": sorted((dynamic_params or {}).items()),
         "no_creds": bool(no_creds),
     }
@@ -135,11 +180,16 @@ def _make_artifact_key(
     dynamic_params: dict[str, Any] | None,
     *,
     no_creds: bool = False,
+    content_version: int | None = None,
+    extend_fingerprint: str = "",
 ) -> str:
     parts = {
         "ns": namespace_name,
         "p": path,
         "v": version,
+        "cv": content_version,
+        "ext": extend_fingerprint,
+        "csv": RESOLVE_CACHE_SCHEMA_VERSION,
         "fmt": cast_format or "",
         "opts": sorted((cast_options or {}).items()),
         "params": sorted((dynamic_params or {}).items()),
@@ -171,6 +221,14 @@ def _check_participant(participant: dict[str, Any], namespace) -> bool:
     return current == stored_version
 
 
+def skipped_optional_extend_valid(entry: dict, namespace) -> bool:
+    """Return False when a cached skipped optional extend source is now present."""
+    for skipped in entry.get("skipped_optional_extend", []):
+        if TreeManager(namespace, skipped["path"], auth=None).classify_extend_source(skipped["ref"]) == "present":
+            return False
+    return True
+
+
 class ResolveCacheManager:
     """Short-circuit resolve cache (two-layer)."""
 
@@ -182,9 +240,19 @@ class ResolveCacheManager:
         dynamic_params: dict[str, Any] | None,
         *,
         no_creds: bool = False,
+        content_version: int | None = None,
+        extend_fingerprint: str = "",
     ) -> str:
         """Layer 1 key: cast-independent."""
-        return _make_resolution_key(namespace_name, path, version, dynamic_params, no_creds=no_creds)
+        return _make_resolution_key(
+            namespace_name,
+            path,
+            version,
+            dynamic_params,
+            no_creds=no_creds,
+            content_version=content_version,
+            extend_fingerprint=extend_fingerprint,
+        )
 
     @staticmethod
     def make_artifact_key(
@@ -196,6 +264,8 @@ class ResolveCacheManager:
         dynamic_params: dict[str, Any] | None,
         *,
         no_creds: bool = False,
+        content_version: int | None = None,
+        extend_fingerprint: str = "",
     ) -> str:
         """Layer 2 key: includes cast format + options."""
         return _make_artifact_key(
@@ -206,6 +276,8 @@ class ResolveCacheManager:
             cast_options,
             dynamic_params,
             no_creds=no_creds,
+            content_version=content_version,
+            extend_fingerprint=extend_fingerprint,
         )
 
     # ------------------------------------------------------------------
@@ -246,6 +318,8 @@ class ResolveCacheManager:
 
         Used for Layer 1 validation (no artifact check needed).
         """
+        if not skipped_optional_extend_valid(entry, namespace):
+            return False
         for p in entry.get("participants", []):
             if not _check_participant(p, namespace):
                 return False

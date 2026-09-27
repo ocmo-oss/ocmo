@@ -20,7 +20,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Dex device-flow callback (see docker/nginx.conf).
+    # Dex device-flow callback: Dex redirects to /device/callback after browser login.
+    # That path is outside /dex, so route it explicitly to the IdP (not the SPA).
     location = /device/callback {
         proxy_pass http://oidc-provider:9000/dex/device/callback;
         proxy_set_header Host              $host;
@@ -45,23 +46,28 @@ server {
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        # Support large YAML uploads and resolve responses.
         client_max_body_size 32m;
         proxy_read_timeout   120s;
     }
 
     # ── Artifact offload (filesystem) ─────────────────────────────────────────
+    # The API emits X-Accel-Redirect: /_ocmo_artifacts/<sha[:2]>/<sha[2:4]>/<sha>
+    # Set OCMO_RESOLVE_DOWNLOAD_XACCEL_LOCATION=/_ocmo_artifacts to enable.
     location /_ocmo_artifacts/ {
         internal;
         alias /tmp/ocmo/resolved/;
     }
 
     # ── Artifact offload (Redis) ───────────────────────────────────────────────
+    # Redis artifact offload (ngx_http_redis); conf dropped in by gateway
+    # entrypoint when the redis service is reachable.
     include /etc/nginx/conf.d/ocmo-redis/*.conf;
 
-    # ── Frontend (Vite dev server) ─────────────────────────────────────────────
-# HMR WebSocket is proxied through the gateway on :8080 (see vite hmr.clientPort).
+    # ── Frontend ───────────────────────────────────────────────────────────────
+    # OCMO_FRONTEND_UPSTREAM: http://frontend:80 (static) or http://frontend:3000 (Vite HMR).
     location / {
-        proxy_pass http://frontend:3000;
+        proxy_pass ${OCMO_FRONTEND_UPSTREAM};
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;

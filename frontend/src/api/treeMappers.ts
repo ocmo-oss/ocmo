@@ -269,13 +269,31 @@ function mapResolveTrace(
     const meta = (value ?? {}) as Record<string, unknown>;
     const at = key.lastIndexOf("@");
     const path = at >= 0 ? key.slice(0, at) : key;
+
+    if (meta.skipped === true) {
+      mapped[key] = {
+        resource_type:
+          (meta.resource_type as ResolveParticipant["resource_type"]) ??
+          "config",
+        path: typeof meta.path === "string" ? meta.path : path,
+        resolve_role:
+          (meta.resolve_role as ResolveParticipant["resolve_role"]) ??
+          "transitive",
+        from_cache: false,
+        skipped: true,
+      };
+      continue;
+    }
+
     const versionFromKey = at >= 0 ? Number(key.slice(at + 1)) : 0;
+    const version =
+      typeof meta.version === "number" ? meta.version : versionFromKey;
 
     mapped[key] = {
       resource_type:
         (meta.resource_type as ResolveParticipant["resource_type"]) ?? "config",
       path: typeof meta.path === "string" ? meta.path : path,
-      version: typeof meta.version === "number" ? meta.version : versionFromKey,
+      version: Number.isFinite(version) ? version : undefined,
       resolve_role:
         (meta.resolve_role as ResolveParticipant["resolve_role"]) ??
         "transitive",

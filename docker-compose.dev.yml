@@ -138,8 +138,9 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      # Static frontend image (nginx on :80). HMR overlay sets :3000 (Vite).
+      OCMO_FRONTEND_UPSTREAM: http://frontend:80
     volumes:
-      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ocmo_artifacts:/tmp/ocmo/resolved:ro
     depends_on:
       oidc-provider:

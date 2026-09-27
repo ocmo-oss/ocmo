@@ -305,6 +305,17 @@ class CacheKeyUnitTests(SimpleTestCase):
         k_true = ResolveCacheManager.make_artifact_key("ns", "path", "latest", "yaml", {}, {}, no_creds=True)
         self.assertNotEqual(k_false, k_true)
 
+    def test_extend_fingerprint_changes_resolution_key(self):
+        from core.managers.resolve_cache import ResolveCacheManager
+
+        base = ResolveCacheManager.make_resolution_key(
+            "ns", "path", "latest", {}, content_version=2, extend_fingerprint=""
+        )
+        changed = ResolveCacheManager.make_resolution_key(
+            "ns", "path", "latest", {}, content_version=2, extend_fingerprint="abc123"
+        )
+        self.assertNotEqual(base, changed)
+
 
 class CacheStatusUnitTests(SimpleTestCase):
     """Unit tests for ResolutionManager._cache_status (no DB required)."""

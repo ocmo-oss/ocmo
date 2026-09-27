@@ -35,6 +35,10 @@ The `trace` field shows every config that participated, at which version, and ne
 
 For folder resolve with a version tag, configs that lack the tag cause failure unless `--ignore-configs-with-missing-tags` is set.
 
+Optional extend sources (`../overlay?` or `skip_missing: true`) are skipped silently when the path or version/tag is missing. Use `--trace-only` to see `skipped: not_found` entries and confirm an optional layer was omitted rather than merged.
+
+When every output is omitted (for example `replicate` with a single optional base that does not exist), resolve returns `length: 0`. The CLI exits with code **10** (`RESOLVE_EMPTY`) — not a transport or validation error. Check `ocmo -n prod resolve <path> --trace-only -o json` to confirm whether optional extend skipped all bases.
+
 ---
 
 ## Error: circular reference
