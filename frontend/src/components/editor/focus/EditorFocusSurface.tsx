@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  type ReactNode,
-  type RefObject,
-} from "react";
+import { useEffect, useRef, type ReactNode, type RefObject } from "react";
 import type { editor } from "monaco-editor";
 import { isModalOpen } from "../../../store/modalStack";
 import { useMonacoLayoutOnResize } from "../../../hooks/useMonacoLayoutOnResize";
@@ -89,7 +84,10 @@ export function EditorFocusSurface({
             resolveButton={toolbarResolve}
           />
         )}
-        <div ref={contentRef} className="min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div
+          ref={contentRef}
+          className="min-h-0 min-w-0 flex-1 overflow-hidden"
+        >
           {children}
         </div>
       </div>

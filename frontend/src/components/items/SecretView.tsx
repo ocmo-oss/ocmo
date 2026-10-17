@@ -35,10 +35,7 @@ import { cn } from "../ui/cn";
 import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode, hasEditorContent } from "../../lib/itemEditorMode";
 import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
-import {
-  EditorFocusSurface,
-  FocusModeToggleButton,
-} from "../editor/focus";
+import { EditorFocusSurface, FocusModeToggleButton } from "../editor/focus";
 
 type Tab = "editor" | "history" | "audit";
 

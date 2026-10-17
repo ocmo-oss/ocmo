@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from `1.0.0` onward.
 Before `1.0.0`, minor releases may include breaking API or behavior changes.
 
+## [0.8.24]
+
+### Added
+
+- **[feat] Frontend:** editor focus mode for config, template, secret, and resolver views — blurred backdrop, animated panel, and compact save/exit toolbar.
+- **[feat] Frontend:** in-focus resolve split on configs (orientation-aware) with shared resolve workflow and `focus-split` resolve panel layout.
+
+### Changed
+
+- **[chore] CI:** run frontend ESLint, Prettier, build, tests, and Docker build as parallel jobs.
+
 ## [0.8.23]
 
 ### Added

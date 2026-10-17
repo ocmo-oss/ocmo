@@ -16,9 +16,7 @@ import {
 type PanelPhase = "inline" | "entering" | "open" | "exiting";
 
 function isFocusPanelPhase(phase: PanelPhase): boolean {
-  return (
-    phase === "entering" || phase === "open" || phase === "exiting"
-  );
+  return phase === "entering" || phase === "open" || phase === "exiting";
 }
 
 export function useEditorFocusGeometry({
@@ -57,10 +55,7 @@ export function useEditorFocusGeometry({
     const reduced = prefersReducedMotion();
 
     if (focusOpen) {
-      if (
-        phaseRef.current === "inline" ||
-        phaseRef.current === "exiting"
-      ) {
+      if (phaseRef.current === "inline" || phaseRef.current === "exiting") {
         const anchor = anchorRef.current?.getBoundingClientRect();
         if (!anchor || reduced) {
           applyRect(targetRect());

@@ -57,10 +57,7 @@ import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode, hasEditorContent } from "../../lib/itemEditorMode";
 import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
 import { useViewportOrientation } from "../../hooks/useViewportOrientation";
-import {
-  EditorFocusSurface,
-  FocusModeToggleButton,
-} from "../editor/focus";
+import { EditorFocusSurface, FocusModeToggleButton } from "../editor/focus";
 import { FOCUS_TRANSITION_MS } from "../editor/focus/constants";
 
 type Tab = "editor" | "history" | "audit";
@@ -163,8 +160,13 @@ export default function ConfigEditor({
     ) => void
   >(() => {});
   const monacoTheme = useMonacoEditorTheme();
-  const { focusOpen, openFocus, closeFocus, resolveSplitOpen, toggleResolveSplit } =
-    useEditorFocusMode();
+  const {
+    focusOpen,
+    openFocus,
+    closeFocus,
+    resolveSplitOpen,
+    toggleResolveSplit,
+  } = useEditorFocusMode();
   const { isLandscape } = useViewportOrientation();
 
   const getUriReference = useCallback(() => {
@@ -605,25 +607,28 @@ export default function ConfigEditor({
                     : "flex-col",
                 )}
               >
-                {resolveSplitOpen && focusOpen && canResolve && !isLandscape && (
-                  <div
-                    className="min-h-0 min-w-0 flex-1 overflow-hidden border-b dark:border-gray-700"
-                    style={{
-                      transition: `flex-basis ${FOCUS_TRANSITION_MS}ms ease-in-out, opacity ${FOCUS_TRANSITION_MS}ms ease-in-out`,
-                    }}
-                  >
-                    <ResolvePanel
-                      namespace={namespace}
-                      path={item.path}
-                      versionRef={versionRef}
-                      content={content}
-                      isDirty={useDraftResolve}
-                      variant="focus-split"
-                      embedded
-                      splitOrientation="vertical"
-                    />
-                  </div>
-                )}
+                {resolveSplitOpen &&
+                  focusOpen &&
+                  canResolve &&
+                  !isLandscape && (
+                    <div
+                      className="min-h-0 min-w-0 flex-1 overflow-hidden border-b dark:border-gray-700"
+                      style={{
+                        transition: `flex-basis ${FOCUS_TRANSITION_MS}ms ease-in-out, opacity ${FOCUS_TRANSITION_MS}ms ease-in-out`,
+                      }}
+                    >
+                      <ResolvePanel
+                        namespace={namespace}
+                        path={item.path}
+                        versionRef={versionRef}
+                        content={content}
+                        isDirty={useDraftResolve}
+                        variant="focus-split"
+                        embedded
+                        splitOrientation="vertical"
+                      />
+                    </div>
+                  )}
                 <div
                   className={cn(
                     "min-h-0 min-w-0 overflow-hidden",

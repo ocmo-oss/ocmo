@@ -403,9 +403,7 @@ export function ResolvePanel({
   const showOverlayHeader = !embedded && variant === "overlay";
   const isFocusSplit = variant === "focus-split";
   const innerFlexDirection =
-    isFocusSplit && splitOrientation === "vertical"
-      ? "flex-col"
-      : "flex-row";
+    isFocusSplit && splitOrientation === "vertical" ? "flex-col" : "flex-row";
 
   return (
     <div className="flex h-full w-full flex-col bg-surface-elevated dark:bg-gray-950">
@@ -440,7 +438,9 @@ export function ResolvePanel({
         )}
         style={
           isFocusSplit
-            ? { transition: `flex-direction ${FOCUS_TRANSITION_MS}ms ease-in-out` }
+            ? {
+                transition: `flex-direction ${FOCUS_TRANSITION_MS}ms ease-in-out`,
+              }
             : undefined
         }
       >
