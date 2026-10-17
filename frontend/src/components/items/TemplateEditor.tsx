@@ -36,6 +36,8 @@ import {
 import { cn } from "../ui/cn";
 import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode } from "../../lib/itemEditorMode";
+import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
+import { EditorFocusSurface, FocusModeToggleButton } from "../editor/focus";
 
 type Tab = "editor" | "history" | "audit";
 
@@ -97,6 +99,7 @@ export default function TemplateEditor({
   >(() => {});
   const debouncedContent = useDebouncedValue(content, VALIDATION_DEBOUNCE_MS);
   const monacoTheme = useMonacoEditorTheme();
+  const { focusOpen, openFocus, closeFocus } = useEditorFocusMode();
 
   const validation = useMemo(
     () => validateJinja2Template(debouncedContent),
@@ -120,6 +123,10 @@ export default function TemplateEditor({
     setContent(item.content ?? "");
     setIsDirty(false);
   }, [creating, item.path, item.version, item.content]);
+
+  useEffect(() => {
+    closeFocus();
+  }, [item.path, namespace, closeFocus]);
 
   useEffect(() => {
     if (activeTab !== "history") {
@@ -291,16 +298,23 @@ export default function TemplateEditor({
           />
         ) : activeTab === "audit" ? null : !isDeleted &&
           permissions.canWrite ? (
-          <ItemSaveButton
-            label={creating ? "Create" : "Save"}
-            loading={saveMut.isPending}
-            disabled={!canSave}
-            onClick={() => saveMut.mutate()}
-            buttonRef={saveShortcut.buttonRef}
-            showEnterHint={saveShortcut.showEnterHint}
-            enterHint={saveShortcut.enterHint}
-            onKeyDown={saveShortcut.handleButtonKeyDown}
-          />
+          <>
+            {!focusOpen && (
+              <FocusModeToggleButton onClick={openFocus} className="mr-1" />
+            )}
+            {!focusOpen && (
+              <ItemSaveButton
+                label={creating ? "Create" : "Save"}
+                loading={saveMut.isPending}
+                disabled={!canSave}
+                onClick={() => saveMut.mutate()}
+                buttonRef={saveShortcut.buttonRef}
+                showEnterHint={saveShortcut.showEnterHint}
+                enterHint={saveShortcut.enterHint}
+                onKeyDown={saveShortcut.handleButtonKeyDown}
+              />
+            )}
+          </>
         ) : null}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -312,26 +326,46 @@ export default function TemplateEditor({
           />
         )}
         {activeTab === "editor" && !isDeleted && (
-          <MonacoEditor
-            height="100%"
-            language="jinja2"
-            theme={monacoTheme}
-            value={content}
-            onMount={handleEditorMount}
-            onChange={(v) => {
-              const next = v ?? "";
-              setContent(next);
-              setIsDirty(true);
-              applyValidationMarkers(next);
-            }}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 13,
-              wordWrap: "on",
-              readOnly: !permissions.canWrite,
-              accessibilitySupport: "on",
-            }}
-          />
+          <EditorFocusSurface
+            focusOpen={focusOpen}
+            onCloseFocus={closeFocus}
+            editorRef={editorRef}
+            toolbarSave={
+              permissions.canWrite ? (
+                <ItemSaveButton
+                  label={creating ? "Create" : "Save"}
+                  loading={saveMut.isPending}
+                  disabled={!canSave}
+                  onClick={() => saveMut.mutate()}
+                  buttonRef={saveShortcut.buttonRef}
+                  showEnterHint={saveShortcut.showEnterHint}
+                  enterHint={saveShortcut.enterHint}
+                  onKeyDown={saveShortcut.handleButtonKeyDown}
+                />
+              ) : undefined
+            }
+          >
+            <MonacoEditor
+              height="100%"
+              language="jinja2"
+              theme={monacoTheme}
+              value={content}
+              onMount={handleEditorMount}
+              onChange={(v) => {
+                const next = v ?? "";
+                setContent(next);
+                setIsDirty(true);
+                applyValidationMarkers(next);
+              }}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 13,
+                wordWrap: "on",
+                readOnly: !permissions.canWrite,
+                accessibilitySupport: "on",
+              }}
+            />
+          </EditorFocusSurface>
         )}
         {activeTab === "history" && (
           <ItemHistoryTab

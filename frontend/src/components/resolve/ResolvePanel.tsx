@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import MonacoEditor from "@monaco-editor/react";
 import {
   ChevronDown,
@@ -10,8 +10,6 @@ import {
   Info,
   Play,
 } from "lucide-react";
-import { treeApi } from "../../api/tree";
-import { resolveApi } from "../../api/resolve";
 import { fetchAuthenticatedText } from "../../api/client";
 import type {
   ResolveResponse,
@@ -21,28 +19,16 @@ import type {
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Skeleton } from "../ui/Skeleton";
-import { pushApiError, pushNotification } from "../../store/notifications";
+import { pushNotification } from "../../store/notifications";
 import { showToast } from "../ui/Toast";
 import { CastFormatSelector } from "./CastFormatSelector";
 import { CastOptionsForm } from "./CastOptionsForm";
 import { VyshyvankaPatternBand } from "./VyshyvankaPatternBand";
 import { useMonacoEditorTheme } from "../../hooks/useMonacoEditorTheme";
-import { hasOcmoRenderConfiguration } from "../../lib/ocmoMetadata";
-import { validateDynamicParams } from "../../lib/resolveParameterValidation";
-import { buildResolveQueryParams } from "../../lib/resolveQueryParams";
-import {
-  buildResolveCliCommand,
-  buildResolveCurlCommand,
-  buildResolveSdkCommand,
-  type ResolveCommandConfig,
-} from "../../lib/resolveCommands";
-import {
-  resolveActionLabel,
-  emptyResolveArtifactsMessage,
-} from "../../lib/resolveTargetLabel";
-import { env } from "../../env";
-import { useConfigMetadataKey } from "../../store/health";
+import { emptyResolveArtifactsMessage } from "../../lib/resolveTargetLabel";
 import { cn } from "../ui/cn";
+import { useResolveWorkflow } from "./useResolveWorkflow";
+import { FOCUS_TRANSITION_MS } from "../editor/focus/constants";
 
 interface ResolvedArtifact extends ResolveArtifact {
   content: string;
@@ -60,34 +46,6 @@ function monacoLanguage(cast: string): string {
     default:
       return "plaintext";
   }
-}
-
-function buildResolveParams({
-  versionRef,
-  cast,
-  markStable,
-  noCreds,
-  dynamicParams,
-  castOptions,
-  ignoreConfigsWithMissingTags,
-}: {
-  versionRef?: string;
-  cast: string;
-  markStable: boolean;
-  noCreds: boolean;
-  dynamicParams: Record<string, string>;
-  castOptions: Record<string, string | boolean>;
-  ignoreConfigsWithMissingTags?: boolean;
-}) {
-  return buildResolveQueryParams({
-    versionRef,
-    noCreds,
-    dynamicParams,
-    cast,
-    markStable,
-    castOptions,
-    ignoreConfigsWithMissingTags,
-  });
 }
 
 function ParameterField({
@@ -379,6 +337,9 @@ interface ResolvePanelProps {
   onClose?: () => void;
   mode?: "config" | "folder";
   embedded?: boolean;
+  variant?: "overlay" | "focus-split";
+  /** When focus-split: stack result above options on narrow panes */
+  splitOrientation?: "horizontal" | "vertical";
 }
 
 export function ResolvePanel({
@@ -390,196 +351,63 @@ export function ResolvePanel({
   onClose,
   mode = "config",
   embedded = false,
+  variant = "overlay",
+  splitOrientation = "horizontal",
 }: ResolvePanelProps) {
-  const isFolder = mode === "folder";
-  const useDraftResolve = !isFolder && isDirty;
-  const configMetadataKey = useConfigMetadataKey();
-  const castUnavailable = useMemo(
-    () =>
-      Boolean(
-        content && hasOcmoRenderConfiguration(content, configMetadataKey),
-      ),
-    [content, configMetadataKey],
-  );
-  const [cast, setCast] = useState("");
-  const [castOpen, setCastOpen] = useState(false);
-  const [castOptions, setCastOptions] = useState<
-    Record<string, string | boolean>
-  >({});
-  const [noCreds, setNoCreds] = useState(true);
-  const [resolveMenuOpen, setResolveMenuOpen] = useState(false);
-  const [dynamicParams, setDynamicParams] = useState<Record<string, string>>(
-    {},
-  );
-  const [folderVersion, setFolderVersion] = useState("latest");
-  const [ignoreMissingTags, setIgnoreMissingTags] = useState(false);
-  const [resolveResult, setResolveResult] = useState<ResolveResponse | null>(
-    null,
-  );
-  const [awaitingArtifacts, setAwaitingArtifacts] = useState(false);
-
-  const effectiveVersionRef = isFolder ? folderVersion : versionRef;
-
-  const paramQueryParams = useMemo(
-    () =>
-      buildResolveQueryParams({
-        versionRef: effectiveVersionRef,
-        noCreds,
-        dynamicParams: {},
-      }),
-    [effectiveVersionRef, noCreds],
-  );
-
+  const workflow = useResolveWorkflow({
+    namespace,
+    path,
+    versionRef,
+    content,
+    isDirty,
+    mode,
+  });
   const {
-    data: paramsData,
-    isLoading: paramsLoading,
-    isFetching: paramsFetching,
-    isError: paramsIsError,
-    error: paramsError,
-  } = useQuery({
-    queryKey: ["resolve-params", namespace, path, paramQueryParams],
-    queryFn: ({ signal }) =>
-      resolveApi.parameters(namespace, path, paramQueryParams, signal),
-    staleTime: 0,
-    placeholderData: keepPreviousData,
-    enabled: !isFolder,
-  });
-
-  const { data: castFormatsData } = useQuery({
-    queryKey: ["cast-formats"],
-    queryFn: ({ signal }) => resolveApi.castFormats(signal),
-    staleTime: 60_000,
-    enabled: !castUnavailable,
-  });
-
-  const castSchema = useMemo(() => {
-    if (!cast) return null;
-    return (
-      castFormatsData?.formats.find((f) => f.format === cast)?.options_schema ??
-      null
-    );
-  }, [cast, castFormatsData]);
-
-  useEffect(() => {
-    setCastOptions({});
-  }, [cast]);
-
-  useEffect(() => {
-    if (!castUnavailable) return;
-    setCast("");
-    setCastOptions({});
-    setCastOpen(false);
-  }, [castUnavailable]);
-
-  useEffect(() => {
-    if (!paramsData?.parameters) return;
-    setDynamicParams((prev) => {
-      const next = { ...prev };
-      for (const [name, param] of Object.entries(paramsData.parameters)) {
-        if (param.type === "dynamic" && next[name] === undefined) {
-          next[name] =
-            param.declared_default != null
-              ? String(param.declared_default)
-              : "";
-        }
-      }
-      return next;
-    });
-  }, [paramsData]);
-
-  const resolveMut = useMutation({
-    mutationFn: (markStable: boolean) => {
-      const params = buildResolveParams({
-        versionRef: effectiveVersionRef,
-        cast,
-        markStable,
-        noCreds,
-        dynamicParams,
-        castOptions,
-        ignoreConfigsWithMissingTags: isFolder ? ignoreMissingTags : undefined,
-      });
-      if (useDraftResolve && content !== undefined) {
-        return treeApi.resolveDraft(namespace, path, content, params);
-      }
-      return treeApi.resolve(namespace, path, params);
-    },
-    onSuccess: (result) => {
-      setResolveResult(result);
-      setAwaitingArtifacts(result.artifacts.length > 0);
-      showToast(useDraftResolve ? "Draft resolved" : "Resolved successfully");
-      setResolveMenuOpen(false);
-    },
-    onError: (e: Error) => {
-      setAwaitingArtifacts(false);
-      pushApiError("Resolve failed", e);
-    },
-  });
-
-  const parameters = paramsData?.parameters ?? {};
-  const paramEntries = Object.entries(parameters);
-  const paramErrors = useMemo(
-    () => validateDynamicParams(dynamicParams, parameters),
-    [dynamicParams, parameters],
-  );
-  const hasParamErrors = Object.keys(paramErrors).length > 0;
-  const showParamsLoading =
-    !isFolder && (paramsLoading || paramsFetching) && !paramsData;
-  const resolveLabel = resolveActionLabel(useDraftResolve, effectiveVersionRef);
-  const resolveMarkStableLabel = resolveActionLabel(
+    isFolder,
     useDraftResolve,
+    castUnavailable,
+    cast,
+    setCast,
+    castOpen,
+    setCastOpen,
+    castOptions,
+    setCastOptions,
+    castSchema,
+    noCreds,
+    setNoCreds,
+    resolveMenuOpen,
+    setResolveMenuOpen,
+    dynamicParams,
+    setDynamicParams,
+    folderVersion,
+    setFolderVersion,
+    ignoreMissingTags,
+    setIgnoreMissingTags,
+    resolveResult,
     effectiveVersionRef,
-    { markStable: true },
-  );
-  const resolveActive = resolveMut.isPending || awaitingArtifacts;
+    paramEntries,
+    paramErrors,
+    hasParamErrors,
+    showParamsLoading,
+    paramsIsError,
+    paramsError,
+    paramsData,
+    resolveLabel,
+    resolveMarkStableLabel,
+    resolveActive,
+    resolveMut,
+    copyResolveCommand,
+    clearArtifactsLoading,
+  } = workflow;
 
-  const resolveCommandConfig = useMemo<ResolveCommandConfig>(
-    () => ({
-      namespace,
-      path,
-      mode,
-      versionRef: effectiveVersionRef,
-      noCreds,
-      cast,
-      castOptions,
-      dynamicParams,
-      ignoreConfigsWithMissingTags: isFolder ? ignoreMissingTags : undefined,
-      isDraft: useDraftResolve,
-      apiBase: env.apiBase,
-    }),
-    [
-      namespace,
-      path,
-      mode,
-      effectiveVersionRef,
-      noCreds,
-      cast,
-      castOptions,
-      dynamicParams,
-      isFolder,
-      ignoreMissingTags,
-      useDraftResolve,
-    ],
-  );
-
-  const copyResolveCommand = async (kind: "curl" | "cli" | "sdk") => {
-    const text =
-      kind === "curl"
-        ? buildResolveCurlCommand(resolveCommandConfig)
-        : kind === "cli"
-          ? buildResolveCliCommand(resolveCommandConfig)
-          : buildResolveSdkCommand(resolveCommandConfig);
-    try {
-      await navigator.clipboard.writeText(text);
-      showToast(`Copied ${kind} command`);
-      setResolveMenuOpen(false);
-    } catch {
-      pushNotification("error", "Copy failed");
-    }
-  };
+  const showOverlayHeader = !embedded && variant === "overlay";
+  const isFocusSplit = variant === "focus-split";
+  const innerFlexDirection =
+    isFocusSplit && splitOrientation === "vertical" ? "flex-col" : "flex-row";
 
   return (
     <div className="flex h-full w-full flex-col bg-surface-elevated dark:bg-gray-950">
-      {!embedded && (
+      {showOverlayHeader && (
         <div className="flex shrink-0 items-center gap-3 border-b px-4 py-2 dark:border-gray-700">
           <Button
             variant="primary"
@@ -603,7 +431,19 @@ export function ResolvePanel({
         </div>
       )}
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 overflow-hidden",
+          innerFlexDirection,
+        )}
+        style={
+          isFocusSplit
+            ? {
+                transition: `flex-direction ${FOCUS_TRANSITION_MS}ms ease-in-out`,
+              }
+            : undefined
+        }
+      >
         <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           {resolveActive && (
             <VyshyvankaPatternBand
@@ -618,9 +458,7 @@ export function ResolvePanel({
               mode={mode}
               versionRef={effectiveVersionRef}
               ignoreMissingTags={isFolder ? ignoreMissingTags : false}
-              onArtifactsLoadingChange={(loading) => {
-                if (!loading) setAwaitingArtifacts(false);
-              }}
+              onArtifactsLoadingChange={clearArtifactsLoading}
             />
           ) : !resolveActive ? (
             <div className="flex h-full items-center justify-center p-6 text-center">
@@ -634,7 +472,14 @@ export function ResolvePanel({
           {resolveResult && <TraceViewer trace={resolveResult.trace} />}
         </div>
 
-        <aside className="flex w-72 shrink-0 flex-col overflow-hidden border-l dark:border-gray-700">
+        <aside
+          className={cn(
+            "flex shrink-0 flex-col overflow-hidden dark:border-gray-700",
+            isFocusSplit
+              ? "w-full max-h-[45%] border-t dark:border-t-gray-700 sm:max-h-none sm:w-56 sm:border-l sm:border-t-0"
+              : "w-72 border-l",
+          )}
+        >
           <div className="flex-1 space-y-4 overflow-y-auto p-3">
             {isFolder ? (
               <>
