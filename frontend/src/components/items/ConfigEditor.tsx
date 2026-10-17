@@ -5,6 +5,7 @@ import MonacoEditor from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import {
   ChevronLeft,
+  ChevronRight,
   History,
   AlertTriangle,
   Route,
@@ -54,6 +55,13 @@ import { createItemEditorModelPath } from "../../lib/configEditorSchema";
 import { cn } from "../ui/cn";
 import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode, hasEditorContent } from "../../lib/itemEditorMode";
+import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
+import { useViewportOrientation } from "../../hooks/useViewportOrientation";
+import {
+  EditorFocusSurface,
+  FocusModeToggleButton,
+} from "../editor/focus";
+import { FOCUS_TRANSITION_MS } from "../editor/focus/constants";
 
 type Tab = "editor" | "history" | "audit";
 
@@ -155,6 +163,9 @@ export default function ConfigEditor({
     ) => void
   >(() => {});
   const monacoTheme = useMonacoEditorTheme();
+  const { focusOpen, openFocus, closeFocus, resolveSplitOpen, toggleResolveSplit } =
+    useEditorFocusMode();
+  const { isLandscape } = useViewportOrientation();
 
   const getUriReference = useCallback(() => {
     const metadataKey = metadataKeyRef.current;
@@ -386,7 +397,10 @@ export default function ConfigEditor({
     if (activeTab !== "editor" && resolveMounted) {
       closeResolve();
     }
-  }, [activeTab, resolveMounted, closeResolve]);
+    if (activeTab !== "editor" && focusOpen) {
+      closeFocus();
+    }
+  }, [activeTab, resolveMounted, closeResolve, focusOpen, closeFocus]);
 
   useEffect(() => {
     if (isJsonSchemaMode && resolveMounted) {
@@ -398,7 +412,8 @@ export default function ConfigEditor({
     if (resolveMounted) {
       closeResolve();
     }
-  }, [item.path, namespace, closeResolve]);
+    closeFocus();
+  }, [item.path, namespace, closeResolve, closeFocus]);
 
   return (
     <div className="flex h-full flex-col">
@@ -499,20 +514,23 @@ export default function ConfigEditor({
             />
           ) : activeTab === "audit" ? null : !isDeleted ? (
             <>
-              {canEdit && !resolveMounted && (
-                <ItemSaveButton
-                  label={creating ? "Create" : "Save"}
-                  loading={saveMut.isPending}
-                  disabled={!canSave}
-                  onClick={() => saveMut.mutate()}
-                  buttonRef={saveShortcut.buttonRef}
-                  showEnterHint={saveShortcut.showEnterHint}
-                  enterHint={saveShortcut.enterHint}
-                  onKeyDown={saveShortcut.handleButtonKeyDown}
-                  className="mr-2"
-                />
+              {canEdit && !resolveMounted && !focusOpen && (
+                <>
+                  <FocusModeToggleButton onClick={openFocus} className="mr-1" />
+                  <ItemSaveButton
+                    label={creating ? "Create" : "Save"}
+                    loading={saveMut.isPending}
+                    disabled={!canSave}
+                    onClick={() => saveMut.mutate()}
+                    buttonRef={saveShortcut.buttonRef}
+                    showEnterHint={saveShortcut.showEnterHint}
+                    enterHint={saveShortcut.enterHint}
+                    onKeyDown={saveShortcut.handleButtonKeyDown}
+                    className="mr-2"
+                  />
+                </>
               )}
-              {canResolve && !resolveMounted && (
+              {canResolve && !resolveMounted && !focusOpen && (
                 <Button
                   variant="primary"
                   size="sm"
@@ -536,20 +554,121 @@ export default function ConfigEditor({
             />
           )}
           {activeTab === "editor" && !isDeleted && (
-            <MonacoEditor
-              height="100%"
-              language="yaml"
-              theme={monacoTheme}
-              path={editorModelPath}
-              value={content}
-              onMount={handleEditorMount}
-              onChange={(v) => {
-                if (!canEdit) return;
-                setContent(v ?? "");
-                setIsDirty(true);
-              }}
-              options={yamlEditorOptions(!canEdit)}
-            />
+            <EditorFocusSurface
+              focusOpen={focusOpen}
+              onCloseFocus={closeFocus}
+              resolveSplitOpen={resolveSplitOpen}
+              editorRef={editorRef}
+              toolbarSave={
+                canEdit ? (
+                  <ItemSaveButton
+                    label={creating ? "Create" : "Save"}
+                    loading={saveMut.isPending}
+                    disabled={!canSave}
+                    onClick={() => saveMut.mutate()}
+                    buttonRef={saveShortcut.buttonRef}
+                    showEnterHint={saveShortcut.showEnterHint}
+                    enterHint={saveShortcut.enterHint}
+                    onKeyDown={saveShortcut.handleButtonKeyDown}
+                  />
+                ) : undefined
+              }
+              toolbarResolve={
+                canResolve ? (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={toggleResolveSplit}
+                    className={cn(
+                      "bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700",
+                      resolveSplitOpen &&
+                        "ring-2 ring-green-400 ring-offset-1 dark:ring-offset-gray-950",
+                    )}
+                  >
+                    Resolve
+                    {resolveSplitOpen ? (
+                      <ChevronLeft className="h-3.5 w-3.5" />
+                    ) : (
+                      <ChevronRight className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                ) : undefined
+              }
+            >
+              <div
+                className={cn(
+                  "flex h-full min-h-0",
+                  resolveSplitOpen && focusOpen
+                    ? isLandscape
+                      ? "flex-row"
+                      : "flex-col"
+                    : "flex-col",
+                )}
+              >
+                {resolveSplitOpen && focusOpen && canResolve && !isLandscape && (
+                  <div
+                    className="min-h-0 min-w-0 flex-1 overflow-hidden border-b dark:border-gray-700"
+                    style={{
+                      transition: `flex-basis ${FOCUS_TRANSITION_MS}ms ease-in-out, opacity ${FOCUS_TRANSITION_MS}ms ease-in-out`,
+                    }}
+                  >
+                    <ResolvePanel
+                      namespace={namespace}
+                      path={item.path}
+                      versionRef={versionRef}
+                      content={content}
+                      isDirty={useDraftResolve}
+                      variant="focus-split"
+                      embedded
+                      splitOrientation="vertical"
+                    />
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    "min-h-0 min-w-0 overflow-hidden",
+                    resolveSplitOpen && focusOpen ? "flex-1" : "h-full flex-1",
+                  )}
+                  style={{
+                    transition: `flex-basis ${FOCUS_TRANSITION_MS}ms ease-in-out`,
+                  }}
+                >
+                  <MonacoEditor
+                    height="100%"
+                    language="yaml"
+                    theme={monacoTheme}
+                    path={editorModelPath}
+                    value={content}
+                    onMount={handleEditorMount}
+                    onChange={(v) => {
+                      if (!canEdit) return;
+                      setContent(v ?? "");
+                      setIsDirty(true);
+                    }}
+                    options={yamlEditorOptions(!canEdit)}
+                  />
+                </div>
+                {resolveSplitOpen && focusOpen && canResolve && isLandscape && (
+                  <div
+                    className="min-h-0 min-w-0 flex-1 overflow-hidden border-l dark:border-gray-700"
+                    style={{
+                      transition: `flex-basis ${FOCUS_TRANSITION_MS}ms ease-in-out, opacity ${FOCUS_TRANSITION_MS}ms ease-in-out`,
+                    }}
+                  >
+                    <ResolvePanel
+                      namespace={namespace}
+                      path={item.path}
+                      versionRef={versionRef}
+                      content={content}
+                      isDirty={useDraftResolve}
+                      variant="focus-split"
+                      embedded
+                      splitOrientation="horizontal"
+                    />
+                  </div>
+                )}
+              </div>
+            </EditorFocusSurface>
           )}
           {activeTab === "history" && (
             <ItemHistoryTab
@@ -579,6 +698,7 @@ export default function ConfigEditor({
 
         {(creating || activeTab === "editor") &&
           !isDeleted &&
+          !focusOpen &&
           resolveMounted &&
           canResolve && (
             <div

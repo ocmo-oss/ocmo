@@ -34,6 +34,11 @@ import { isBuiltinNamespacePath } from "../../lib/builtinPaths";
 import { cn } from "../ui/cn";
 import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode, hasEditorContent } from "../../lib/itemEditorMode";
+import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
+import {
+  EditorFocusSurface,
+  FocusModeToggleButton,
+} from "../editor/focus";
 
 type Tab = "editor" | "history" | "audit";
 
@@ -125,6 +130,8 @@ export default function SecretView({
     ) => void
   >(() => {});
   const monacoTheme = useMonacoEditorTheme();
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const { focusOpen, openFocus, closeFocus } = useEditorFocusMode();
   const [activeTab, setActiveTab] = useState<Tab>("editor");
   const [placeholderContent, setPlaceholderContent] = useState(
     pickDummySecretContent,
@@ -189,6 +196,7 @@ export default function SecretView({
     }
 
     if (pathChanged) {
+      closeFocus();
       setPlaceholderContent(pickDummySecretContent());
       setIsDirty(false);
 
@@ -232,6 +240,7 @@ export default function SecretView({
     editorInstance: editor.IStandaloneCodeEditor,
     monaco: typeof import("monaco-editor"),
   ) => {
+    editorRef.current = editorInstance;
     emptyHintDisposableRef.current?.dispose();
     emptyHintDisposableRef.current = installEditorEmptyHint(
       editorInstance,
@@ -461,16 +470,27 @@ export default function SecretView({
               onClearSelection={clearHistorySelection}
             />
           ) : activeTab === "audit" ? null : showSave ? (
-            <ItemSaveButton
-              label={creating ? "Create" : "Save"}
-              loading={saveMut.isPending}
-              disabled={!canSave}
-              onClick={() => saveMut.mutate()}
-              buttonRef={saveShortcut.buttonRef}
-              showEnterHint={saveShortcut.showEnterHint}
-              enterHint={saveShortcut.enterHint}
-              onKeyDown={saveShortcut.handleButtonKeyDown}
-            />
+            <>
+              {!focusOpen && (
+                <FocusModeToggleButton
+                  onClick={openFocus}
+                  disabled={!isSecretLoaded}
+                  className="mr-1"
+                />
+              )}
+              {!focusOpen && (
+                <ItemSaveButton
+                  label={creating ? "Create" : "Save"}
+                  loading={saveMut.isPending}
+                  disabled={!canSave}
+                  onClick={() => saveMut.mutate()}
+                  buttonRef={saveShortcut.buttonRef}
+                  showEnterHint={saveShortcut.showEnterHint}
+                  enterHint={saveShortcut.enterHint}
+                  onKeyDown={saveShortcut.handleButtonKeyDown}
+                />
+              )}
+            </>
           ) : null}
         </div>
 
@@ -489,25 +509,45 @@ export default function SecretView({
             ) : (
               <div className="relative flex min-h-0 flex-1 flex-col">
                 {isSecretLoaded ? (
-                  <MonacoEditor
-                    key={
-                      creating
-                        ? "revealed-create"
-                        : `revealed-${item.path}-${item.version}`
+                  <EditorFocusSurface
+                    focusOpen={focusOpen}
+                    onCloseFocus={closeFocus}
+                    editorRef={editorRef}
+                    toolbarSave={
+                      showSave ? (
+                        <ItemSaveButton
+                          label={creating ? "Create" : "Save"}
+                          loading={saveMut.isPending}
+                          disabled={!canSave}
+                          onClick={() => saveMut.mutate()}
+                          buttonRef={saveShortcut.buttonRef}
+                          showEnterHint={saveShortcut.showEnterHint}
+                          enterHint={saveShortcut.enterHint}
+                          onKeyDown={saveShortcut.handleButtonKeyDown}
+                        />
+                      ) : undefined
                     }
-                    height="100%"
-                    language="yaml"
-                    theme={monacoTheme}
-                    value={revealedEditorValue}
-                    onMount={handleSecretEditorMount}
-                    onChange={(v) => {
-                      if (!canEdit) return;
-                      const next = v ?? "";
-                      setContent(next);
-                      setIsDirty(next !== savedContent);
-                    }}
-                    options={yamlEditorOptions(!canEdit)}
-                  />
+                  >
+                    <MonacoEditor
+                      key={
+                        creating
+                          ? "revealed-create"
+                          : `revealed-${item.path}-${item.version}`
+                      }
+                      height="100%"
+                      language="yaml"
+                      theme={monacoTheme}
+                      value={revealedEditorValue}
+                      onMount={handleSecretEditorMount}
+                      onChange={(v) => {
+                        if (!canEdit) return;
+                        const next = v ?? "";
+                        setContent(next);
+                        setIsDirty(next !== savedContent);
+                      }}
+                      options={yamlEditorOptions(!canEdit)}
+                    />
+                  </EditorFocusSurface>
                 ) : (
                   <>
                     <div className="min-h-0 flex-1 pointer-events-none select-none blur-[3px]">

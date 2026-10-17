@@ -48,6 +48,11 @@ import { createItemEditorModelPath } from "../../lib/configEditorSchema";
 import { cn } from "../ui/cn";
 import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode } from "../../lib/itemEditorMode";
+import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
+import {
+  EditorFocusSurface,
+  FocusModeToggleButton,
+} from "../editor/focus";
 
 type Tab = "config" | "tokens" | "audit";
 
@@ -110,6 +115,11 @@ export default function ResolverView({
   const [moveOpen, setMoveOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
   const monacoTheme = useMonacoEditorTheme();
+  const { focusOpen, openFocus, closeFocus } = useEditorFocusMode();
+
+  useEffect(() => {
+    closeFocus();
+  }, [item.path, namespace, closeFocus]);
 
   useEffect(() => {
     if (!createdTokenFromNavigation) return;
@@ -344,16 +354,23 @@ export default function ResolverView({
             </span>
           )}
           {activeTab === "config" && permissions.canWrite && (
-            <ItemSaveButton
-              label="Save"
-              loading={saveMut.isPending}
-              disabled={!canSave}
-              onClick={() => saveMut.mutate()}
-              buttonRef={saveShortcut.buttonRef}
-              showEnterHint={saveShortcut.showEnterHint}
-              enterHint={saveShortcut.enterHint}
-              onKeyDown={saveShortcut.handleButtonKeyDown}
-            />
+            <>
+              {!focusOpen && (
+                <FocusModeToggleButton onClick={openFocus} className="mr-1" />
+              )}
+              {!focusOpen && (
+                <ItemSaveButton
+                  label="Save"
+                  loading={saveMut.isPending}
+                  disabled={!canSave}
+                  onClick={() => saveMut.mutate()}
+                  buttonRef={saveShortcut.buttonRef}
+                  showEnterHint={saveShortcut.showEnterHint}
+                  enterHint={saveShortcut.enterHint}
+                  onKeyDown={saveShortcut.handleButtonKeyDown}
+                />
+              )}
+            </>
           )}
         </div>
       ) : (
@@ -364,16 +381,23 @@ export default function ResolverView({
             </span>
           )}
           {permissions.canWrite && (
-            <ItemSaveButton
-              label="Create"
-              loading={saveMut.isPending}
-              disabled={!canSave}
-              onClick={() => saveMut.mutate()}
-              buttonRef={saveShortcut.buttonRef}
-              showEnterHint={saveShortcut.showEnterHint}
-              enterHint={saveShortcut.enterHint}
-              onKeyDown={saveShortcut.handleButtonKeyDown}
-            />
+            <>
+              {!focusOpen && (
+                <FocusModeToggleButton onClick={openFocus} className="mr-1" />
+              )}
+              {!focusOpen && (
+                <ItemSaveButton
+                  label="Create"
+                  loading={saveMut.isPending}
+                  disabled={!canSave}
+                  onClick={() => saveMut.mutate()}
+                  buttonRef={saveShortcut.buttonRef}
+                  showEnterHint={saveShortcut.showEnterHint}
+                  enterHint={saveShortcut.enterHint}
+                  onKeyDown={saveShortcut.handleButtonKeyDown}
+                />
+              )}
+            </>
           )}
         </div>
       )}
@@ -388,7 +412,25 @@ export default function ResolverView({
           )}
         {(creating || activeTab === "config") &&
           (creating ? permissions.canWrite : permissions.canRead) && (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <EditorFocusSurface
+              focusOpen={focusOpen}
+              onCloseFocus={closeFocus}
+              editorRef={editorRef}
+              toolbarSave={
+                permissions.canWrite ? (
+                  <ItemSaveButton
+                    label={creating ? "Create" : "Save"}
+                    loading={saveMut.isPending}
+                    disabled={!canSave}
+                    onClick={() => saveMut.mutate()}
+                    buttonRef={saveShortcut.buttonRef}
+                    showEnterHint={saveShortcut.showEnterHint}
+                    enterHint={saveShortcut.enterHint}
+                    onKeyDown={saveShortcut.handleButtonKeyDown}
+                  />
+                ) : undefined
+              }
+            >
               <MonacoEditor
                 height="100%"
                 language="yaml"
@@ -403,7 +445,7 @@ export default function ResolverView({
                 options={yamlEditorOptions(!permissions.canWrite)}
                 loading={!isReady ? "Loading schema…" : undefined}
               />
-            </div>
+            </EditorFocusSurface>
           )}
         {activeTab === "tokens" && permissions.canRead && (
           <div className="p-6 space-y-6">
