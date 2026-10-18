@@ -16,7 +16,7 @@ Click **Sign in with SSO** → you are redirected to Dex → sign in with `admin
 
 ### Prerequisites
 
-- Node.js 20+
+- Node.js 24+
 - pnpm (`corepack enable && corepack prepare pnpm@latest --activate`)
 
 ### Build
