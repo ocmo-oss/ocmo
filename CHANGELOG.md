@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from `1.0.0` onward.
 Before `1.0.0`, minor releases may include breaking API or behavior changes.
 
+## [0.8.25]
+
+### Changed
+
+- **[chore] Frontend:** Node.js 24 in CI and Docker images; Vite 7, Vitest 5, and `@vitejs/plugin-react` 5; Vitest includes `*.test.tsx` files.
+- **[chore] API / smoke:** Django 6.1.1, PyJWT 2.15.0, urllib3 2.8.0 (lockfile; includes security fixes in urllib3).
+
 ## [0.8.24]
 
 ### Added

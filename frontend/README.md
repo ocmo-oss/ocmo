@@ -21,7 +21,7 @@ UI setup and coverage: [../docs/quickstart/install-web-ui.md](../docs/quickstart
 
 ## Requirements
 
-- **Node.js** 20 LTS (see `frontend/Dockerfile`)
+- **Node.js** 24 LTS (see `frontend/Dockerfile`)
 - **pnpm** 10.x (`packageManager` field in `package.json`)
 
 ---
