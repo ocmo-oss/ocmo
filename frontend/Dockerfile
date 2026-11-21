@@ -21,12 +21,13 @@ ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 RUN pnpm run build
 
 # ── Stage 2: serve ─────────────────────────────────────────────────────────────
-FROM nginx:1.27-alpine
+FROM nginx:1.30.7-alpine
 
 RUN apk add --no-cache wget
 
 COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx-security-headers.inc /etc/nginx/conf.d/ocmo-security-headers.inc
 
 EXPOSE 80
 

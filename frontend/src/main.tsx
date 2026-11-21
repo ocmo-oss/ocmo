@@ -1,5 +1,5 @@
 import "./store/theme"; // apply saved theme before first paint
-import "./lib/monacoEnvironment"; // MonacoEnvironment.getWorker before monaco loads
+import "./lib/monacoEnvironment"; // MonacoEnvironment before monaco loads
 import "./lib/monaco"; // configures Monaco before any editor renders
 import React from "react";
 import ReactDOM from "react-dom/client";

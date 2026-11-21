@@ -24,7 +24,7 @@ classifiers = [
 dependencies = [
     "attrs>=21.3",
     "httpx>=0.27",
-    "pyjwt>=2.8",
+    "pyjwt>=2.15.0",
     "python-dateutil>=2.8",
     "pyyaml>=6.0",
 ]
@@ -49,7 +49,7 @@ dev = [
     "pytest-cov>=5.0",
     "respx>=0.21",
     "ruff>=0.4",
-    "openapi-python-client==0.21.*",
+    "openapi-python-client>=0.29.1",
     "click>=8.1.7,<8.2",
     "types-PyYAML>=6.0",
 ]

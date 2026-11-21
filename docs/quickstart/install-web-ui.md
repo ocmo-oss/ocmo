@@ -31,19 +31,26 @@ pnpm build       # outputs to frontend/dist/
 
 `dist/` is a standard SPA. Serve it from any static file server. The server must send `index.html` for all non-asset paths (HTML5 history mode).
 
-Example with nginx:
+Example with nginx (gunicorn upstream on loopback):
 
 ```nginx
 server {
     listen 80;
     root /srv/ocmo-frontend/dist;
 
+    # Optional: security headers from frontend/nginx-security-headers.inc in the repo.
+    # Requires connect-src to reach the API from the browser — proxy /api/ on this host
+    # and build with VITE_API_BASE_URL="" (see below).
+
     location / {
         try_files $uri $uri/ /index.html;
     }
 
     location /api/ {
-        proxy_pass http://ocmo-api:8000;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 }
 ```
@@ -54,11 +61,13 @@ server {
 |----------|---------|---------|
 | `VITE_API_BASE_URL` | _(empty = same origin)_ | API origin. Set when the UI and API are on different hosts, e.g. `https://api.ocmo.example.com`. Leave empty when serving both behind the same gateway. |
 
-Example when UI and API share a gateway at the same origin:
+Example when UI and API share a gateway at the same origin (required when using the frontend CSP headers):
 
 ```bash
 VITE_API_BASE_URL="" pnpm build
 ```
+
+Config editor autocomplete loads JSON Schema from `GET /api/v1/~config-metadata-schema` and related routes. If the browser blocks those requests (CSP `connect-src`, mixed content, or a wrong `VITE_API_BASE_URL`), completions stay empty and DevTools reports a CSP violation — often `connect-src` when the bundle still points at `http://localhost:8000` or another non-HTTPS origin.
 
 Example when API is on a separate subdomain:
 

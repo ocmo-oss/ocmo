@@ -1,5 +1,5 @@
 # OCMO gateway: nginx with ngx_http_redis for X-Accel-Redirect artifact offload.
-FROM nginx:1.27-alpine AS builder
+FROM nginx:1.30.7-alpine AS builder
 
 RUN apk add --no-cache --virtual .build-deps \
         gcc \
@@ -22,7 +22,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && make modules \
     && apk del .build-deps
 
-FROM nginx:1.27-alpine
+FROM nginx:1.30.7-alpine
 
 COPY --from=builder /tmp/nginx-*/objs/ngx_http_redis_module.so /usr/lib/nginx/modules/
 COPY docker/gateway/nginx-main.conf /etc/nginx/nginx.conf

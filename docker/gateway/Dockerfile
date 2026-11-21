@@ -2,7 +2,7 @@
 # Build context: repository root.
 # Local development: use Dockerfile.dev (same image) with docker-compose.dev.yml nginx overrides.
 
-FROM nginx:1.27-alpine AS builder
+FROM nginx:1.30.7-alpine AS builder
 
 RUN apk add --no-cache --virtual .build-deps \
         gcc \
@@ -25,7 +25,7 @@ RUN apk add --no-cache --virtual .build-deps \
     && make modules \
     && apk del .build-deps
 
-FROM nginx:1.27-alpine
+FROM nginx:1.30.7-alpine
 
 RUN apk add --no-cache gettext wget
 

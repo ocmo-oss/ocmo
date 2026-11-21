@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { cspDevelopment, cspProduction } from './csp'
 
 // Vite /api proxy target for direct dev-server access (:3000). Empty VITE_API_BASE_URL
 // means the SPA calls same-origin /api (through the gateway on :8080 in compose).
@@ -25,6 +26,11 @@ export default defineConfig({
     dedupe: ['@monaco-editor/loader'],
   },
   server: {
+    headers: {
+      'Content-Security-Policy': cspDevelopment,
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'X-Content-Type-Options': 'nosniff',
+    },
     host: true,
     port: 3000,
     strictPort: true,
@@ -39,6 +45,13 @@ export default defineConfig({
         target: apiProxyTarget,
         changeOrigin: true,
       },
+    },
+  },
+  preview: {
+    headers: {
+      'Content-Security-Policy': cspProduction,
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'X-Content-Type-Options': 'nosniff',
     },
   },
   build: {
