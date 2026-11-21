@@ -161,6 +161,17 @@ class AuthManager:
             return cls.DEFAULT_ACTOR_IDENTITY
         return auth.actor_identity
 
+    @classmethod
+    def resolve_change_request_actor(cls, auth: AuthManager | None) -> str:
+        """Stable per-account identity for change-request author/approver keys."""
+        if auth is None:
+            return cls.DEFAULT_ACTOR_IDENTITY
+        if auth.is_user:
+            email = auth.email
+            if email:
+                return str(email)
+        return auth.actor_identity
+
     @property
     def is_global_admin(self) -> bool:
         """True when the JWT satisfies OIDC_GLOBAL_ADMIN_CLAIM/VALUE."""

@@ -286,7 +286,7 @@ class ChangeRequestTestCase(TestCase):
                 f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg/~approve/?number=1",
             )
             self.assertEqual(approve.status_code, 200, approve.content)
-            self.assertIn("writer", approve.json()["approvers"])
+            self.assertIn("writer@example.com", approve.json()["approvers"])
             unapprove = self.client.post(
                 f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg/~unapprove/?number=1",
             )
@@ -411,7 +411,7 @@ class ChangeRequestTestCase(TestCase):
         self.assertEqual(resp.status_code, 200, resp.content)
         events = resp.json()["approval_events"]
         self.assertEqual(len(events), 1)
-        self.assertEqual(events[0]["approver"], "writer")
+        self.assertEqual(events[0]["approver"], "writer@example.com")
 
     def test_diff_rejected_change_request(self):
         with self._patch_auth("reader@example.com"):

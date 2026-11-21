@@ -450,7 +450,7 @@ class ChangeRequestManager:
         latest = self._latest_version_number(item)
         approval_count = cr.approvals.count()
         required = self.namespace.change_requests_required_approvals
-        actor = AuthManager.resolve_actor_identity(self.auth)
+        actor = AuthManager.resolve_change_request_actor(self.auth)
         body = self._plaintext_content(cr)
         has_cr_refs = self.body_has_cr_refs(item, body) if cr.status == ChangeRequest.STATUS_OPEN else False
         identical_to_latest = any(
@@ -643,7 +643,7 @@ class ChangeRequestManager:
         self._ensure_read(item)
         if is_builtin_namespace_path(self.path):
             raise ChangeRequestConflict("Change requests are not allowed on built-in namespace paths")
-        actor = AuthManager.resolve_actor_identity(self.auth)
+        actor = AuthManager.resolve_change_request_actor(self.auth)
         max_open = self.namespace.change_requests_max_open_per_user_per_resource
         base_version = self._resolve_base_version(item, base_version_ref)
         self._validate_cr_body(item, body, allow_cr_refs=True, strict=False)
@@ -702,7 +702,7 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
+        if cr.created_by != AuthManager.resolve_change_request_actor(self.auth):
             raise ChangeRequestNotApplicable("Only the author can update this change request")
         old_body = self._plaintext_content(cr)
         typed = self._typed_item_for_cr(cr)
@@ -710,7 +710,7 @@ class ChangeRequestManager:
         self._reject_if_matches_base(typed, cr.base_version, body)
         with transaction.atomic():
             cr = self._lock_open_change_request(item, number)
-            if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
+            if cr.created_by != AuthManager.resolve_change_request_actor(self.auth):
                 raise ChangeRequestNotApplicable("Only the author can update this change request")
             if self.namespace.change_requests_reset_approvals_on_change and is_substantive_content_change(
                 old_body, body
@@ -746,11 +746,11 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
+        if cr.created_by != AuthManager.resolve_change_request_actor(self.auth):
             raise ChangeRequestNotApplicable("Only the author can update this change request")
         with transaction.atomic():
             cr = self._lock_open_change_request(item, number)
-            if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
+            if cr.created_by != AuthManager.resolve_change_request_actor(self.auth):
                 raise ChangeRequestNotApplicable("Only the author can update this change request")
             update_fields = ["updated_at"]
             if title is not None:
@@ -782,7 +782,7 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        actor = AuthManager.resolve_actor_identity(self.auth)
+        actor = AuthManager.resolve_change_request_actor(self.auth)
         with transaction.atomic():
             cr = self._lock_open_change_request(item, number)
             if cr.created_by == actor:
@@ -810,7 +810,7 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        actor = AuthManager.resolve_actor_identity(self.auth)
+        actor = AuthManager.resolve_change_request_actor(self.auth)
         with transaction.atomic():
             cr = self._lock_open_change_request(item, number)
             deleted, _ = ChangeRequestApproval.objects.filter(
@@ -846,7 +846,7 @@ class ChangeRequestManager:
             cr = self._lock_open_change_request(item, number)
             cr.status = ChangeRequest.STATUS_REJECTED
             cr.rejected_reason = reason[:4096]
-            cr.rejected_by = AuthManager.resolve_actor_identity(self.auth)
+            cr.rejected_by = AuthManager.resolve_change_request_actor(self.auth)
             cr.rejected_at = timezone.now()
             cr.save(
                 update_fields=[
@@ -877,11 +877,11 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
+        if cr.created_by != AuthManager.resolve_change_request_actor(self.auth):
             raise ChangeRequestNotApplicable("Only the author can withdraw this change request")
         with transaction.atomic():
             cr = self._lock_open_change_request(item, number)
-            if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
+            if cr.created_by != AuthManager.resolve_change_request_actor(self.auth):
                 raise ChangeRequestNotApplicable("Only the author can withdraw this change request")
             cr.status = ChangeRequest.STATUS_WITHDRAWN
             cr.save(update_fields=["status", "updated_at"])
@@ -949,7 +949,7 @@ class ChangeRequestManager:
                 raise ChangeRequestConflict("Change request content did not produce a new version")
             cr.status = ChangeRequest.STATUS_APPLIED
             cr.applied_version = new_version
-            cr.applied_by = AuthManager.resolve_actor_identity(self.auth)
+            cr.applied_by = AuthManager.resolve_change_request_actor(self.auth)
             cr.applied_at = timezone.now()
             cr.save(
                 update_fields=[
@@ -1023,7 +1023,7 @@ class ChangeRequestManager:
         self._ensure_comments_allowed(cr)
         comment = ChangeRequestComment.objects.create(
             change_request=cr,
-            author=AuthManager.resolve_actor_identity(self.auth),
+            author=AuthManager.resolve_change_request_actor(self.auth),
             body=body[:8192],
             anchor=anchor,
         )
@@ -1054,7 +1054,7 @@ class ChangeRequestManager:
         return comment
 
     def _ensure_comment_author(self, comment: ChangeRequestComment) -> None:
-        if comment.author != AuthManager.resolve_actor_identity(self.auth):
+        if comment.author != AuthManager.resolve_change_request_actor(self.auth):
             raise PermissionDenied("Only the comment author can modify this comment")
 
     @staticmethod

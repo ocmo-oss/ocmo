@@ -15,6 +15,7 @@ from ..shortcuts import (
 
 # Match @~N at end of a reference segment (after path)
 _CR_REF_SUFFIX_RE = re.compile(r"@~([1-9][0-9]*)")
+_REF_ANCHOR_LOOKBEHIND = r"(?<![\w./-])"
 
 
 def normalize_for_substantive_compare(body: str) -> str:
@@ -38,6 +39,13 @@ def change_request_cache_stamp(updated_at: datetime, content_plaintext: str) -> 
     digest = hashlib.sha256(content_plaintext.encode("utf-8")).hexdigest()[:16]
     ts = updated_at.timestamp() if updated_at else 0.0
     return f"{ts:.6f}:{digest}"
+
+
+def _ref_span_used(start: int, end: int, used: list[tuple[int, int]]) -> bool:
+    for used_start, used_end in used:
+        if not (end <= used_start or start >= used_end):
+            return True
+    return False
 
 
 def rewrite_cr_refs_in_body(
@@ -83,14 +91,22 @@ def rewrite_cr_refs_in_body(
         new_ref = f"{path_part}@{applied_version}{suffix}"
         if new_ref != ref_str:
             replacements.append((ref_str, new_ref))
-    cursor = 0
+    used_spans: list[tuple[int, int]] = []
+    edits: list[tuple[int, int, str]] = []
     for ref_str, new_ref in replacements:
-        pattern = re.compile(rf"{re.escape(ref_str)}(?!\d)")
-        match = pattern.search(content, cursor)
-        if match is None:
+        pattern = re.compile(rf"{_REF_ANCHOR_LOOKBEHIND}{re.escape(ref_str)}(?!\d)")
+        chosen: re.Match[str] | None = None
+        for match in pattern.finditer(content):
+            if _ref_span_used(match.start(), match.end(), used_spans):
+                continue
+            if chosen is None or match.start() < chosen.start():
+                chosen = match
+        if chosen is None:
             continue
-        content = content[: match.start()] + new_ref + content[match.end() :]
-        cursor = match.start() + len(new_ref)
+        used_spans.append((chosen.start(), chosen.end()))
+        edits.append((chosen.start(), chosen.end(), new_ref))
+    for start, end, new_ref in sorted(edits, key=lambda item: item[0], reverse=True):
+        content = content[:start] + new_ref + content[end:]
     return content
 
 
