@@ -38,11 +38,16 @@ describe("CSP policy", () => {
     expect(cspDevelopment).not.toMatch(/unsafe-eval/);
   });
 
-  it("locks down embedding and plugin objects", () => {
+  it("allows same-origin framing for OIDC silent renew but blocks plugins", () => {
     for (const csp of [cspProduction, cspDevelopment]) {
-      expect(expectDirective(csp, "frame-ancestors")).toBe("'none'");
+      expect(expectDirective(csp, "frame-ancestors")).toBe("'self'");
       expect(expectDirective(csp, "object-src")).toBe("'none'");
     }
+  });
+
+  it("development connect-src allows local HTTP API and IdP", () => {
+    const connectSrc = expectDirective(cspDevelopment, "connect-src");
+    expect(connectSrc).toContain("http:");
   });
 
   it("nginx header snippet matches production policy", () => {

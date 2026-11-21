@@ -11,7 +11,8 @@ const cspProductionDirectives = [
   "default-src 'self' blob:",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  // Same-origin parent must frame /auth/silent-callback (oidc-client-ts signinSilent).
+  "frame-ancestors 'self'",
   "object-src 'none'",
   // Bundled Vite/React modules and lazy chunks only.
   "script-src 'self'",
@@ -29,13 +30,14 @@ const cspProductionDirectives = [
   // API (/api on same origin) and HTTPS OIDC token/userinfo.
   "connect-src 'self' https:",
   "manifest-src 'self'",
-] as const
+] as const;
 
 const cspDevelopmentDirectives = [
   "default-src 'self' blob:",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  // Same-origin parent must frame /auth/silent-callback (oidc-client-ts signinSilent).
+  "frame-ancestors 'self'",
   "object-src 'none'",
   // Vite dev client bootstrap.
   "script-src 'self' 'unsafe-inline'",
@@ -46,53 +48,62 @@ const cspDevelopmentDirectives = [
   "style-src-attr 'unsafe-inline'",
   "font-src 'self' data:",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https: ws: wss:",
+  // Standalone pnpm dev: API on :8000, Dex on http://localhost:8080/dex (see .env.example).
+  "connect-src 'self' https: http: ws: wss:",
   "manifest-src 'self'",
-] as const
+] as const;
 
-export const cspProduction = cspProductionDirectives.join('; ')
-export const cspDevelopment = cspDevelopmentDirectives.join('; ')
+export const cspProduction = cspProductionDirectives.join("; ");
+export const cspDevelopment = cspDevelopmentDirectives.join("; ");
 
 /** App features that must stay aligned with the production CSP (see csp.test.ts). */
 export const cspProductionRequirements = [
   {
-    feature: 'Vite production bundles (main.tsx, lazy routes)',
-    directive: 'script-src',
+    feature: "Vite production bundles (main.tsx, lazy routes)",
+    directive: "script-src",
     tokens: ["'self'"],
   },
   {
-    feature: 'Monaco editor worker (monacoEnvironment.ts getWorker, ?worker chunk)',
-    directive: 'worker-src',
-    tokens: ["'self'", 'blob:'],
+    feature:
+      "Monaco editor worker (monacoEnvironment.ts getWorker, ?worker chunk)",
+    directive: "worker-src",
+    tokens: ["'self'", "blob:"],
   },
   {
-    feature: 'OIDC silent renew (auth/oidc.ts, SilentCallbackPage)',
-    directive: 'frame-src',
-    tokens: ["'self'", 'https:'],
+    feature:
+      "OIDC silent renew hidden iframe (auth/oidc.ts, SilentCallbackPage)",
+    directive: "frame-src",
+    tokens: ["'self'", "https:"],
   },
   {
-    feature: 'API client + OIDC metadata (api/client.ts, fetch)',
-    directive: 'connect-src',
-    tokens: ["'self'", 'https:'],
-  },
-  {
-    feature: 'Config YAML autocomplete (useConfigYamlSchema, uriReferenceCompletion)',
-    directive: 'connect-src',
+    feature: "OIDC silent callback loaded inside same-origin iframe",
+    directive: "frame-ancestors",
     tokens: ["'self'"],
   },
   {
-    feature: 'Resolve artifact download (ResolvePanel blob URLs)',
-    directive: 'default-src',
-    tokens: ["'self'", 'blob:'],
+    feature: "API client + OIDC metadata (api/client.ts, fetch)",
+    directive: "connect-src",
+    tokens: ["'self'", "https:"],
   },
   {
-    feature: 'Sanitized markdown images (descriptionMarkdownRender)',
-    directive: 'img-src',
-    tokens: ['https:'],
+    feature:
+      "Config YAML autocomplete (useConfigYamlSchema, uriReferenceCompletion)",
+    directive: "connect-src",
+    tokens: ["'self'"],
   },
   {
-    feature: 'React inline layout styles',
-    directive: 'style-src-attr',
+    feature: "Resolve artifact download (ResolvePanel blob URLs)",
+    directive: "default-src",
+    tokens: ["'self'", "blob:"],
+  },
+  {
+    feature: "Sanitized markdown images (descriptionMarkdownRender)",
+    directive: "img-src",
+    tokens: ["https:"],
+  },
+  {
+    feature: "React inline layout styles",
+    directive: "style-src-attr",
     tokens: ["'unsafe-inline'"],
   },
-] as const
+] as const;
