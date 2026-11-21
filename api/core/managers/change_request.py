@@ -8,6 +8,7 @@ from typing import Any, Literal
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.db.models import Max
 from django.utils import timezone
 
 from ..constants.audit_operations import (
@@ -159,6 +160,15 @@ class ChangeRequestManager:
 
     def _permissions(self):
         return self.auth.permissions(self.namespace)
+
+    def _lock_open_change_request(self, item: TreeItem, number: int) -> ChangeRequest:
+        cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
+        if cr is None:
+            raise ChangeRequestNotFound(f"Change request ~{number} not found")
+        cr = ChangeRequest.objects.select_for_update().get(pk=cr.pk)
+        if cr.status != ChangeRequest.STATUS_OPEN:
+            raise ChangeRequestNotApplicable("Only open change requests accept this action")
+        return cr
 
     def _ensure_read(self, item: TreeItem) -> None:
         self._permissions().require_tree(self._read_perm(item.node_type), self.path)
@@ -446,12 +456,14 @@ class ChangeRequestManager:
         identical_to_latest = any(
             issue == "Content is identical to the latest published version." for issue in self._collect_issues(cr, item)
         )
+        path_locked = LockManager.get_covering_lock(self.namespace, self.path) is not None
         can_apply = (
             cr.status == ChangeRequest.STATUS_OPEN
             and approval_count >= required
             and not has_cr_refs
             and not identical_to_latest
             and bool(body.strip())
+            and not path_locked
             and self._permissions().check_tree(self._write_perm(item.node_type), self.path)
         )
         already_approved = cr.approvals.filter(approver=actor).exists()
@@ -469,6 +481,7 @@ class ChangeRequestManager:
             "approval_count": approval_count,
             "required_approvals": required,
             "can_apply": can_apply,
+            "path_locked": path_locked,
             "can_approve": can_approve,
             "can_unapprove": can_unapprove,
             "projected_version_on_apply": projected,
@@ -631,16 +644,7 @@ class ChangeRequestManager:
         if is_builtin_namespace_path(self.path):
             raise ChangeRequestConflict("Change requests are not allowed on built-in namespace paths")
         actor = AuthManager.resolve_actor_identity(self.auth)
-        open_count = ChangeRequest.objects.filter(
-            tree_item=item,
-            created_by=actor,
-            status=ChangeRequest.STATUS_OPEN,
-        ).count()
         max_open = self.namespace.change_requests_max_open_per_user_per_resource
-        if open_count >= max_open:
-            raise ChangeRequestConflict(
-                f"Maximum open change requests per user on this resource is {max_open}",
-            )
         base_version = self._resolve_base_version(item, base_version_ref)
         self._validate_cr_body(item, body, allow_cr_refs=True, strict=False)
         self._reject_if_matches_base(item, base_version, body)
@@ -649,8 +653,20 @@ class ChangeRequestManager:
             raise ChangeRequestConflict("Title is required")
         description = description.strip()
         with transaction.atomic():
+            TreeItem.objects.select_for_update().get(pk=item.pk)
+            open_count = ChangeRequest.objects.filter(
+                tree_item=item,
+                created_by=actor,
+                status=ChangeRequest.STATUS_OPEN,
+            ).count()
+            if open_count >= max_open:
+                raise ChangeRequestConflict(
+                    f"Maximum open change requests per user on this resource is {max_open}",
+                )
+            next_number = (ChangeRequest.objects.filter(tree_item=item).aggregate(m=Max("number"))["m"] or 0) + 1
             cr = ChangeRequest(
                 tree_item=item,
+                number=next_number,
                 base_version=base_version,
                 title=title[:200],
                 description=description[:4096],
@@ -686,8 +702,6 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        if cr.status != ChangeRequest.STATUS_OPEN:
-            raise ChangeRequestNotApplicable("Only open change requests can be updated")
         if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
             raise ChangeRequestNotApplicable("Only the author can update this change request")
         old_body = self._plaintext_content(cr)
@@ -695,12 +709,15 @@ class ChangeRequestManager:
         self._validate_cr_body(item, body, allow_cr_refs=True, strict=False)
         self._reject_if_matches_base(typed, cr.base_version, body)
         with transaction.atomic():
+            cr = self._lock_open_change_request(item, number)
+            if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
+                raise ChangeRequestNotApplicable("Only the author can update this change request")
             if self.namespace.change_requests_reset_approvals_on_change and is_substantive_content_change(
                 old_body, body
             ):
                 cr.approvals.all().delete()
             self._store_content(item, body, cr)
-            cr.save()
+            cr.save(update_fields=["content", "content_encrypted", "updated_at"])
         enrich_audit(object_version=number)
         return self._to_dict(cr, include_content=True)
 
@@ -729,15 +746,20 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        if cr.status != ChangeRequest.STATUS_OPEN:
-            raise ChangeRequestNotApplicable("Only open change requests can be updated")
         if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
             raise ChangeRequestNotApplicable("Only the author can update this change request")
-        if title is not None:
-            cr.title = title[:200]
-        if description is not None:
-            cr.description = description[:4096]
-        cr.save()
+        with transaction.atomic():
+            cr = self._lock_open_change_request(item, number)
+            if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
+                raise ChangeRequestNotApplicable("Only the author can update this change request")
+            update_fields = ["updated_at"]
+            if title is not None:
+                cr.title = title[:200]
+                update_fields.append("title")
+            if description is not None:
+                cr.description = description[:4096]
+                update_fields.append("description")
+            cr.save(update_fields=update_fields)
         enrich_audit(object_version=number)
         return self._to_dict(cr, include_content=False)
 
@@ -760,12 +782,12 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        if cr.status != ChangeRequest.STATUS_OPEN:
-            raise ChangeRequestNotApplicable("Only open change requests can be approved")
         actor = AuthManager.resolve_actor_identity(self.auth)
-        if cr.created_by == actor:
-            raise ChangeRequestNotApplicable("Author cannot approve their own change request")
-        ChangeRequestApproval.objects.get_or_create(change_request=cr, approver=actor)
+        with transaction.atomic():
+            cr = self._lock_open_change_request(item, number)
+            if cr.created_by == actor:
+                raise ChangeRequestNotApplicable("Author cannot approve their own change request")
+            ChangeRequestApproval.objects.get_or_create(change_request=cr, approver=actor)
         enrich_audit(object_version=number)
         return self._to_dict(cr)
 
@@ -788,15 +810,15 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        if cr.status != ChangeRequest.STATUS_OPEN:
-            raise ChangeRequestNotApplicable("Only open change requests can be unapproved")
         actor = AuthManager.resolve_actor_identity(self.auth)
-        deleted, _ = ChangeRequestApproval.objects.filter(
-            change_request=cr,
-            approver=actor,
-        ).delete()
-        if not deleted:
-            raise ChangeRequestNotApplicable("You have not approved this change request")
+        with transaction.atomic():
+            cr = self._lock_open_change_request(item, number)
+            deleted, _ = ChangeRequestApproval.objects.filter(
+                change_request=cr,
+                approver=actor,
+            ).delete()
+            if not deleted:
+                raise ChangeRequestNotApplicable("You have not approved this change request")
         enrich_audit(object_version=number)
         return self._to_dict(cr)
 
@@ -820,13 +842,21 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        if cr.status != ChangeRequest.STATUS_OPEN:
-            raise ChangeRequestNotApplicable("Only open change requests can be rejected")
-        cr.status = ChangeRequest.STATUS_REJECTED
-        cr.rejected_reason = reason[:4096]
-        cr.rejected_by = AuthManager.resolve_actor_identity(self.auth)
-        cr.rejected_at = timezone.now()
-        cr.save()
+        with transaction.atomic():
+            cr = self._lock_open_change_request(item, number)
+            cr.status = ChangeRequest.STATUS_REJECTED
+            cr.rejected_reason = reason[:4096]
+            cr.rejected_by = AuthManager.resolve_actor_identity(self.auth)
+            cr.rejected_at = timezone.now()
+            cr.save(
+                update_fields=[
+                    "status",
+                    "rejected_reason",
+                    "rejected_by",
+                    "rejected_at",
+                    "updated_at",
+                ],
+            )
         enrich_audit(object_version=number)
         return self._to_dict(cr)
 
@@ -849,10 +879,12 @@ class ChangeRequestManager:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
         if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
             raise ChangeRequestNotApplicable("Only the author can withdraw this change request")
-        if cr.status != ChangeRequest.STATUS_OPEN:
-            raise ChangeRequestNotApplicable("Only open change requests can be withdrawn")
-        cr.status = ChangeRequest.STATUS_WITHDRAWN
-        cr.save(update_fields=["status", "updated_at"])
+        with transaction.atomic():
+            cr = self._lock_open_change_request(item, number)
+            if cr.created_by != AuthManager.resolve_actor_identity(self.auth):
+                raise ChangeRequestNotApplicable("Only the author can withdraw this change request")
+            cr.status = ChangeRequest.STATUS_WITHDRAWN
+            cr.save(update_fields=["status", "updated_at"])
         enrich_audit(object_version=number)
         return self._to_dict(cr)
 
@@ -919,7 +951,15 @@ class ChangeRequestManager:
             cr.applied_version = new_version
             cr.applied_by = AuthManager.resolve_actor_identity(self.auth)
             cr.applied_at = timezone.now()
-            cr.save()
+            cr.save(
+                update_fields=[
+                    "status",
+                    "applied_version",
+                    "applied_by",
+                    "applied_at",
+                    "updated_at",
+                ],
+            )
             self.rewrite_peer_refs_on_apply(self.namespace, item, number, new_version)
         enrich_audit(object_version=new_version)
         return self._to_dict(cr)

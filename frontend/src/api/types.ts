@@ -161,6 +161,7 @@ export interface ChangeRequest {
   approval_count: number;
   required_approvals: number;
   can_apply: boolean;
+  path_locked?: boolean;
   can_approve: boolean;
   can_unapprove: boolean;
   projected_version_on_apply: number;

@@ -63,6 +63,7 @@ def rewrite_cr_refs_in_body(
     if not metadata.model_dump(exclude_none=True):
         return content
     base_folder = "/".join(item_path.strip("/").split("/")[:-1])
+    replacements: list[tuple[str, str]] = []
     for ref_str in _reference_strings_from_metadata(metadata):
         raw = ref_str.strip()
         if not raw:
@@ -81,7 +82,15 @@ def rewrite_cr_refs_in_body(
             continue
         new_ref = f"{path_part}@{applied_version}{suffix}"
         if new_ref != ref_str:
-            content = content.replace(ref_str, new_ref, 1)
+            replacements.append((ref_str, new_ref))
+    cursor = 0
+    for ref_str, new_ref in replacements:
+        pattern = re.compile(rf"{re.escape(ref_str)}(?!\d)")
+        match = pattern.search(content, cursor)
+        if match is None:
+            continue
+        content = content[: match.start()] + new_ref + content[match.end() :]
+        cursor = match.start() + len(new_ref)
     return content
 
 

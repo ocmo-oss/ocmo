@@ -74,6 +74,10 @@ class ChangeRequestSchema(Schema):
     approval_count: int = Field(..., ge=0)
     required_approvals: int = Field(..., ge=0)
     can_apply: bool
+    path_locked: bool = Field(
+        False,
+        description="True when a tree lock covers this item path (apply would return 423)",
+    )
     can_approve: bool
     can_unapprove: bool
     projected_version_on_apply: int = Field(..., ge=1)
