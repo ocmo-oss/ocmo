@@ -6898,7 +6898,7 @@
           "version": {
             "description": "Deployed package version",
             "examples": [
-              "0.8.26"
+              "0.8.27"
             ],
             "title": "Version",
             "type": "string"

@@ -655,7 +655,7 @@ wheels = [
 
 [[package]]
 name = "ocmo-cli"
-version = "0.8.26"
+version = "0.8.27"
 source = { editable = "cli" }
 dependencies = [
     { name = "click" },
@@ -694,7 +694,7 @@ dev = [
 
 [[package]]
 name = "ocmo-sdk"
-version = "0.8.26"
+version = "0.8.27"
 source = { editable = "sdk" }
 dependencies = [
     { name = "attrs" },
