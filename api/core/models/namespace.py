@@ -33,6 +33,11 @@ class Namespace(models.Model):
     # Wrapped DEK: base64-encoded (nonce || ciphertext || tag) produced by AES-256-GCM
     # with OCMO_MASTER_KEY. Null only before first secret is written (lazy init allowed).
     encrypted_dek = models.BinaryField(null=True, blank=True)
+    change_requests_enabled = models.BooleanField(default=False)
+    change_requests_required_approvals = models.PositiveSmallIntegerField(default=1)
+    change_requests_auto_reject_on_new_version = models.BooleanField(default=True)
+    change_requests_max_open_per_user_per_resource = models.PositiveSmallIntegerField(default=1)
+    change_requests_reset_approvals_on_change = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

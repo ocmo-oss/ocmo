@@ -204,6 +204,22 @@ def is_version_number_ref(ref: str) -> bool:
     return bool(ref) and ref.isdigit()
 
 
+_CHANGE_REQUEST_REF_RE = re.compile(r"^~([1-9][0-9]*)$")
+
+
+def is_change_request_ref(version_ref: str) -> bool:
+    """True when *version_ref* is a change-request suffix ``~N`` (N >= 1)."""
+    return bool(version_ref) and _CHANGE_REQUEST_REF_RE.fullmatch(version_ref) is not None
+
+
+def change_request_number_from_ref(version_ref: str) -> int:
+    """Parse ``~N`` into *N*. Raises ValueError if not a CR ref."""
+    m = _CHANGE_REQUEST_REF_RE.fullmatch(version_ref or "")
+    if not m:
+        raise ValueError(f"Not a change request reference: {version_ref!r}")
+    return int(m.group(1))
+
+
 def tag_subresource_from_ref(ref: str) -> tuple[str, str] | None:
     """Return (subresource_type, subresource) when *ref* is a tag name.
 

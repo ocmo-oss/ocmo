@@ -7,7 +7,12 @@ from pydantic import ConfigDict, Field
 
 from ..exceptions import VersionNotFound
 from ..managers.resolver_tokens import ResolverTokenManager
-from ..shortcuts import is_valid_positive_int, mask_resolver_token
+from ..shortcuts import (
+    change_request_number_from_ref,
+    is_change_request_ref,
+    is_valid_positive_int,
+    mask_resolver_token,
+)
 
 
 class UserWhoAmIDetails(Schema):
@@ -114,6 +119,11 @@ class NamespaceSchema(Schema):
     permissions_tag: str
     webhooks_tag: str
     git_sync_tag: str
+    change_requests_enabled: bool
+    change_requests_required_approvals: int
+    change_requests_auto_reject_on_new_version: bool
+    change_requests_max_open_per_user_per_resource: int
+    change_requests_reset_approvals_on_change: bool
     created_at: datetime
     updated_at: datetime
 
@@ -239,7 +249,7 @@ class ProductVersionSchema(Schema):
     version: str = Field(
         ...,
         description="Deployed package version",
-        examples=["0.8.25"],
+        examples=["0.8.26"],
     )
     license: str = Field(
         ...,
@@ -351,6 +361,19 @@ def _resolve_version_data(obj, tags_field="tags", version_model=None):
 
     requested_version = getattr(obj, "_requested_version", "latest")
 
+    if is_change_request_ref(str(requested_version)):
+        from types import SimpleNamespace
+
+        cr_num = change_request_number_from_ref(str(requested_version))
+        return SimpleNamespace(
+            version=cr_num,
+            data=getattr(obj, "_cr_plaintext_override", ""),
+            tags=[],
+            updater="",
+            updated_at=datetime.now(),
+            deleted_at=None,
+        )
+
     if is_valid_positive_int(requested_version):
         requested_version = int(requested_version)
     else:
@@ -427,6 +450,18 @@ class SecretSchemaExtended(SecretSchema):
             tags_per_version.setdefault(ver, []).append(tag)
 
         requested_version = getattr(obj, "_requested_version", "latest")
+        if is_change_request_ref(str(requested_version)):
+            from types import SimpleNamespace
+
+            cr_num = change_request_number_from_ref(str(requested_version))
+            return SimpleNamespace(
+                version=cr_num,
+                tags=[],
+                updater="",
+                updated_at=datetime.now(),
+                deleted_at=None,
+                data=getattr(obj, "_decrypted_plaintext", None),
+            )
         if not is_valid_positive_int(requested_version):
             resolved = obj.tags.get(requested_version)
             if resolved is None:

@@ -107,6 +107,9 @@ from django.conf import settings
 from django.core.cache import caches
 
 from ..exceptions import VersionNotFound
+from ..models import ChangeRequest
+from ..shortcuts import change_request_number_from_ref, is_change_request_ref
+from ..utils.change_request_content import change_request_cache_stamp
 from .artifacts import get_backend
 from .tree import TreeManager
 
@@ -114,7 +117,7 @@ logger = logging.getLogger(__name__)
 
 _CACHE_ALIAS = "resolve"
 # Bump when resolve semantics change so stale cache entries are not reused.
-RESOLVE_CACHE_SCHEMA_VERSION = 3
+RESOLVE_CACHE_SCHEMA_VERSION = 4
 
 
 def extend_cache_fingerprint(metadata) -> str:
@@ -212,6 +215,19 @@ def _check_participant(participant: dict[str, Any], namespace) -> bool:
         item = TreeManager(namespace, path, auth=None).get_item(kind)
         if item is None:
             return False
+        if is_change_request_ref(ref):
+            stored_stamp = participant.get("cr_stamp")
+            if not stored_stamp:
+                return False
+            number = change_request_number_from_ref(ref)
+            cr = ChangeRequest.objects.filter(tree_item_id=item.pk, number=number).first()
+            if cr is None:
+                return False
+            from .change_request import ChangeRequestManager
+
+            plaintext = ChangeRequestManager(namespace, path, auth=None)._plaintext_content(cr)
+            current_stamp = change_request_cache_stamp(cr.updated_at, plaintext)
+            return current_stamp == stored_stamp
         current = TreeManager.resolve_version(item, ref).version
     except VersionNotFound:
         return False

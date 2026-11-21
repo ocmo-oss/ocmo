@@ -93,6 +93,23 @@ DELETE_LOCK = "delete_lock"
 # Propagation
 PROPAGATE_CONFIG = "propagate_config"
 
+# Change requests
+LIST_CHANGE_REQUESTS = "list_change_requests"
+CREATE_CHANGE_REQUEST = "create_change_request"
+GET_CHANGE_REQUEST = "get_change_request"
+UPDATE_CHANGE_REQUEST = "update_change_request"
+PATCH_CHANGE_REQUEST_METADATA = "patch_change_request_metadata"
+APPROVE_CHANGE_REQUEST = "approve_change_request"
+UNAPPROVE_CHANGE_REQUEST = "unapprove_change_request"
+REJECT_CHANGE_REQUEST = "reject_change_request"
+WITHDRAW_CHANGE_REQUEST = "withdraw_change_request"
+APPLY_CHANGE_REQUEST = "apply_change_request"
+DIFF_CHANGE_REQUEST = "diff_change_request"
+LIST_CHANGE_REQUEST_COMMENTS = "list_change_request_comments"
+CREATE_CHANGE_REQUEST_COMMENT = "create_change_request_comment"
+UPDATE_CHANGE_REQUEST_COMMENT = "update_change_request_comment"
+DELETE_CHANGE_REQUEST_COMMENT = "delete_change_request_comment"
+
 ALL: frozenset[str] = frozenset(
     {
         HEALTH,
@@ -153,5 +170,20 @@ ALL: frozenset[str] = frozenset(
         REPLACE_LOCK,
         DELETE_LOCK,
         PROPAGATE_CONFIG,
+        LIST_CHANGE_REQUESTS,
+        CREATE_CHANGE_REQUEST,
+        GET_CHANGE_REQUEST,
+        UPDATE_CHANGE_REQUEST,
+        PATCH_CHANGE_REQUEST_METADATA,
+        APPROVE_CHANGE_REQUEST,
+        UNAPPROVE_CHANGE_REQUEST,
+        REJECT_CHANGE_REQUEST,
+        WITHDRAW_CHANGE_REQUEST,
+        APPLY_CHANGE_REQUEST,
+        DIFF_CHANGE_REQUEST,
+        LIST_CHANGE_REQUEST_COMMENTS,
+        CREATE_CHANGE_REQUEST_COMMENT,
+        UPDATE_CHANGE_REQUEST_COMMENT,
+        DELETE_CHANGE_REQUEST_COMMENT,
     }
 )

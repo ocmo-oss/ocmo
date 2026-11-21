@@ -10,6 +10,9 @@ from ..exceptions import (
     BrokenNamespace,
     CannotCast,
     CannotResolveConfig,
+    ChangeRequestConflict,
+    ChangeRequestNotApplicable,
+    ChangeRequestNotFound,
     ConfigExtendNotPossible,
     ConfigTagAlreadyPointsToDesiredVersion,
     ConfigTagDoesntExists,
@@ -44,6 +47,7 @@ from ..models import GlobalPermissionRule, Namespace, TreeItem, TreeLock
 from . import (
     audit,
     auth,
+    change_request,
     config,
     global_permissions,
     lock,
@@ -76,6 +80,7 @@ router.add_router("", global_permissions.router)
 router.add_router("", lock.router)
 router.add_router("", propagation.router)
 router.add_router("", audit.router)
+router.add_router("", change_request.router)
 
 
 def register_exception_handlers(api):
@@ -87,6 +92,7 @@ def register_exception_handlers(api):
     @api.exception_handler(VersionNotFound)
     @api.exception_handler(PropagationNotConfigured)
     @api.exception_handler(NotFound)
+    @api.exception_handler(ChangeRequestNotFound)
     def not_found_error(request, exc):
         return create_error_response(api, request, exc, str(exc), 404)
 
@@ -96,6 +102,8 @@ def register_exception_handlers(api):
     @api.exception_handler(WrongCopyTargetException)
     @api.exception_handler(TreeItemConflict)
     @api.exception_handler(LockAlreadyExists)
+    @api.exception_handler(ChangeRequestConflict)
+    @api.exception_handler(ChangeRequestNotApplicable)
     def conflict_error(request, exc):
         return create_error_response(api, request, exc, str(exc), 409)
 

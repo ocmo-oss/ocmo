@@ -340,6 +340,8 @@ interface ResolvePanelProps {
   variant?: "overlay" | "focus-split";
   /** When focus-split: stack result above options on narrow panes */
   splitOrientation?: "horizontal" | "vertical";
+  /** Show “resolve and mark stable” in the actions menu (default true). */
+  allowMarkStable?: boolean;
 }
 
 export function ResolvePanel({
@@ -353,6 +355,7 @@ export function ResolvePanel({
   embedded = false,
   variant = "overlay",
   splitOrientation = "horizontal",
+  allowMarkStable = true,
 }: ResolvePanelProps) {
   const workflow = useResolveWorkflow({
     namespace,
@@ -617,14 +620,16 @@ export function ResolvePanel({
                   >
                     {resolveLabel}
                   </button>
-                  <button
-                    type="button"
-                    className="flex w-full px-3 py-2 text-left text-xs hover:bg-slate-100 dark:hover:bg-gray-800 disabled:opacity-50"
-                    disabled={hasParamErrors}
-                    onClick={() => resolveMut.mutate(true)}
-                  >
-                    {resolveMarkStableLabel}
-                  </button>
+                  {allowMarkStable && (
+                    <button
+                      type="button"
+                      className="flex w-full px-3 py-2 text-left text-xs hover:bg-slate-100 dark:hover:bg-gray-800 disabled:opacity-50"
+                      disabled={hasParamErrors}
+                      onClick={() => resolveMut.mutate(true)}
+                    >
+                      {resolveMarkStableLabel}
+                    </button>
+                  )}
                   <div className="my-1 border-t dark:border-gray-700" />
                   <button
                     type="button"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { ItemType } from "../../api/types";
 import type { useItemPermissions } from "../../hooks/useItemPermissions";
 import { isBuiltinNamespacePath } from "../../lib/builtinPaths";
@@ -8,6 +8,7 @@ import { LocationDialog } from "./LocationDialog";
 import { PermissionDenied } from "./PermissionDenied";
 import { ItemAuditTab } from "./ItemAuditTab";
 import { cn } from "../ui/cn";
+import { useItemTabHash } from "../../hooks/useItemTabHash";
 
 interface ItemRestrictedViewProps {
   namespace: string;
@@ -27,8 +28,15 @@ export function ItemRestrictedView({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<"content" | "audit">(() =>
-    permissions.canAudit ? "audit" : "content",
+  const restrictedTabIds = useMemo(
+    (): Array<"content" | "audit"> =>
+      permissions.canAudit ? ["content", "audit"] : ["content"],
+    [permissions.canAudit],
+  );
+  const [activeTab, setActiveTab] = useItemTabHash(
+    restrictedTabIds,
+    "content",
+    { initialWhenNoHash: permissions.canAudit ? "audit" : "content" },
   );
 
   const canDeleteItem = permissions.canDelete && !isBuiltinNamespacePath(path);

@@ -124,8 +124,12 @@ class ConfigValidationManager:
             return
         referenced = self._collect_parameter_references(body)
         referenced |= self._collect_parameter_references(metadata.model_dump(exclude_none=True))
+        for match in _PLACEHOLDER_RE.finditer(self.data_yaml):
+            name = match.group(1)
+            if name != "omit":
+                referenced.add(name)
         unused = set(metadata.parameters) - referenced
-        unused -= {name for name, decl in metadata.parameters.items() if decl.type == "secret"}
+        unused -= {name for name, decl in metadata.parameters.items() if decl.type in ("secret", "projected")}
         if unused:
             names = ", ".join(sorted(unused))
             raise ValueError(f"Declared parameter(s) not referenced in config data: {names}")

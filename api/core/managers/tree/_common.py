@@ -52,6 +52,7 @@ from ...schemas import (
 )
 from ...shortcuts import (
     generate_resolver_token,
+    is_change_request_ref,
     is_version_number_ref,
     parse_ref,
     resolve_relative_path,

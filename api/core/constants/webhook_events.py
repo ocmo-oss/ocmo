@@ -20,6 +20,13 @@ WEBHOOK_EVENTS: tuple[str, ...] = (
     "lock.updated",
     "lock.deleted",
     "propagation.triggered",
+    "change_request.created",
+    "change_request.updated",
+    "change_request.approved",
+    "change_request.unapproved",
+    "change_request.rejected",
+    "change_request.applied",
+    "change_request.comment.created",
 )
 
 WEBHOOK_PAYLOAD_PRESETS: tuple[str, ...] = (

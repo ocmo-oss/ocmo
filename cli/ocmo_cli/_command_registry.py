@@ -10,6 +10,7 @@ HAND_WRITTEN_SHORT_HELP: dict[str, tuple[str, str, str]] = {
     "export": ("export", "export_cmd", "Export a subtree to disk, preserving tree structure."),
     "import": ("import_", "import_cmd", "Import a directory tree into OCMO."),
     "apply": ("apply", "apply_cmd", "Create or update a tree item from a local file."),
+    "apply-cr": ("apply_cr", "apply_cr_cmd", "Apply (merge) a change request to create a new version."),
     "edit": ("edit", "edit_group", "Open a tree item in $EDITOR and update it on save."),
     "ls": ("ls", "ls_cmd", "List the direct children of a tree path, or the namespace root when ADDRESS is omitted."),
     "tree": ("ls", "tree_cmd", "Render the subtree under a path in tree format."),

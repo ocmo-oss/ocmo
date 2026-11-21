@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import MonacoEditor from "@monaco-editor/react";
 import type { editor } from "monaco-editor";
 import {
   ChevronLeft,
   ChevronRight,
+  GitPullRequest,
   History,
   AlertTriangle,
   Route,
   RotateCcw,
   ScrollText,
 } from "lucide-react";
+import { changeRequestsApi } from "../../api/changeRequests";
+import { namespacesApi } from "../../api/namespaces";
 import { treeApi } from "../../api/tree";
 import type { ConfigNode, PropagationResult } from "../../api/types";
 import type { useItemPermissions } from "../../hooks/useItemPermissions";
@@ -20,6 +23,7 @@ import { useHistorySelection } from "../../hooks/useHistorySelection";
 import { hasManualPropagation } from "../../lib/ocmoMetadata";
 import { ItemHeader } from "./ItemHeader";
 import { ItemDescription } from "./ItemDescription";
+import { ChangeRequestsTab } from "./ChangeRequestsTab";
 import { ItemHistoryTab } from "./ItemHistoryTab";
 import { ItemAuditTab } from "./ItemAuditTab";
 import { HistoryTabActions } from "./HistoryTabActions";
@@ -27,9 +31,12 @@ import { ResolvePanel } from "../resolve/ResolvePanel";
 import { DeleteDialog } from "./DeleteDialog";
 import { LocationDialog } from "./LocationDialog";
 import { DeletedVersionNotice } from "./DeletedVersionNotice";
-import { ItemSaveButton } from "./ItemSaveButton";
+import { ItemSaveButtonGroup } from "./ItemSaveButtonGroup";
 import { Button } from "../ui/Button";
+import { Tooltip } from "../ui/Tooltip";
+import { Input } from "../ui/Input";
 import { Modal } from "../ui/Modal";
+import { MarkdownEditor } from "../ui/MarkdownEditor";
 import { pushApiError, pushNotification } from "../../store/notifications";
 import { showToast } from "../ui/Toast";
 import { isHealthy } from "../../store/health";
@@ -46,7 +53,10 @@ import { installYamlEditorEmptyHint } from "../../lib/yamlEditorEmptyHint";
 import { useMonacoEditorTheme } from "../../hooks/useMonacoEditorTheme";
 import { yamlEditorOptions } from "../../lib/yamlEditorOptions";
 import { useConfigYamlSchema } from "../../hooks/useConfigYamlSchema";
-import { useItemSaveShortcut } from "../../hooks/useItemSaveShortcut";
+import {
+  ENTER_TO_CREATE_CR_HINT,
+  useItemSaveShortcut,
+} from "../../hooks/useItemSaveShortcut";
 import {
   isBuiltinNamespacePath,
   isBuiltinNamespaceSchemaPath,
@@ -57,10 +67,11 @@ import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode, hasEditorContent } from "../../lib/itemEditorMode";
 import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
 import { useViewportOrientation } from "../../hooks/useViewportOrientation";
+import { useItemTabHash } from "../../hooks/useItemTabHash";
 import { EditorFocusSurface, FocusModeToggleButton } from "../editor/focus";
 import { FOCUS_TRANSITION_MS } from "../editor/focus/constants";
 
-type Tab = "editor" | "history" | "audit";
+type Tab = "editor" | "history" | "audit" | "change_requests";
 
 interface ConfigEditorProps {
   item: ConfigNode;
@@ -97,22 +108,47 @@ export default function ConfigEditor({
     canUntag,
     canRemove,
   } = useHistorySelection();
-  const [activeTab, setActiveTab] = useState<Tab>("editor");
   const [content, setContent] = useState(item.content ?? "");
   const [isDirty, setIsDirty] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
   const [propagateOpen, setPropagateOpen] = useState(false);
+  const [createCrOpen, setCreateCrOpen] = useState(false);
+  const [createCrTitle, setCreateCrTitle] = useState("");
+  const [createCrDescription, setCreateCrDescription] = useState("");
   const [resolveMounted, setResolveMounted] = useState(false);
   const [resolveOpen, setResolveOpen] = useState(false);
   const [diffPair, setDiffPair] = useState<{ from: string; to: string } | null>(
     null,
   );
 
+  const { data: nsMeta } = useQuery({
+    queryKey: ["namespace", namespace],
+    queryFn: () => namespacesApi.get(namespace),
+    staleTime: 60_000,
+  });
+  const crEnabled =
+    Boolean(nsMeta?.change_requests_enabled) &&
+    !isBuiltinNamespacePath(item.path);
+  const itemTabIds = useMemo((): Tab[] => {
+    if (creating) return ["editor"];
+    const ids: Tab[] = ["editor", "history"];
+    if (permissions.canAudit) ids.push("audit");
+    if (crEnabled) ids.push("change_requests");
+    return ids;
+  }, [creating, permissions.canAudit, crEnabled]);
+  const [activeTab, setActiveTab] = useItemTabHash(itemTabIds, "editor");
   const useDraftResolve = creating || isDirty;
   const canEdit =
     permissions.canWrite && !isBuiltinNamespaceSchemaPath(item.path);
+  /** Draft edits for change request creation (API allows create with read-only). */
+  const canEditEditor =
+    canEdit ||
+    (crEnabled &&
+      permissions.canRead &&
+      !creating &&
+      !isBuiltinNamespacePath(item.path));
   const canDeleteItem =
     permissions.canDelete && !isBuiltinNamespacePath(item.path);
   const canMoveItem = permissions.canMove && !isBuiltinNamespacePath(item.path);
@@ -299,6 +335,36 @@ export default function ConfigEditor({
     onError: (e: Error) => pushApiError("Save failed", e),
   });
 
+  const openCreateCrDialog = useCallback(() => {
+    setCreateCrTitle("");
+    setCreateCrDescription("");
+    setCreateCrOpen(true);
+  }, []);
+
+  const createCrMut = useMutation({
+    mutationFn: (meta: { title: string; description: string }) =>
+      changeRequestsApi.create(namespace, item.path, content, {
+        base_version: versionRef ?? undefined,
+        title: meta.title || undefined,
+        description: meta.description || undefined,
+      }),
+    onSuccess: (cr) => {
+      setCreateCrOpen(false);
+      setCreateCrTitle("");
+      setCreateCrDescription("");
+      void qc.invalidateQueries({
+        queryKey: ["change-requests", namespace, item.path],
+      });
+      setIsDirty(false);
+      allowNavigationOnce();
+      showToast("Change request created");
+      navigate(
+        `/ns/${namespace}/configs/${item.path}/change-requests/${cr.number}`,
+      );
+    },
+    onError: (e: Error) => pushApiError("Create change request failed", e),
+  });
+
   const canSave =
     canEdit &&
     !resolveMounted &&
@@ -306,9 +372,35 @@ export default function ConfigEditor({
     hasEditorContent(content) &&
     isHealthy();
 
+  const canCreateCr =
+    crEnabled &&
+    !creating &&
+    !resolveMounted &&
+    isDirty &&
+    hasEditorContent(content) &&
+    isHealthy();
+
+  const saveExtraActions =
+    crEnabled && !creating
+      ? [
+          {
+            label: "Create change request",
+            onClick: openCreateCrDialog,
+            disabled: !canCreateCr,
+            loading: createCrMut.isPending,
+          },
+        ]
+      : undefined;
+
+  const createCrButtonRef = useRef<HTMLButtonElement>(null);
+
   const saveShortcut = useItemSaveShortcut({
     canSave,
     onSave: () => saveMut.mutate(),
+    canFocusShortcut: canSave || canCreateCr,
+    focusButtonRef: canEdit ? undefined : createCrButtonRef,
+    enterHint: canEdit ? undefined : ENTER_TO_CREATE_CR_HINT,
+    onEnterKey: canEdit ? undefined : openCreateCrDialog,
   });
   saveShortcutMountRef.current = saveShortcut.onEditorMount;
 
@@ -351,6 +443,15 @@ export default function ConfigEditor({
                   id: "audit" as const,
                   label: "Audit",
                   icon: <ScrollText className="h-3.5 w-3.5" />,
+                },
+              ]
+            : []),
+          ...(crEnabled
+            ? [
+                {
+                  id: "change_requests" as const,
+                  label: "Change requests",
+                  icon: <GitPullRequest className="h-3.5 w-3.5" />,
                 },
               ]
             : []),
@@ -486,7 +587,7 @@ export default function ConfigEditor({
             <span className="mr-2 flex items-center gap-1.5 text-xs text-yellow-600 dark:text-yellow-400">
               <AlertTriangle className="h-3 w-3" />
               Unsaved changes
-              {canEdit && (
+              {canEditEditor && (
                 <button
                   type="button"
                   onClick={resetContent}
@@ -514,12 +615,13 @@ export default function ConfigEditor({
               onDiff={handleDiff}
               onClearSelection={clearHistorySelection}
             />
-          ) : activeTab === "audit" ? null : !isDeleted ? (
+          ) : activeTab === "audit" ||
+            activeTab === "change_requests" ? null : !isDeleted ? (
             <>
               {canEdit && !resolveMounted && !focusOpen && (
                 <>
                   <FocusModeToggleButton onClick={openFocus} className="mr-1" />
-                  <ItemSaveButton
+                  <ItemSaveButtonGroup
                     label={creating ? "Create" : "Save"}
                     loading={saveMut.isPending}
                     disabled={!canSave}
@@ -528,10 +630,36 @@ export default function ConfigEditor({
                     showEnterHint={saveShortcut.showEnterHint}
                     enterHint={saveShortcut.enterHint}
                     onKeyDown={saveShortcut.handleButtonKeyDown}
+                    extraActions={saveExtraActions}
                     className="mr-2"
                   />
                 </>
               )}
+              {!canEdit &&
+                crEnabled &&
+                canCreateCr &&
+                !resolveMounted &&
+                !focusOpen && (
+                  <Tooltip
+                    content={ENTER_TO_CREATE_CR_HINT}
+                    open={saveShortcut.showEnterHint}
+                    showOnHover={false}
+                    side="bottom"
+                    align="end"
+                  >
+                    <Button
+                      ref={createCrButtonRef}
+                      variant="primary"
+                      size="sm"
+                      className="mr-2"
+                      loading={createCrMut.isPending}
+                      onClick={openCreateCrDialog}
+                      onKeyDown={saveShortcut.handleButtonKeyDown}
+                    >
+                      Create change request
+                    </Button>
+                  </Tooltip>
+                )}
               {canResolve && !resolveMounted && !focusOpen && (
                 <Button
                   variant="primary"
@@ -563,7 +691,7 @@ export default function ConfigEditor({
               editorRef={editorRef}
               toolbarSave={
                 canEdit ? (
-                  <ItemSaveButton
+                  <ItemSaveButtonGroup
                     label={creating ? "Create" : "Save"}
                     loading={saveMut.isPending}
                     disabled={!canSave}
@@ -572,6 +700,7 @@ export default function ConfigEditor({
                     showEnterHint={saveShortcut.showEnterHint}
                     enterHint={saveShortcut.enterHint}
                     onKeyDown={saveShortcut.handleButtonKeyDown}
+                    extraActions={saveExtraActions}
                   />
                 ) : undefined
               }
@@ -646,11 +775,11 @@ export default function ConfigEditor({
                     value={content}
                     onMount={handleEditorMount}
                     onChange={(v) => {
-                      if (!canEdit) return;
+                      if (!canEditEditor) return;
                       setContent(v ?? "");
                       setIsDirty(true);
                     }}
-                    options={yamlEditorOptions(!canEdit)}
+                    options={yamlEditorOptions(!canEditEditor)}
                   />
                 </div>
                 {resolveSplitOpen && focusOpen && canResolve && isLandscape && (
@@ -698,6 +827,9 @@ export default function ConfigEditor({
               path={item.path}
               type="config"
             />
+          )}
+          {activeTab === "change_requests" && (
+            <ChangeRequestsTab namespace={namespace} path={item.path} />
           )}
         </div>
 
@@ -750,6 +882,73 @@ export default function ConfigEditor({
         open={copyOpen}
         onClose={() => setCopyOpen(false)}
       />
+
+      <Modal
+        open={createCrOpen}
+        onClose={() => setCreateCrOpen(false)}
+        title="Create change request"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setCreateCrOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              loading={createCrMut.isPending}
+              disabled={!createCrTitle.trim() || createCrMut.isPending}
+              onClick={() =>
+                createCrMut.mutate({
+                  title: createCrTitle.trim(),
+                  description: createCrDescription.trim(),
+                })
+              }
+            >
+              Create
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-3">
+          <div>
+            <label
+              htmlFor="create-cr-title"
+              className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400"
+            >
+              Title <span className="text-red-500">*</span>
+            </label>
+            <Input
+              id="create-cr-title"
+              value={createCrTitle}
+              onChange={(e) => setCreateCrTitle(e.target.value)}
+              placeholder="Short summary"
+              maxLength={200}
+              autoFocus
+              required
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+              Description
+            </label>
+            <MarkdownEditor
+              value={createCrDescription}
+              onChange={setCreateCrDescription}
+              rows={5}
+              placeholder="Change description (optional)"
+              textareaClassName="text-xs"
+              disabled={createCrMut.isPending}
+              onSubmit={() => {
+                const title = createCrTitle.trim();
+                if (!title || createCrMut.isPending) return;
+                createCrMut.mutate({
+                  title,
+                  description: createCrDescription.trim(),
+                });
+              }}
+            />
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={propagateOpen}

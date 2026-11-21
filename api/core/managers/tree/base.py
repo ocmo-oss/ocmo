@@ -183,7 +183,12 @@ class TreeManagerBaseMixin:
 
     @staticmethod
     def resolve_version(item, version_ref: str):
-        """Resolve a tag name or numeric version string to a version row."""
+        """Resolve a tag name, numeric version, or change-request suffix ``~N``."""
+        if is_change_request_ref(version_ref):
+            from ..change_request import ChangeRequestManager
+
+            return ChangeRequestManager(item.namespace, item.path, auth=None).get_cr_version_view(item, version_ref)
+
         version_number = item.tags.get(version_ref)
         if version_number is None:
             if str(version_ref).isdigit() and int(version_ref) > 0:

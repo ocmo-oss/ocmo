@@ -30,6 +30,7 @@ class TreeUpdateMixin:
         version_model_class,
         validate_data: Callable[[str], None] | None = None,
         invalidate_webhooks_on_change: bool = False,
+        skip_change_request_auto_reject: bool = False,
     ):
         self._ensure_writable_capability()
         self._ensure_writable()
@@ -43,6 +44,14 @@ class TreeUpdateMixin:
                 item_version.save()
                 self.item.tags["latest"] = item_version.version
                 content_changed = True
+            if (
+                content_changed
+                and not skip_change_request_auto_reject
+                and self.item.node_type in ("config", "template", "secret")
+            ):
+                from ..change_request import ChangeRequestManager
+
+                ChangeRequestManager.on_version_created(self.namespace, self.item)
         return self._finalize_content_update(
             content_changed,
             actor,
@@ -82,7 +91,7 @@ class TreeUpdateMixin:
     )
     @audit("config", operation=OP_UPDATE_ITEM)
     @require_permissions(PermCheck("config:write"))
-    def update_configs(self, data: str):
+    def update_configs(self, data: str, *, skip_change_request_auto_reject: bool = False):
         """Create a new config version when content changes."""
         self.get_or_raise(["config"])
         return self._generic_update_versioned(
@@ -90,6 +99,7 @@ class TreeUpdateMixin:
             version_model_class=ConfigVersion,
             validate_data=self._validate_config_on_save,
             invalidate_webhooks_on_change=True,
+            skip_change_request_auto_reject=skip_change_request_auto_reject,
         )
 
     @webhook(
@@ -99,12 +109,13 @@ class TreeUpdateMixin:
     )
     @audit("template", operation=OP_UPDATE_ITEM)
     @require_permissions(PermCheck("template:write"))
-    def update_templates(self, data: str):
+    def update_templates(self, data: str, *, skip_change_request_auto_reject: bool = False):
         """Create a new template version when content changes."""
         self.get_or_raise(["template"])
         return self._generic_update_versioned(
             data,
             version_model_class=TemplateVersion,
+            skip_change_request_auto_reject=skip_change_request_auto_reject,
         )
 
     @webhook(

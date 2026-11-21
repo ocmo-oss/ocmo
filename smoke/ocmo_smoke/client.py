@@ -88,6 +88,201 @@ class OcmoApiClient:
     def delete_namespace(self, name: str) -> ApiResponse:
         return self.request("DELETE", f"/api/v1/ns/{name}")
 
+    def patch_namespace(self, namespace: str, payload: dict[str, Any]) -> ApiResponse:
+        return self.request(
+            "PATCH",
+            f"/api/v1/ns/{namespace}",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+    @staticmethod
+    def _change_request_path(namespace: str, path: str, suffix: str = "") -> str:
+        item_path = path.strip("/")
+        return f"/api/v1/ns/{namespace}/~change-requests/{item_path}{suffix}"
+
+    def create_change_request(
+        self,
+        namespace: str,
+        path: str,
+        *,
+        title: str,
+        body: bytes | str,
+        description: str = "",
+        base_version: str | None = None,
+        content_type: str = "text/plain",
+    ) -> ApiResponse:
+        params: dict[str, str] = {"title": title}
+        if description:
+            params["description"] = description
+        if base_version is not None:
+            params["base_version"] = base_version
+        qs = urlencode(params)
+        return self.request(
+            "POST",
+            f"{self._change_request_path(namespace, path)}?{qs}",
+            data=body,
+            content_type=content_type,
+        )
+
+    def get_change_request(
+        self,
+        namespace: str,
+        path: str,
+        number: int,
+        *,
+        include_content: bool = False,
+    ) -> ApiResponse:
+        params: dict[str, str] = {"number": str(number)}
+        if include_content:
+            params["include_content"] = "true"
+        qs = urlencode(params)
+        return self.request("GET", f"{self._change_request_path(namespace, path)}?{qs}")
+
+    def update_change_request(
+        self,
+        namespace: str,
+        path: str,
+        number: int,
+        body: bytes | str,
+        *,
+        content_type: str = "text/plain",
+    ) -> ApiResponse:
+        qs = urlencode({"number": str(number)})
+        return self.request(
+            "PUT",
+            f"{self._change_request_path(namespace, path)}?{qs}",
+            data=body,
+            content_type=content_type,
+        )
+
+    def patch_change_request_metadata(
+        self,
+        namespace: str,
+        path: str,
+        number: int,
+        payload: dict[str, Any],
+    ) -> ApiResponse:
+        qs = urlencode({"number": str(number)})
+        return self.request(
+            "PATCH",
+            f"{self._change_request_path(namespace, path)}?{qs}",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+
+    def list_change_requests(
+        self,
+        namespace: str,
+        path: str,
+        *,
+        status: str | None = None,
+    ) -> ApiResponse:
+        params: dict[str, str] = {}
+        if status is not None:
+            params["status"] = status
+        qs = urlencode(params)
+        suffix = f"?{qs}" if qs else ""
+        item_path = path.strip("/")
+        return self.request(
+            "GET",
+            f"/api/v1/ns/{namespace}/~change-requests/{item_path}/~list/{suffix}",
+        )
+
+    def approve_change_request(
+        self, namespace: str, path: str, number: int
+    ) -> ApiResponse:
+        qs = urlencode({"number": str(number)})
+        return self.request(
+            "POST",
+            f"{self._change_request_path(namespace, path, '/~approve/')}?{qs}",
+        )
+
+    def unapprove_change_request(
+        self, namespace: str, path: str, number: int
+    ) -> ApiResponse:
+        qs = urlencode({"number": str(number)})
+        return self.request(
+            "POST",
+            f"{self._change_request_path(namespace, path, '/~unapprove/')}?{qs}",
+        )
+
+    def reject_change_request(
+        self,
+        namespace: str,
+        path: str,
+        number: int,
+        *,
+        reason: str = "",
+    ) -> ApiResponse:
+        qs = urlencode({"number": str(number)})
+        return self.request(
+            "POST",
+            f"{self._change_request_path(namespace, path, '/~reject/')}?{qs}",
+            data=json.dumps({"reason": reason}),
+            content_type="application/json",
+        )
+
+    def withdraw_change_request(
+        self, namespace: str, path: str, number: int
+    ) -> ApiResponse:
+        qs = urlencode({"number": str(number)})
+        return self.request(
+            "POST",
+            f"{self._change_request_path(namespace, path, '/~withdraw/')}?{qs}",
+        )
+
+    def apply_change_request(
+        self, namespace: str, path: str, number: int
+    ) -> ApiResponse:
+        qs = urlencode({"number": str(number)})
+        return self.request(
+            "POST",
+            f"{self._change_request_path(namespace, path, '/~apply/')}?{qs}",
+        )
+
+    def diff_change_request(
+        self,
+        namespace: str,
+        path: str,
+        number: int,
+        *,
+        against: str = "base",
+        reveal: bool = False,
+    ) -> ApiResponse:
+        params: dict[str, str] = {"number": str(number), "against": against}
+        if reveal:
+            params["reveal"] = "true"
+        qs = urlencode(params)
+        return self.request(
+            "GET",
+            f"{self._change_request_path(namespace, path, '/~diff/')}?{qs}",
+        )
+
+    def create_change_request_comment(
+        self,
+        namespace: str,
+        path: str,
+        number: int,
+        body: str,
+    ) -> ApiResponse:
+        qs = urlencode({"number": str(number)})
+        return self.request(
+            "POST",
+            f"{self._change_request_path(namespace, path, '/~comments/')}?{qs}",
+            data=json.dumps({"body": body}),
+            content_type="application/json",
+        )
+
+    def list_change_request_comments(
+        self, namespace: str, path: str, number: int
+    ) -> ApiResponse:
+        qs = urlencode({"number": str(number)})
+        return self.request(
+            "GET",
+            f"{self._change_request_path(namespace, path, '/~comments/')}?{qs}",
+        )
+
     def create_config(
         self,
         namespace: str,

@@ -30,6 +30,7 @@ Each page describes one OCMO feature: what it is, how it behaves, and how to use
 | [Validation](validation.md) | JSON Schema validation on config save |
 | [Propagation](propagation.md) | Push config data to downstream targets on tag/manual |
 | [Locks](locks.md) | Freeze a path tree against writes |
+| [Change requests](change-requests.md) | Propose, review, and merge config/template/secret updates |
 | [Audit](audit.md) | Immutable event log for all operations |
 | [Webhooks](webhooks.md) | HTTP notifications on tree mutations |
 

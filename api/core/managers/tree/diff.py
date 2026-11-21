@@ -237,7 +237,7 @@ class TreeDiffMixin:
                 "node_type": item.node_type,
                 "requested": version_ref,
                 "version": version_obj.version,
-                "data": version_obj.data,
+                "data": version_obj.data if version_obj.data is not None else "",
             }
 
         if item.node_type == "secret":

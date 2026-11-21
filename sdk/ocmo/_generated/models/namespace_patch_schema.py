@@ -17,6 +17,11 @@ class NamespacePatchSchema:
         permissions_tag (Union[None, Unset, str]):
         webhooks_tag (Union[None, Unset, str]):
         git_sync_tag (Union[None, Unset, str]):
+        change_requests_enabled (Union[None, Unset, bool]):
+        change_requests_required_approvals (Union[None, Unset, int]):
+        change_requests_auto_reject_on_new_version (Union[None, Unset, bool]):
+        change_requests_max_open_per_user_per_resource (Union[None, Unset, int]):
+        change_requests_reset_approvals_on_change (Union[None, Unset, bool]):
     """
 
     name: Union[None, Unset, str] = UNSET
@@ -24,6 +29,11 @@ class NamespacePatchSchema:
     permissions_tag: Union[None, Unset, str] = UNSET
     webhooks_tag: Union[None, Unset, str] = UNSET
     git_sync_tag: Union[None, Unset, str] = UNSET
+    change_requests_enabled: Union[None, Unset, bool] = UNSET
+    change_requests_required_approvals: Union[None, Unset, int] = UNSET
+    change_requests_auto_reject_on_new_version: Union[None, Unset, bool] = UNSET
+    change_requests_max_open_per_user_per_resource: Union[None, Unset, int] = UNSET
+    change_requests_reset_approvals_on_change: Union[None, Unset, bool] = UNSET
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -57,6 +67,36 @@ class NamespacePatchSchema:
         else:
             git_sync_tag = self.git_sync_tag
 
+        change_requests_enabled: Union[None, Unset, bool]
+        if isinstance(self.change_requests_enabled, Unset):
+            change_requests_enabled = UNSET
+        else:
+            change_requests_enabled = self.change_requests_enabled
+
+        change_requests_required_approvals: Union[None, Unset, int]
+        if isinstance(self.change_requests_required_approvals, Unset):
+            change_requests_required_approvals = UNSET
+        else:
+            change_requests_required_approvals = self.change_requests_required_approvals
+
+        change_requests_auto_reject_on_new_version: Union[None, Unset, bool]
+        if isinstance(self.change_requests_auto_reject_on_new_version, Unset):
+            change_requests_auto_reject_on_new_version = UNSET
+        else:
+            change_requests_auto_reject_on_new_version = self.change_requests_auto_reject_on_new_version
+
+        change_requests_max_open_per_user_per_resource: Union[None, Unset, int]
+        if isinstance(self.change_requests_max_open_per_user_per_resource, Unset):
+            change_requests_max_open_per_user_per_resource = UNSET
+        else:
+            change_requests_max_open_per_user_per_resource = self.change_requests_max_open_per_user_per_resource
+
+        change_requests_reset_approvals_on_change: Union[None, Unset, bool]
+        if isinstance(self.change_requests_reset_approvals_on_change, Unset):
+            change_requests_reset_approvals_on_change = UNSET
+        else:
+            change_requests_reset_approvals_on_change = self.change_requests_reset_approvals_on_change
+
         field_dict: Dict[str, Any] = {}
         field_dict.update(self.additional_properties)
         field_dict.update({})
@@ -70,6 +110,18 @@ class NamespacePatchSchema:
             field_dict["webhooks_tag"] = webhooks_tag
         if git_sync_tag is not UNSET:
             field_dict["git_sync_tag"] = git_sync_tag
+        if change_requests_enabled is not UNSET:
+            field_dict["change_requests_enabled"] = change_requests_enabled
+        if change_requests_required_approvals is not UNSET:
+            field_dict["change_requests_required_approvals"] = change_requests_required_approvals
+        if change_requests_auto_reject_on_new_version is not UNSET:
+            field_dict["change_requests_auto_reject_on_new_version"] = change_requests_auto_reject_on_new_version
+        if change_requests_max_open_per_user_per_resource is not UNSET:
+            field_dict["change_requests_max_open_per_user_per_resource"] = (
+                change_requests_max_open_per_user_per_resource
+            )
+        if change_requests_reset_approvals_on_change is not UNSET:
+            field_dict["change_requests_reset_approvals_on_change"] = change_requests_reset_approvals_on_change
 
         return field_dict
 
@@ -122,12 +174,70 @@ class NamespacePatchSchema:
 
         git_sync_tag = _parse_git_sync_tag(d.pop("git_sync_tag", UNSET))
 
+        def _parse_change_requests_enabled(data: object) -> Union[None, Unset, bool]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[None, Unset, bool], data)
+
+        change_requests_enabled = _parse_change_requests_enabled(d.pop("change_requests_enabled", UNSET))
+
+        def _parse_change_requests_required_approvals(data: object) -> Union[None, Unset, int]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[None, Unset, int], data)
+
+        change_requests_required_approvals = _parse_change_requests_required_approvals(
+            d.pop("change_requests_required_approvals", UNSET)
+        )
+
+        def _parse_change_requests_auto_reject_on_new_version(data: object) -> Union[None, Unset, bool]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[None, Unset, bool], data)
+
+        change_requests_auto_reject_on_new_version = _parse_change_requests_auto_reject_on_new_version(
+            d.pop("change_requests_auto_reject_on_new_version", UNSET)
+        )
+
+        def _parse_change_requests_max_open_per_user_per_resource(data: object) -> Union[None, Unset, int]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[None, Unset, int], data)
+
+        change_requests_max_open_per_user_per_resource = _parse_change_requests_max_open_per_user_per_resource(
+            d.pop("change_requests_max_open_per_user_per_resource", UNSET)
+        )
+
+        def _parse_change_requests_reset_approvals_on_change(data: object) -> Union[None, Unset, bool]:
+            if data is None:
+                return data
+            if isinstance(data, Unset):
+                return data
+            return cast(Union[None, Unset, bool], data)
+
+        change_requests_reset_approvals_on_change = _parse_change_requests_reset_approvals_on_change(
+            d.pop("change_requests_reset_approvals_on_change", UNSET)
+        )
+
         namespace_patch_schema = cls(
             name=name,
             description=description,
             permissions_tag=permissions_tag,
             webhooks_tag=webhooks_tag,
             git_sync_tag=git_sync_tag,
+            change_requests_enabled=change_requests_enabled,
+            change_requests_required_approvals=change_requests_required_approvals,
+            change_requests_auto_reject_on_new_version=change_requests_auto_reject_on_new_version,
+            change_requests_max_open_per_user_per_resource=change_requests_max_open_per_user_per_resource,
+            change_requests_reset_approvals_on_change=change_requests_reset_approvals_on_change,
         )
 
         namespace_patch_schema.additional_properties = d

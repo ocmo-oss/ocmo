@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { treeApi } from "../../api/tree";
 import type { FolderNode } from "../../api/types";
 import type { useItemPermissions } from "../../hooks/useItemPermissions";
@@ -14,6 +14,7 @@ import { DeleteDialog } from "./DeleteDialog";
 import { LocationDialog } from "./LocationDialog";
 import { PermissionDenied } from "./PermissionDenied";
 import { cn } from "../ui/cn";
+import { useItemTabHash } from "../../hooks/useItemTabHash";
 
 type Tab = "contents" | "resolve" | "audit";
 
@@ -29,11 +30,13 @@ export default function FolderView({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
   const [copyOpen, setCopyOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("contents");
-
-  useEffect(() => {
-    setActiveTab("contents");
-  }, [item.path]);
+  const folderTabIds = useMemo((): Tab[] => {
+    const ids: Tab[] = ["contents"];
+    if (permissions.canResolve) ids.push("resolve");
+    if (permissions.canAudit) ids.push("audit");
+    return ids;
+  }, [permissions.canResolve, permissions.canAudit]);
+  const [activeTab, setActiveTab] = useItemTabHash(folderTabIds, "contents");
 
   const { data, isLoading } = useQuery({
     queryKey: ["tree-nav", namespace, item.path],

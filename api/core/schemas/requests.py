@@ -69,6 +69,11 @@ class NamespacePatchSchema(Schema):
     permissions_tag: str | None = None
     webhooks_tag: str | None = None
     git_sync_tag: str | None = None
+    change_requests_enabled: bool | None = None
+    change_requests_required_approvals: int | None = Field(None, ge=0, le=100)
+    change_requests_auto_reject_on_new_version: bool | None = None
+    change_requests_max_open_per_user_per_resource: int | None = Field(None, ge=1, le=100)
+    change_requests_reset_approvals_on_change: bool | None = None
 
     @model_validator(mode="after")
     def check_at_least_one(self):

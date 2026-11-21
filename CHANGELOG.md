@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from `1.0.0` onward.
 Before `1.0.0`, minor releases may include breaking API or behavior changes.
 
+## [0.8.26]
+
+### Added
+
+- **[feat] API:** change requests for config, template, and secret — propose, approve, apply, comments, `path@~N` resolve refs, namespace policy fields.
+- **[feat] Frontend:** change requests tab, detail view with diff and discussion, namespace settings, create CR from editor.
+- **[feat] CLI:** `ocmo apply-cr` to merge change requests.
+
 ## [0.8.25]
 
 ### Changed

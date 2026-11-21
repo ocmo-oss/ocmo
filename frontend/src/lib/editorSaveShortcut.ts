@@ -16,7 +16,13 @@ function isMonacoSaveShortcut(
 }
 
 function editorHasFocus(editorInstance: editor.IStandaloneCodeEditor): boolean {
-  return editorInstance.hasTextFocus() || editorInstance.hasWidgetFocus();
+  if (editorInstance.hasTextFocus() || editorInstance.hasWidgetFocus()) {
+    return true;
+  }
+  const root = editorInstance.getDomNode();
+  if (!root) return false;
+  const active = document.activeElement;
+  return active instanceof Node && root.contains(active);
 }
 
 export function installEditorSaveShortcut(

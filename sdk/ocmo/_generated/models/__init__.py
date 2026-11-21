@@ -9,6 +9,20 @@ from .can_i_response_schema_allowed import CanIResponseSchemaAllowed
 from .cast_format_schema import CastFormatSchema
 from .cast_format_schema_options_schema import CastFormatSchemaOptionsSchema
 from .cast_formats_list_schema import CastFormatsListSchema
+from .change_request_anchor_schema import ChangeRequestAnchorSchema
+from .change_request_approval_event_schema import ChangeRequestApprovalEventSchema
+from .change_request_comment_create_schema import ChangeRequestCommentCreateSchema
+from .change_request_comment_list_schema import ChangeRequestCommentListSchema
+from .change_request_comment_schema import ChangeRequestCommentSchema
+from .change_request_comment_update_schema import ChangeRequestCommentUpdateSchema
+from .change_request_list_schema import ChangeRequestListSchema
+from .change_request_metadata_patch_schema import ChangeRequestMetadataPatchSchema
+from .change_request_referrer_schema import ChangeRequestReferrerSchema
+from .change_request_referrer_schema_node_type import ChangeRequestReferrerSchemaNodeType
+from .change_request_reject_schema import ChangeRequestRejectSchema
+from .change_request_schema import ChangeRequestSchema
+from .change_request_schema_node_type import ChangeRequestSchemaNodeType
+from .change_request_schema_status import ChangeRequestSchemaStatus
 from .config_schema import ConfigSchema
 from .config_schema_extended import ConfigSchemaExtended
 from .config_schema_extended_tags import ConfigSchemaExtendedTags
@@ -16,6 +30,7 @@ from .config_schema_tags import ConfigSchemaTags
 from .copied_items_schema import CopiedItemsSchema
 from .delete_schema import DeleteSchema
 from .describe_payload import DescribePayload
+from .diff_change_request_against import DiffChangeRequestAgainst
 from .diff_response_schema import DiffResponseSchema
 from .diff_side_schema import DiffSideSchema
 from .effective_resolver_hooks_schema import EffectiveResolverHooksSchema
@@ -41,6 +56,7 @@ from .health_schema_checks import HealthSchemaChecks
 from .health_schema_status import HealthSchemaStatus
 from .info_schema import InfoSchema
 from .input_ import Input
+from .list_change_requests_status_type_0 import ListChangeRequestsStatusType0
 from .location_payload import LocationPayload
 from .lock_payload import LockPayload
 from .lock_schema import LockSchema
@@ -104,6 +120,20 @@ __all__ = (
     "CastFormatSchema",
     "CastFormatSchemaOptionsSchema",
     "CastFormatsListSchema",
+    "ChangeRequestAnchorSchema",
+    "ChangeRequestApprovalEventSchema",
+    "ChangeRequestCommentCreateSchema",
+    "ChangeRequestCommentListSchema",
+    "ChangeRequestCommentSchema",
+    "ChangeRequestCommentUpdateSchema",
+    "ChangeRequestListSchema",
+    "ChangeRequestMetadataPatchSchema",
+    "ChangeRequestReferrerSchema",
+    "ChangeRequestReferrerSchemaNodeType",
+    "ChangeRequestRejectSchema",
+    "ChangeRequestSchema",
+    "ChangeRequestSchemaNodeType",
+    "ChangeRequestSchemaStatus",
     "ConfigSchema",
     "ConfigSchemaExtended",
     "ConfigSchemaExtendedTags",
@@ -111,6 +141,7 @@ __all__ = (
     "CopiedItemsSchema",
     "DeleteSchema",
     "DescribePayload",
+    "DiffChangeRequestAgainst",
     "DiffResponseSchema",
     "DiffSideSchema",
     "EffectiveResolverHooksSchema",
@@ -136,6 +167,7 @@ __all__ = (
     "HealthSchemaStatus",
     "InfoSchema",
     "Input",
+    "ListChangeRequestsStatusType0",
     "LocationPayload",
     "LockPayload",
     "LockSchema",

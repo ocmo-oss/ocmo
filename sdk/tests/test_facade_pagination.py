@@ -20,6 +20,11 @@ def _namespace_item(name: str, *, item_id: int) -> dict:
         "permissions_tag": "main",
         "webhooks_tag": "main",
         "git_sync_tag": "main",
+        "change_requests_enabled": False,
+        "change_requests_required_approvals": 1,
+        "change_requests_auto_reject_on_new_version": True,
+        "change_requests_max_open_per_user_per_resource": 1,
+        "change_requests_reset_approvals_on_change": True,
         "created_at": "2026-01-01T00:00:00Z",
         "updated_at": "2026-01-01T00:00:00Z",
     }

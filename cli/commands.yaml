@@ -228,3 +228,63 @@ operations:
     action: propagate
     resource: config
     scope: namespace
+  list_change_requests:
+    action: get
+    resource: change-request
+    scope: namespace
+  create_change_request:
+    action: create
+    resource: change-request
+    scope: namespace
+  get_change_request:
+    action: get
+    resource: change-request
+    scope: namespace
+  update_change_request:
+    action: update
+    resource: change-request
+    scope: namespace
+  patch_change_request_metadata:
+    action: update
+    resource: change-request
+    scope: namespace
+  approve_change_request:
+    action: approve
+    resource: change-request
+    scope: namespace
+  unapprove_change_request:
+    action: unapprove
+    resource: change-request
+    scope: namespace
+  reject_change_request:
+    action: reject
+    resource: change-request
+    scope: namespace
+  withdraw_change_request:
+    action: withdraw
+    resource: change-request
+    scope: namespace
+  apply_change_request:
+    hand_written: true
+    scope: namespace
+  diff_change_request:
+    action: diff
+    resource: change-request
+    scope: namespace
+  list_change_request_comments:
+    action: get
+    resource: change-request-comment
+    scope: namespace
+  create_change_request_comment:
+    action: create
+    resource: change-request-comment
+    scope: namespace
+  update_change_request_comment:
+    action: update
+    resource: change-request-comment
+    scope: namespace
+  delete_change_request_comment:
+    action: delete
+    resource: change-request-comment
+    confirm: destructive
+    scope: namespace

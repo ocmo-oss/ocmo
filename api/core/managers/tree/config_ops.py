@@ -120,6 +120,7 @@ class TreeConfigOpsMixin:
         *,
         config_path: str | None = None,
         resolve_db_path: Callable[[str], str] | None = None,
+        allow_cr_refs: bool = False,
     ) -> None:
         """Ensure extend/render/secret paths referenced in ``_ocmo`` exist."""
         if not metadata.model_dump(exclude_none=True):
@@ -134,6 +135,17 @@ class TreeConfigOpsMixin:
             return resolved
 
         def _require_version(item, version: str) -> None:
+            from ...shortcuts import is_change_request_ref
+
+            if is_change_request_ref(version):
+                if not allow_cr_refs:
+                    raise ValidationError(
+                        f"Change request references ({version!r}) are not allowed in published versions",
+                    )
+                from ..change_request import ChangeRequestManager
+
+                ChangeRequestManager(self.namespace, item.path, auth=self.auth).get_cr_version_view(item, version)
+                return
             try:
                 self.resolve_version(item, version)
             except VersionNotFound as exc:
@@ -219,7 +231,13 @@ class TreeConfigOpsMixin:
                 )
             del item
 
-    def _validate_config_on_save(self, data_yaml: str, *, validate_references: bool = True) -> ConfigDocumentParts:
+    def _validate_config_on_save(
+        self,
+        data_yaml: str,
+        *,
+        validate_references: bool = True,
+        allow_cr_refs: bool = False,
+    ) -> ConfigDocumentParts:
         validator = ConfigValidationManager(config_path=self.path, data_yaml=data_yaml)
 
         validator.parse()
@@ -227,7 +245,7 @@ class TreeConfigOpsMixin:
 
         if validate_references:
             ref_metadata = self._metadata_for_reference_validation(validator.metadata, validator.parts.body)
-            self._validate_config_ocmo_references(ref_metadata)
+            self._validate_config_ocmo_references(ref_metadata, allow_cr_refs=allow_cr_refs)
 
             schema_ref = ConfigValidationManager.resolve_schema_ref_for_path(self.path, ref_metadata)
             if schema_ref is not None:

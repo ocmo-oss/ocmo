@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   formatUserDateTime,
   formatUserDateTimeRelative,
@@ -49,6 +49,7 @@ import { cn } from "../ui/cn";
 import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode } from "../../lib/itemEditorMode";
 import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
+import { useItemTabHash } from "../../hooks/useItemTabHash";
 import { EditorFocusSurface, FocusModeToggleButton } from "../editor/focus";
 
 type Tab = "config" | "tokens" | "audit";
@@ -90,9 +91,14 @@ export default function ResolverView({
   const location = useLocation();
   const navState = location.state as ResolverNavigationState | null;
   const createdTokenFromNavigation = navState?.createdToken;
-  const [activeTab, setActiveTab] = useState<Tab>(() =>
-    createdTokenFromNavigation ? "tokens" : "config",
-  );
+  const resolverTabIds = useMemo((): Tab[] => {
+    const ids: Tab[] = ["config", "tokens"];
+    if (permissions.canAudit) ids.push("audit");
+    return ids;
+  }, [permissions.canAudit]);
+  const [activeTab, setActiveTab] = useItemTabHash(resolverTabIds, "config", {
+    initialWhenNoHash: createdTokenFromNavigation ? "tokens" : "config",
+  });
   const [content, setContent] = useState(() => {
     if (!item.configuration) return "";
     return typeof item.configuration === "string"
@@ -122,11 +128,14 @@ export default function ResolverView({
     if (!createdTokenFromNavigation) return;
     setNewToken(createdTokenFromNavigation);
     setIsInitialToken(true);
-    setActiveTab("tokens");
-    navigate(`${location.pathname}${location.search}`, {
-      replace: true,
-      state: null,
-    });
+    navigate(
+      {
+        pathname: location.pathname,
+        search: location.search,
+        hash: "#tokens",
+      },
+      { replace: true, state: null },
+    );
   }, [
     createdTokenFromNavigation,
     location.pathname,

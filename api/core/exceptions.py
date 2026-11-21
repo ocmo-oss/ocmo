@@ -169,3 +169,21 @@ class PropagationNotConfigured(Exception):
     """Propagation is not configured, disabled, or trigger does not match."""
 
     pass
+
+
+class ChangeRequestNotFound(Exception):
+    """Change request does not exist or feature is disabled."""
+
+    pass
+
+
+class ChangeRequestNotApplicable(Exception):
+    """Change request cannot be approved, applied, or updated in current state."""
+
+    pass
+
+
+class ChangeRequestConflict(Exception):
+    """Change request policy limit or validation conflict."""
+
+    pass

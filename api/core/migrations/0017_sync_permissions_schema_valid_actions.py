@@ -6,9 +6,9 @@ from django.db import migrations
 
 
 def sync_permissions_schema_valid_actions(apps, schema_editor):
-    from core.models import Namespace
     from core.utils.namespace_special_configs import sync_permissions_webhooks_schema_configs
 
+    Namespace = apps.get_model("core", "Namespace")
     for namespace in Namespace.objects.all().iterator():
         sync_permissions_webhooks_schema_configs(namespace)
 

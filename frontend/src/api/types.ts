@@ -103,6 +103,11 @@ export interface Namespace {
   permissions_tag: string;
   webhooks_tag: string;
   git_sync_tag: string;
+  change_requests_enabled: boolean;
+  change_requests_required_approvals: number;
+  change_requests_auto_reject_on_new_version: boolean;
+  change_requests_max_open_per_user_per_resource: number;
+  change_requests_reset_approvals_on_change: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -117,6 +122,69 @@ export interface NamespacePatch {
   permissions_tag?: string;
   webhooks_tag?: string;
   git_sync_tag?: string;
+  change_requests_enabled?: boolean;
+  change_requests_required_approvals?: number;
+  change_requests_auto_reject_on_new_version?: boolean;
+  change_requests_max_open_per_user_per_resource?: number;
+  change_requests_reset_approvals_on_change?: boolean;
+}
+
+export type ChangeRequestStatus = "open" | "rejected" | "withdrawn" | "applied";
+
+export interface ChangeRequestReferrer {
+  path: string;
+  node_type: "config" | "template" | "secret";
+  number: number;
+}
+
+export interface ChangeRequest {
+  path: string;
+  node_type: "config" | "template" | "secret";
+  number: number;
+  status: ChangeRequestStatus;
+  base_version: number;
+  title: string;
+  description: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  applied_version?: number | null;
+  applied_by?: string | null;
+  applied_at?: string | null;
+  rejected_reason: string;
+  rejected_by?: string | null;
+  rejected_at?: string | null;
+  approvers: string[];
+  approval_events: { approver: string; created_at: string }[];
+  base_superseded: boolean;
+  latest_version: number;
+  approval_count: number;
+  required_approvals: number;
+  can_apply: boolean;
+  path_locked?: boolean;
+  can_approve: boolean;
+  can_unapprove: boolean;
+  projected_version_on_apply: number;
+  has_cr_references: boolean;
+  referenced_by: ChangeRequestReferrer[];
+  depends_on: ChangeRequestReferrer[];
+  issues?: string[];
+  content?: string | null;
+}
+
+export interface ChangeRequestListResponse {
+  items: ChangeRequest[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface ChangeRequestComment {
+  id: number;
+  author: string;
+  body: string;
+  anchor?: { start_line: number; end_line?: number } | null;
+  created_at: string;
 }
 
 export interface PaginatedResponse<T> {

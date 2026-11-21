@@ -240,3 +240,60 @@ operations:
   propagate_config:
     scope: namespace
     cli: { action: propagate, resource: config }
+
+  list_change_requests:
+    scope: namespace
+    cli: { action: get, resource: change-request }
+
+  create_change_request:
+    scope: namespace
+    cli: { action: create, resource: change-request }
+
+  get_change_request:
+    scope: namespace
+    cli: { action: get, resource: change-request }
+
+  update_change_request:
+    scope: namespace
+    cli: { action: update, resource: change-request }
+
+  patch_change_request_metadata:
+    scope: namespace
+
+  approve_change_request:
+    scope: namespace
+    cli: { action: approve, resource: change-request }
+
+  unapprove_change_request:
+    scope: namespace
+    cli: { action: unapprove, resource: change-request }
+
+  reject_change_request:
+    scope: namespace
+    cli: { action: reject, resource: change-request }
+
+  withdraw_change_request:
+    scope: namespace
+    cli: { action: withdraw, resource: change-request }
+
+  apply_change_request:
+    scope: namespace
+    cli: { action: apply, resource: change-request }
+
+  diff_change_request:
+    scope: namespace
+    cli: { action: diff, resource: change-request }
+
+  list_change_request_comments:
+    scope: namespace
+    cli: { action: get, resource: change-request-comment }
+
+  create_change_request_comment:
+    scope: namespace
+    cli: { action: create, resource: change-request-comment }
+
+  update_change_request_comment:
+    scope: namespace
+
+  delete_change_request_comment:
+    scope: namespace

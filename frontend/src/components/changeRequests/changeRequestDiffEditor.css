@@ -1,0 +1,62 @@
+/* CR inline diff: no revert gutter; tighter line-number column */
+.change-request-diff-editor .monaco-diff-editor .gutter {
+  display: none !important;
+}
+
+/* Inline diff deleted-line actions (Monaco ignores lightbulb.enabled here) */
+.change-request-diff-editor .codicon-light-bulb,
+.change-request-diff-editor .codicon-lightbulb-autofix,
+.change-request-diff-editor .lightBulbWidget,
+.change-request-diff-editor .monaco-diff-editor .codicon-light-bulb,
+.change-request-diff-editor .monaco-diff-editor .codicon-lightbulb-autofix,
+.change-request-diff-editor .monaco-diff-editor .lightBulbWidget {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.change-request-diff-editor .monaco-editor .margin {
+  margin-left: 0 !important;
+}
+
+.change-request-diff-editor .monaco-editor .margin-view-overlays .line-numbers {
+  padding-right: 10px !important;
+}
+
+.change-request-diff-editor .monaco-editor .glyph-margin-widgets {
+  display: none !important;
+}
+
+.change-request-diff-editor .insert-sign,
+.change-request-diff-editor .delete-sign {
+  margin-left: 6px !important;
+  opacity: 1 !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+}
+
+.change-request-diff-editor .insert-sign {
+  color: #16a34a !important;
+}
+
+.change-request-diff-editor .delete-sign {
+  color: #dc2626 !important;
+}
+
+.change-request-diff-editor .monaco-editor.vs-dark .insert-sign,
+.change-request-diff-editor .monaco-diff-editor.vs-dark .insert-sign {
+  color: #4ade80 !important;
+}
+
+.change-request-diff-editor .monaco-editor.vs-dark .delete-sign,
+.change-request-diff-editor .monaco-diff-editor.vs-dark .delete-sign {
+  color: #f87171 !important;
+}
+
+.change-request-diff-editor .cr-line-highlight {
+  background-color: rgba(254, 240, 138, 0.55) !important;
+}
+
+.change-request-diff-editor .monaco-editor.vs-dark .cr-line-highlight {
+  background-color: rgba(113, 63, 18, 0.45) !important;
+}

@@ -38,6 +38,10 @@ export function defineMonacoThemes(monaco: typeof Monaco): void {
       "scrollbarSlider.hoverBackground": "#94a3b899",
       "scrollbarSlider.activeBackground": "#7f8fa3b3",
       "minimap.background": "#e9eef4",
+      "diffEditor.insertedLineBackground": "#bbf7d066",
+      "diffEditor.removedLineBackground": "#fecaca66",
+      "diffEditor.insertedTextBackground": "#86efac55",
+      "diffEditor.removedTextBackground": "#fca5a555",
     },
   });
 
@@ -52,6 +56,10 @@ export function defineMonacoThemes(monaco: typeof Monaco): void {
       "editorSuggestWidget.background": "#11151c",
       "editorHoverWidget.background": "#11151c",
       "minimap.background": "#0c0f14",
+      "diffEditor.insertedLineBackground": "#14532d55",
+      "diffEditor.removedLineBackground": "#7f1d1d55",
+      "diffEditor.insertedTextBackground": "#16653466",
+      "diffEditor.removedTextBackground": "#991b1b66",
     },
   });
 }

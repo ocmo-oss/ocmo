@@ -55,9 +55,15 @@ from django.db import transaction
 
 from ..decorators import PermCheck, arg, require_permissions, webhook
 from ..exceptions import CannotResolveConfig, CapabilityDenied, PermissionDenied
-from ..models import Config, TreeItem
+from ..models import ChangeRequest, Config, TreeItem
 from ..schemas.cast_options import CAST_FORMATS
-from ..shortcuts import config_path_relative_to_folder, match_resolver_glob
+from ..shortcuts import (
+    change_request_number_from_ref,
+    config_path_relative_to_folder,
+    is_change_request_ref,
+    match_resolver_glob,
+)
+from ..utils.change_request_content import change_request_cache_stamp
 from .artifacts import ArtifactsManager, get_backend, mint_token, sweep_fs_artifacts_if_due
 from .audit import AuditManager
 from .auth import AuthManager
@@ -321,6 +327,18 @@ class ResolutionManager:
         self.promote_stable = promote_stable
         self.ignore_configs_with_missing_tags = ignore_configs_with_missing_tags
 
+    @staticmethod
+    def _participant_cache_dict(p: CacheParticipant) -> dict[str, Any]:
+        data: dict[str, Any] = {
+            "kind": p.kind,
+            "path": p.path,
+            "ref": p.ref,
+            "version": p.version,
+        }
+        if p.cr_stamp:
+            data["cr_stamp"] = p.cr_stamp
+        return data
+
     def _participants_from_cache(self, raw_participants: list[dict]) -> list[CacheParticipant]:
         return [
             CacheParticipant(
@@ -329,6 +347,7 @@ class ResolutionManager:
                 ref=p.get("ref", ""),
                 version=p["version"],
                 from_cache=True,
+                cr_stamp=p.get("cr_stamp"),
             )
             for p in raw_participants
         ]
@@ -355,7 +374,14 @@ class ResolutionManager:
         item = tm.get_or_raise(["config"])
         version_obj = tm.resolve_version(item, self.version)
         metadata, _ = ConfigValidationManager.parse_config_yaml_document(version_obj.data)
-        return version_obj.version, extend_cache_fingerprint(metadata)
+        fingerprint = extend_cache_fingerprint(metadata)
+        if is_change_request_ref(self.version):
+            number = change_request_number_from_ref(self.version)
+            cr = ChangeRequest.objects.filter(tree_item_id=item.pk, number=number).first()
+            if cr is not None:
+                body = version_obj.data if version_obj.data is not None else ""
+                fingerprint = f"{fingerprint}|cr:{change_request_cache_stamp(cr.updated_at, body)}"
+        return version_obj.version, fingerprint
 
     def _record_resolve_audit(
         self,
@@ -781,9 +807,7 @@ class ResolutionManager:
                     )
 
                 if draft_content is None:
-                    participants = [
-                        {"kind": p.kind, "path": p.path, "ref": p.ref, "version": p.version} for p in mgr._participants
-                    ]
+                    participants = [self._participant_cache_dict(p) for p in mgr._participants]
                     skipped_optional_extend = list(mgr._skipped_optional_extend)
                     has_secrets = any(p["kind"] == "secret" for p in participants)
 

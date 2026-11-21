@@ -26,7 +26,7 @@ import platform
 import re
 import time
 import warnings
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
@@ -503,6 +503,17 @@ class NamespaceView(_NamespaceFacadeMixin):
             params=params,
             cast_options=cast_options,
         )
+
+    def apply_change_request(self, path: str, *, number: int) -> dict[str, Any]:  # type: ignore[override]
+        """Merge an open change request into a new published version."""
+        response = self._api._transport.request_raw(
+            "POST",
+            f"/ns/{self._namespace}/~change-requests/{path}/~apply/",
+            params={"number": number},
+            json={},
+        )
+        response.raise_for_status()
+        return cast(dict[str, Any], response.json())
 
 
 class AsyncNamespaceView(_AsyncNamespaceFacadeMixin):
