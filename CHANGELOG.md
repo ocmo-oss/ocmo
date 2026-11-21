@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) from `1.0.0` onward.
 Before `1.0.0`, minor releases may include breaking API or behavior changes.
 
+## [0.8.27]
+
+### Fixed
+
+- **[fix] Frontend:** production CSP headers (nginx + Vite) with strict `script-src 'self'`; Monaco editor worker via Vite `?worker` so YAML/schema features work under CSP.
+- **[fix] Frontend:** `frame-ancestors 'self'` and development `connect-src` `http:` so OIDC silent renew and standalone `pnpm dev` against local Dex/API work.
+- **[fix] Dependencies:** PyJWT ≥2.15, certifi refresh, Zod 4, and pnpm overrides for transitive npm advisories; nginx base images pinned to `1.30.7-alpine`.
+
+### Changed
+
+- **[chore] Docs:** web UI install guide for same-origin `/api/` proxy and `VITE_API_BASE_URL=""`.
+- **[chore] CI:** post-build CSP/Monaco production artifact checks.
+
 ## [0.8.26]
 
 ### Added
