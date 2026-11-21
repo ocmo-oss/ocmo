@@ -21,6 +21,19 @@ class TreeReadMixin:
     def get_configs(self, version: str = "latest", reveal: bool = False):
         """Return a config with version data."""
         item = self.get_or_raise(["config"])
+        if is_change_request_ref(version):
+            from ..change_request import ChangeRequestManager
+
+            crm = ChangeRequestManager(self.namespace, self.path, auth=self.auth)
+            crm._require_feature()
+            view = crm.get_cr_version_view(item, version)
+            item._requested_version = version
+            item._cr_plaintext_override = view.data
+            enrich_audit(
+                operation=read_operation_for_type(item.node_type),
+                object_version=view.version,
+            )
+            return item
         resolved_version = None
         if is_version_number_ref(version):
             resolved_version = int(version)
@@ -44,6 +57,16 @@ class TreeReadMixin:
     def get_templates(self, version: str = "latest", reveal: bool = False):
         """Return a template with version data."""
         item = self.get_or_raise(["template"])
+        if is_change_request_ref(version):
+            from ..change_request import ChangeRequestManager
+
+            crm = ChangeRequestManager(self.namespace, self.path, auth=self.auth)
+            crm._require_feature()
+            view = crm.get_cr_version_view(item, version)
+            item._requested_version = version
+            item._cr_plaintext_override = view.data
+            enrich_audit(operation=read_operation_for_type(item.node_type), object_version=view.version)
+            return item
         resolved_version = None
         if is_version_number_ref(version):
             resolved_version = int(version)
@@ -67,6 +90,20 @@ class TreeReadMixin:
     def get_secrets(self, version: str = "latest", reveal: bool = False):
         """Return a secret with version data and optional decrypted content."""
         item = self.get_or_raise(["secret"])
+        if is_change_request_ref(version):
+            from ..change_request import ChangeRequestManager
+
+            crm = ChangeRequestManager(self.namespace, self.path, auth=self.auth)
+            crm._require_feature()
+            view = crm.get_cr_version_view(item, version)
+            item._requested_version = version
+            if reveal:
+                from ...models import ChangeRequest
+
+                cr = ChangeRequest.objects.get(tree_item=item, number=view.version)
+                item._decrypted_plaintext = crm._plaintext_content(cr)
+            enrich_audit(operation=read_operation_for_type(item.node_type), object_version=view.version)
+            return item
         resolved_version = None
         if reveal:
             version_obj = self.resolve_version(item, version)

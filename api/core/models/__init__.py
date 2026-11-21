@@ -1,4 +1,5 @@
 from .audit import AuditEvent
+from .change_request import ChangeRequest, ChangeRequestApproval, ChangeRequestComment
 from .config import Config, ConfigVersion, Template, TemplateVersion
 from .folder import Folder
 from .global_permissions import GlobalPermissionRule

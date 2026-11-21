@@ -55,6 +55,11 @@ export function NamespaceSettingsPage() {
   const [permTag, setPermTag] = useState("latest");
   const [webhookTag, setWebhookTag] = useState("latest");
   const [gitSyncTag, setGitSyncTag] = useState("latest");
+  const [crEnabled, setCrEnabled] = useState(false);
+  const [crRequiredApprovals, setCrRequiredApprovals] = useState(1);
+  const [crAutoReject, setCrAutoReject] = useState(true);
+  const [crMaxOpen, setCrMaxOpen] = useState(1);
+  const [crResetApprovals, setCrResetApprovals] = useState(true);
 
   useEffect(() => {
     if (data) {
@@ -62,6 +67,13 @@ export function NamespaceSettingsPage() {
       setPermTag(data.permissions_tag);
       setWebhookTag(data.webhooks_tag);
       setGitSyncTag(data.git_sync_tag);
+      setCrEnabled(data.change_requests_enabled ?? false);
+      setCrRequiredApprovals(data.change_requests_required_approvals ?? 1);
+      setCrAutoReject(data.change_requests_auto_reject_on_new_version ?? true);
+      setCrMaxOpen(data.change_requests_max_open_per_user_per_resource ?? 1);
+      setCrResetApprovals(
+        data.change_requests_reset_approvals_on_change ?? true,
+      );
     }
   }, [data]);
 
@@ -72,6 +84,11 @@ export function NamespaceSettingsPage() {
         permissions_tag: permTag,
         webhooks_tag: webhookTag,
         git_sync_tag: gitSyncTag,
+        change_requests_enabled: crEnabled,
+        change_requests_required_approvals: crRequiredApprovals,
+        change_requests_auto_reject_on_new_version: crAutoReject,
+        change_requests_max_open_per_user_per_resource: crMaxOpen,
+        change_requests_reset_approvals_on_change: crResetApprovals,
       }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["namespace", namespace] });
@@ -168,6 +185,103 @@ export function NamespaceSettingsPage() {
                   onChange={setGitSyncTag}
                 />
               </div>
+
+              <section
+                aria-labelledby="namespace-cr-settings"
+                className="space-y-3 rounded-md border border-slate-300 p-3 dark:border-gray-700"
+              >
+                <div id="namespace-cr-settings">
+                  <p className="text-sm font-medium leading-tight text-gray-700 dark:text-gray-300">
+                    Change requests
+                  </p>
+                  <p className="text-[11px] leading-snug text-gray-400">
+                    Propose changes on configs, templates, and secrets before
+                    publishing a new version.
+                  </p>
+                </div>
+
+                <label className="flex cursor-pointer items-start gap-2">
+                  <input
+                    type="checkbox"
+                    className="mt-px rounded border-slate-400 text-brand-600 focus:ring-brand-500 dark:border-gray-600"
+                    checked={crEnabled}
+                    onChange={(e) => setCrEnabled(e.target.checked)}
+                  />
+                  <span>
+                    <span className="block text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">
+                      Enable change requests
+                    </span>
+                    <span className="mt-0.5 block text-[11px] leading-snug text-gray-500 dark:text-gray-400">
+                      Readers can open change requests; writers can approve,
+                      reject, and apply.
+                    </span>
+                  </span>
+                </label>
+
+                {crEnabled && (
+                  <div className="space-y-3 border-t border-slate-200 pt-3 dark:border-gray-700">
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                      Policy
+                    </p>
+                    <Input
+                      label="Required approvals"
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={String(crRequiredApprovals)}
+                      onChange={(e) =>
+                        setCrRequiredApprovals(Number(e.target.value) || 0)
+                      }
+                      className="py-1"
+                    />
+                    <Input
+                      label="Max open change requests per user per resource"
+                      type="number"
+                      min={1}
+                      max={100}
+                      value={String(crMaxOpen)}
+                      onChange={(e) =>
+                        setCrMaxOpen(Number(e.target.value) || 1)
+                      }
+                      className="py-1"
+                    />
+                    <label className="flex cursor-pointer items-start gap-2">
+                      <input
+                        type="checkbox"
+                        className="mt-px rounded border-slate-400 text-brand-600 focus:ring-brand-500 dark:border-gray-600"
+                        checked={crAutoReject}
+                        onChange={(e) => setCrAutoReject(e.target.checked)}
+                      />
+                      <span>
+                        <span className="block text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">
+                          Auto-reject on new version
+                        </span>
+                        <span className="mt-0.5 block text-[11px] leading-snug text-gray-500 dark:text-gray-400">
+                          Close open change requests when a new version is
+                          published outside the CR flow.
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-2">
+                      <input
+                        type="checkbox"
+                        className="mt-px rounded border-slate-400 text-brand-600 focus:ring-brand-500 dark:border-gray-600"
+                        checked={crResetApprovals}
+                        onChange={(e) => setCrResetApprovals(e.target.checked)}
+                      />
+                      <span>
+                        <span className="block text-xs font-medium leading-tight text-gray-700 dark:text-gray-300">
+                          Reset approvals on content change
+                        </span>
+                        <span className="mt-0.5 block text-[11px] leading-snug text-gray-500 dark:text-gray-400">
+                          Clear existing approvals when the change request body
+                          is updated (not when only the base version changes).
+                        </span>
+                      </span>
+                    </label>
+                  </div>
+                )}
+              </section>
             </div>
 
             <label className="flex cursor-pointer items-start gap-2 rounded-md border border-slate-300 px-2.5 py-2 dark:border-gray-700">

@@ -17,6 +17,11 @@ class NamespaceSchema:
         permissions_tag (str):
         webhooks_tag (str):
         git_sync_tag (str):
+        change_requests_enabled (bool):
+        change_requests_required_approvals (int):
+        change_requests_auto_reject_on_new_version (bool):
+        change_requests_max_open_per_user_per_resource (int):
+        change_requests_reset_approvals_on_change (bool):
         created_at (datetime.datetime):
         updated_at (datetime.datetime):
     """
@@ -26,6 +31,11 @@ class NamespaceSchema:
     permissions_tag: str
     webhooks_tag: str
     git_sync_tag: str
+    change_requests_enabled: bool
+    change_requests_required_approvals: int
+    change_requests_auto_reject_on_new_version: bool
+    change_requests_max_open_per_user_per_resource: int
+    change_requests_reset_approvals_on_change: bool
     created_at: datetime.datetime
     updated_at: datetime.datetime
     additional_properties: Dict[str, Any] = _attrs_field(init=False, factory=dict)
@@ -41,6 +51,16 @@ class NamespaceSchema:
 
         git_sync_tag = self.git_sync_tag
 
+        change_requests_enabled = self.change_requests_enabled
+
+        change_requests_required_approvals = self.change_requests_required_approvals
+
+        change_requests_auto_reject_on_new_version = self.change_requests_auto_reject_on_new_version
+
+        change_requests_max_open_per_user_per_resource = self.change_requests_max_open_per_user_per_resource
+
+        change_requests_reset_approvals_on_change = self.change_requests_reset_approvals_on_change
+
         created_at = self.created_at.isoformat()
 
         updated_at = self.updated_at.isoformat()
@@ -54,6 +74,11 @@ class NamespaceSchema:
                 "permissions_tag": permissions_tag,
                 "webhooks_tag": webhooks_tag,
                 "git_sync_tag": git_sync_tag,
+                "change_requests_enabled": change_requests_enabled,
+                "change_requests_required_approvals": change_requests_required_approvals,
+                "change_requests_auto_reject_on_new_version": change_requests_auto_reject_on_new_version,
+                "change_requests_max_open_per_user_per_resource": change_requests_max_open_per_user_per_resource,
+                "change_requests_reset_approvals_on_change": change_requests_reset_approvals_on_change,
                 "created_at": created_at,
                 "updated_at": updated_at,
             }
@@ -74,6 +99,16 @@ class NamespaceSchema:
 
         git_sync_tag = d.pop("git_sync_tag")
 
+        change_requests_enabled = d.pop("change_requests_enabled")
+
+        change_requests_required_approvals = d.pop("change_requests_required_approvals")
+
+        change_requests_auto_reject_on_new_version = d.pop("change_requests_auto_reject_on_new_version")
+
+        change_requests_max_open_per_user_per_resource = d.pop("change_requests_max_open_per_user_per_resource")
+
+        change_requests_reset_approvals_on_change = d.pop("change_requests_reset_approvals_on_change")
+
         created_at = isoparse(d.pop("created_at"))
 
         updated_at = isoparse(d.pop("updated_at"))
@@ -84,6 +119,11 @@ class NamespaceSchema:
             permissions_tag=permissions_tag,
             webhooks_tag=webhooks_tag,
             git_sync_tag=git_sync_tag,
+            change_requests_enabled=change_requests_enabled,
+            change_requests_required_approvals=change_requests_required_approvals,
+            change_requests_auto_reject_on_new_version=change_requests_auto_reject_on_new_version,
+            change_requests_max_open_per_user_per_resource=change_requests_max_open_per_user_per_resource,
+            change_requests_reset_approvals_on_change=change_requests_reset_approvals_on_change,
             created_at=created_at,
             updated_at=updated_at,
         )

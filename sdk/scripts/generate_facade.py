@@ -122,7 +122,9 @@ def _public_kw(
             if field not in out:
                 out.append(field)
 
-    if body_spec or is_document:
+    if is_document:
+        out.append("body")
+    elif body_spec is not None and "body" not in body_fields:
         out.append("body")
 
     return out

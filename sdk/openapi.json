@@ -5452,6 +5452,1314 @@
           }
         ]
       }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}/~list/": {
+      "get": {
+        "operationId": "list_change_requests",
+        "summary": "List Change Requests",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "open",
+                    "rejected",
+                    "withdrawn",
+                    "applied"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "created_by",
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Created By"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestListSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}/~approve/": {
+      "post": {
+        "operationId": "approve_change_request",
+        "summary": "Approve Change Request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}/~unapprove/": {
+      "post": {
+        "operationId": "unapprove_change_request",
+        "summary": "Unapprove Change Request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}/~reject/": {
+      "post": {
+        "operationId": "reject_change_request",
+        "summary": "Reject Change Request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRequestRejectSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}/~withdraw/": {
+      "post": {
+        "operationId": "withdraw_change_request",
+        "summary": "Withdraw Change Request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}/~apply/": {
+      "post": {
+        "operationId": "apply_change_request",
+        "summary": "Apply Change Request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "423": {
+            "description": "Locked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}/~diff/": {
+      "get": {
+        "operationId": "diff_change_request",
+        "summary": "Diff Change Request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "against",
+            "schema": {
+              "default": "base",
+              "enum": [
+                "base",
+                "latest"
+              ],
+              "title": "Against",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "reveal",
+            "schema": {
+              "default": false,
+              "title": "Reveal",
+              "type": "boolean"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiffResponseSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}/~comments/{comment_id}": {
+      "patch": {
+        "operationId": "update_change_request_comment",
+        "summary": "Update Change Request Comment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "comment_id",
+            "schema": {
+              "title": "Comment Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestCommentSchema"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRequestCommentUpdateSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "delete_change_request_comment",
+        "summary": "Delete Change Request Comment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "comment_id",
+            "schema": {
+              "title": "Comment Id",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}/~comments/": {
+      "get": {
+        "operationId": "list_change_request_comments",
+        "summary": "List Change Request Comments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "default": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestCommentListSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "create_change_request_comment",
+        "summary": "Create Change Request Comment",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestCommentSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRequestCommentCreateSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/ns/{namespace}/~change-requests/{path}": {
+      "get": {
+        "operationId": "get_change_request",
+        "summary": "Get Change Request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "include_content",
+            "schema": {
+              "default": false,
+              "title": "Include Content",
+              "type": "boolean"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "operationId": "patch_change_request_metadata",
+        "summary": "Patch Change Request Metadata",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeRequestMetadataPatchSchema"
+              }
+            }
+          },
+          "required": true
+        },
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "update_change_request",
+        "summary": "Update Change Request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "number",
+            "schema": {
+              "minimum": 1,
+              "title": "Number",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "create_change_request",
+        "summary": "Create Change Request",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "title": "Namespace",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "path",
+            "name": "path",
+            "schema": {
+              "title": "Path",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "title",
+            "schema": {
+              "maxLength": 200,
+              "minLength": 1,
+              "title": "Title",
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "description",
+            "schema": {
+              "default": "",
+              "maxLength": 4096,
+              "title": "Description",
+              "type": "string"
+            },
+            "required": false
+          },
+          {
+            "in": "query",
+            "name": "base_version",
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Base Version"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequestSchema"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorSchema"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Change request"
+        ],
+        "security": [
+          {
+            "OAuth2AuthorizationCodeBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -5590,7 +6898,7 @@
           "version": {
             "description": "Deployed package version",
             "examples": [
-              "0.8.25"
+              "0.8.26"
             ],
             "title": "Version",
             "type": "string"
@@ -6055,6 +7363,26 @@
             "title": "Git Sync Tag",
             "type": "string"
           },
+          "change_requests_enabled": {
+            "title": "Change Requests Enabled",
+            "type": "boolean"
+          },
+          "change_requests_required_approvals": {
+            "title": "Change Requests Required Approvals",
+            "type": "integer"
+          },
+          "change_requests_auto_reject_on_new_version": {
+            "title": "Change Requests Auto Reject On New Version",
+            "type": "boolean"
+          },
+          "change_requests_max_open_per_user_per_resource": {
+            "title": "Change Requests Max Open Per User Per Resource",
+            "type": "integer"
+          },
+          "change_requests_reset_approvals_on_change": {
+            "title": "Change Requests Reset Approvals On Change",
+            "type": "boolean"
+          },
           "created_at": {
             "format": "date-time",
             "title": "Created At",
@@ -6072,6 +7400,11 @@
           "permissions_tag",
           "webhooks_tag",
           "git_sync_tag",
+          "change_requests_enabled",
+          "change_requests_required_approvals",
+          "change_requests_auto_reject_on_new_version",
+          "change_requests_max_open_per_user_per_resource",
+          "change_requests_reset_approvals_on_change",
           "created_at",
           "updated_at"
         ],
@@ -6229,6 +7562,65 @@
               }
             ],
             "title": "Git Sync Tag"
+          },
+          "change_requests_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Requests Enabled"
+          },
+          "change_requests_required_approvals": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Requests Required Approvals"
+          },
+          "change_requests_auto_reject_on_new_version": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Requests Auto Reject On New Version"
+          },
+          "change_requests_max_open_per_user_per_resource": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Requests Max Open Per User Per Resource"
+          },
+          "change_requests_reset_approvals_on_change": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Requests Reset Approvals On Change"
           }
         },
         "title": "NamespacePatchSchema",
@@ -8482,6 +9874,528 @@
           "buckets"
         ],
         "title": "ResolveSeriesSchema",
+        "type": "object"
+      },
+      "ChangeRequestApprovalEventSchema": {
+        "properties": {
+          "approver": {
+            "maxLength": 512,
+            "title": "Approver",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "approver",
+          "created_at"
+        ],
+        "title": "ChangeRequestApprovalEventSchema",
+        "type": "object"
+      },
+      "ChangeRequestListSchema": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeRequestSchema"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "limit": {
+            "maximum": 500,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ChangeRequestListSchema",
+        "type": "object"
+      },
+      "ChangeRequestReferrerSchema": {
+        "properties": {
+          "path": {
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          },
+          "node_type": {
+            "enum": [
+              "config",
+              "template",
+              "secret"
+            ],
+            "title": "Node Type",
+            "type": "string"
+          },
+          "number": {
+            "minimum": 1,
+            "title": "Number",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path",
+          "node_type",
+          "number"
+        ],
+        "title": "ChangeRequestReferrerSchema",
+        "type": "object"
+      },
+      "ChangeRequestSchema": {
+        "properties": {
+          "path": {
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          },
+          "node_type": {
+            "enum": [
+              "config",
+              "template",
+              "secret"
+            ],
+            "title": "Node Type",
+            "type": "string"
+          },
+          "number": {
+            "minimum": 1,
+            "title": "Number",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "rejected",
+              "withdrawn",
+              "applied"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "base_version": {
+            "minimum": 1,
+            "title": "Base Version",
+            "type": "integer"
+          },
+          "title": {
+            "maxLength": 200,
+            "title": "Title",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 4096,
+            "title": "Description",
+            "type": "string"
+          },
+          "created_by": {
+            "maxLength": 512,
+            "title": "Created By",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "applied_version": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied Version"
+          },
+          "applied_by": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied By"
+          },
+          "applied_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          },
+          "rejected_reason": {
+            "default": "",
+            "maxLength": 4096,
+            "title": "Rejected Reason",
+            "type": "string"
+          },
+          "rejected_by": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejected By"
+          },
+          "rejected_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rejected At"
+          },
+          "approvers": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Approvers",
+            "type": "array"
+          },
+          "approval_events": {
+            "description": "Approvals in chronological order",
+            "items": {
+              "$ref": "#/components/schemas/ChangeRequestApprovalEventSchema"
+            },
+            "title": "Approval Events",
+            "type": "array"
+          },
+          "base_superseded": {
+            "title": "Base Superseded",
+            "type": "boolean"
+          },
+          "latest_version": {
+            "minimum": 0,
+            "title": "Latest Version",
+            "type": "integer"
+          },
+          "approval_count": {
+            "minimum": 0,
+            "title": "Approval Count",
+            "type": "integer"
+          },
+          "required_approvals": {
+            "minimum": 0,
+            "title": "Required Approvals",
+            "type": "integer"
+          },
+          "can_apply": {
+            "title": "Can Apply",
+            "type": "boolean"
+          },
+          "can_approve": {
+            "title": "Can Approve",
+            "type": "boolean"
+          },
+          "can_unapprove": {
+            "title": "Can Unapprove",
+            "type": "boolean"
+          },
+          "projected_version_on_apply": {
+            "minimum": 1,
+            "title": "Projected Version On Apply",
+            "type": "integer"
+          },
+          "has_cr_references": {
+            "title": "Has Cr References",
+            "type": "boolean"
+          },
+          "referenced_by": {
+            "description": "Open change requests whose _ocmo metadata references this CR",
+            "items": {
+              "$ref": "#/components/schemas/ChangeRequestReferrerSchema"
+            },
+            "title": "Referenced By",
+            "type": "array"
+          },
+          "depends_on": {
+            "description": "Other change requests referenced from this CR's _ocmo metadata (@~N)",
+            "items": {
+              "$ref": "#/components/schemas/ChangeRequestReferrerSchema"
+            },
+            "title": "Depends On",
+            "type": "array"
+          },
+          "issues": {
+            "description": "Validation and policy problems that may block apply or safe use",
+            "items": {
+              "type": "string"
+            },
+            "title": "Issues",
+            "type": "array"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          }
+        },
+        "required": [
+          "path",
+          "node_type",
+          "number",
+          "status",
+          "base_version",
+          "title",
+          "description",
+          "created_by",
+          "created_at",
+          "updated_at",
+          "approvers",
+          "base_superseded",
+          "latest_version",
+          "approval_count",
+          "required_approvals",
+          "can_apply",
+          "can_approve",
+          "can_unapprove",
+          "projected_version_on_apply",
+          "has_cr_references"
+        ],
+        "title": "ChangeRequestSchema",
+        "type": "object"
+      },
+      "ChangeRequestRejectSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "default": "",
+            "maxLength": 4096,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "title": "ChangeRequestRejectSchema",
+        "type": "object"
+      },
+      "ChangeRequestAnchorSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "start_line": {
+            "description": "1-based start line in CR content",
+            "minimum": 1,
+            "title": "Start Line",
+            "type": "integer"
+          },
+          "end_line": {
+            "anyOf": [
+              {
+                "minimum": 1,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "1-based end line (inclusive); defaults to start_line when omitted",
+            "title": "End Line"
+          }
+        },
+        "required": [
+          "start_line"
+        ],
+        "title": "ChangeRequestAnchorSchema",
+        "type": "object"
+      },
+      "ChangeRequestCommentSchema": {
+        "properties": {
+          "id": {
+            "minimum": 1,
+            "title": "Id",
+            "type": "integer"
+          },
+          "author": {
+            "maxLength": 512,
+            "title": "Author",
+            "type": "string"
+          },
+          "body": {
+            "maxLength": 8192,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "anchor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChangeRequestAnchorSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "author",
+          "body",
+          "created_at"
+        ],
+        "title": "ChangeRequestCommentSchema",
+        "type": "object"
+      },
+      "ChangeRequestCommentUpdateSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 8192,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "ChangeRequestCommentUpdateSchema",
+        "type": "object"
+      },
+      "ChangeRequestCommentListSchema": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChangeRequestCommentSchema"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "limit": {
+            "maximum": 500,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0,
+            "title": "Offset",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "ChangeRequestCommentListSchema",
+        "type": "object"
+      },
+      "ChangeRequestCommentCreateSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "maxLength": 8192,
+            "minLength": 1,
+            "title": "Body",
+            "type": "string"
+          },
+          "anchor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChangeRequestAnchorSchema"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "title": "ChangeRequestCommentCreateSchema",
+        "type": "object"
+      },
+      "ChangeRequestMetadataPatchSchema": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 200,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4096,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          }
+        },
+        "title": "ChangeRequestMetadataPatchSchema",
         "type": "object"
       }
     },

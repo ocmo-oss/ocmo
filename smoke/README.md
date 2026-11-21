@@ -58,6 +58,12 @@ Change propagation (`~propagate/`, tag triggers, stable promotion):
 uv run pytest test_propagation.py -v
 ```
 
+Change requests (`~change-requests/` lifecycle, approvals, comments):
+
+```bash
+uv run pytest test_change_requests.py -v
+```
+
 Propagation cases use `kind: propagation` in `case.yaml` (see `cases/propagation_manual/`).
 Actions: `propagate` (POST `~propagate/`), `tag` (set tag on source), or `resolve` with `?mark-stable=true`.
 Targets may use `path/to/config@version_or_tag` in `_ocmo.propagation.targets`.

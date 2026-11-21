@@ -106,6 +106,8 @@ interface MarkdownEditorProps {
   previewClassName?: string;
   contentClassName?: string;
   disabled?: boolean;
+  /** Called on Ctrl/Cmd+Enter when the editor is focused (edit mode only). */
+  onSubmit?: () => void;
 }
 
 export function MarkdownEditor({
@@ -118,6 +120,7 @@ export function MarkdownEditor({
   previewClassName,
   contentClassName,
   disabled = false,
+  onSubmit,
 }: MarkdownEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const pendingSelection = useRef<{ start: number; end: number } | null>(null);
@@ -199,6 +202,12 @@ export function MarkdownEditor({
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const mod = event.metaKey || event.ctrlKey;
+
+    if (mod && event.key === "Enter" && onSubmit && !disabled) {
+      event.preventDefault();
+      onSubmit();
+      return;
+    }
 
     if (mod && event.key.toLowerCase() === "z" && !event.shiftKey) {
       event.preventDefault();

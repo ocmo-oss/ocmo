@@ -15,6 +15,21 @@ import ocmo._generated.api.audit.namespace_audit_resolve_series as _op_namespace
 import ocmo._generated.api.audit.namespace_audit_timeline as _op_namespace_audit_timeline
 import ocmo._generated.api.auth.can_i as _op_can_i
 import ocmo._generated.api.auth.whoami as _op_whoami
+import ocmo._generated.api.change_request.apply_change_request as _op_apply_change_request
+import ocmo._generated.api.change_request.approve_change_request as _op_approve_change_request
+import ocmo._generated.api.change_request.create_change_request as _op_create_change_request
+import ocmo._generated.api.change_request.create_change_request_comment as _op_create_change_request_comment
+import ocmo._generated.api.change_request.delete_change_request_comment as _op_delete_change_request_comment
+import ocmo._generated.api.change_request.diff_change_request as _op_diff_change_request
+import ocmo._generated.api.change_request.get_change_request as _op_get_change_request
+import ocmo._generated.api.change_request.list_change_request_comments as _op_list_change_request_comments
+import ocmo._generated.api.change_request.list_change_requests as _op_list_change_requests
+import ocmo._generated.api.change_request.patch_change_request_metadata as _op_patch_change_request_metadata
+import ocmo._generated.api.change_request.reject_change_request as _op_reject_change_request
+import ocmo._generated.api.change_request.unapprove_change_request as _op_unapprove_change_request
+import ocmo._generated.api.change_request.update_change_request as _op_update_change_request
+import ocmo._generated.api.change_request.update_change_request_comment as _op_update_change_request_comment
+import ocmo._generated.api.change_request.withdraw_change_request as _op_withdraw_change_request
 import ocmo._generated.api.config.create_config as _op_create_config
 import ocmo._generated.api.config.get_config_data_schema as _op_get_config_data_schema
 import ocmo._generated.api.config.get_config_metadata_schema as _op_get_config_metadata_schema
@@ -231,13 +246,13 @@ class _ClientFacadeMixin:
             client=self._api,
         )
 
-    def update_namespace(self, namespace: Any, *, name: Any = UNSET, description: Any = UNSET, permissions_tag: Any = UNSET, webhooks_tag: Any = UNSET, git_sync_tag: Any = UNSET, body: Any = UNSET):
+    def update_namespace(self, namespace: Any, *, name: Any = UNSET, description: Any = UNSET, permissions_tag: Any = UNSET, webhooks_tag: Any = UNSET, git_sync_tag: Any = UNSET, change_requests_enabled: Any = UNSET, change_requests_required_approvals: Any = UNSET, change_requests_auto_reject_on_new_version: Any = UNSET, change_requests_max_open_per_user_per_resource: Any = UNSET, change_requests_reset_approvals_on_change: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``update_namespace``."""
 
         return execute_sync(
             "update_namespace",
             _op_update_namespace.sync_detailed,
-            namespace, name=name, description=description, permissions_tag=permissions_tag, webhooks_tag=webhooks_tag, git_sync_tag=git_sync_tag, body=body,
+            namespace, name=name, description=description, permissions_tag=permissions_tag, webhooks_tag=webhooks_tag, git_sync_tag=git_sync_tag, change_requests_enabled=change_requests_enabled, change_requests_required_approvals=change_requests_required_approvals, change_requests_auto_reject_on_new_version=change_requests_auto_reject_on_new_version, change_requests_max_open_per_user_per_resource=change_requests_max_open_per_user_per_resource, change_requests_reset_approvals_on_change=change_requests_reset_approvals_on_change, body=body,
             client=self._api,
         )
 
@@ -428,13 +443,13 @@ class _AsyncClientFacadeMixin:
             client=self._api,
         )
 
-    async def update_namespace(self, namespace: Any, *, name: Any = UNSET, description: Any = UNSET, permissions_tag: Any = UNSET, webhooks_tag: Any = UNSET, git_sync_tag: Any = UNSET, body: Any = UNSET):
+    async def update_namespace(self, namespace: Any, *, name: Any = UNSET, description: Any = UNSET, permissions_tag: Any = UNSET, webhooks_tag: Any = UNSET, git_sync_tag: Any = UNSET, change_requests_enabled: Any = UNSET, change_requests_required_approvals: Any = UNSET, change_requests_auto_reject_on_new_version: Any = UNSET, change_requests_max_open_per_user_per_resource: Any = UNSET, change_requests_reset_approvals_on_change: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``update_namespace``."""
 
         return await execute_async(
             "update_namespace",
             _op_update_namespace.asyncio_detailed,
-            namespace, name=name, description=description, permissions_tag=permissions_tag, webhooks_tag=webhooks_tag, git_sync_tag=git_sync_tag, body=body,
+            namespace, name=name, description=description, permissions_tag=permissions_tag, webhooks_tag=webhooks_tag, git_sync_tag=git_sync_tag, change_requests_enabled=change_requests_enabled, change_requests_required_approvals=change_requests_required_approvals, change_requests_auto_reject_on_new_version=change_requests_auto_reject_on_new_version, change_requests_max_open_per_user_per_resource=change_requests_max_open_per_user_per_resource, change_requests_reset_approvals_on_change=change_requests_reset_approvals_on_change, body=body,
             client=self._api,
         )
 
@@ -459,6 +474,26 @@ class _AsyncClientFacadeMixin:
 
 
 class _NamespaceFacadeMixin:
+    def apply_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``apply_change_request``."""
+
+        return execute_sync(
+            "apply_change_request",
+            _op_apply_change_request.sync_detailed,
+            self._namespace, path, number=number,
+            client=self._api,
+        )
+
+    def approve_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``approve_change_request``."""
+
+        return execute_sync(
+            "approve_change_request",
+            _op_approve_change_request.sync_detailed,
+            self._namespace, path, number=number,
+            client=self._api,
+        )
+
     def copy_item(self, path: Any, *, tag_to_copy: Any = UNSET, skip_reference_validation: Any = UNSET, target_path: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``copy_item``."""
 
@@ -466,6 +501,26 @@ class _NamespaceFacadeMixin:
             "copy_item",
             _op_copy_item.sync_detailed,
             self._namespace, path, tag_to_copy=tag_to_copy, skip_reference_validation=skip_reference_validation, target_path=target_path, body=body,
+            client=self._api,
+        )
+
+    def create_change_request(self, path: Any, *, title: Any = UNSET, description: Any = UNSET, base_version: Any = UNSET):
+        """OpenAPI operation ``create_change_request``."""
+
+        return execute_sync(
+            "create_change_request",
+            _op_create_change_request.sync_detailed,
+            self._namespace, path, title=title, description=description, base_version=base_version,
+            client=self._api,
+        )
+
+    def create_change_request_comment(self, path: Any, *, number: Any = UNSET, body: Any = UNSET, anchor: Any = UNSET):
+        """OpenAPI operation ``create_change_request_comment``."""
+
+        return execute_sync(
+            "create_change_request_comment",
+            _op_create_change_request_comment.sync_detailed,
+            self._namespace, path, number=number, body=body, anchor=anchor,
             client=self._api,
         )
 
@@ -519,6 +574,16 @@ class _NamespaceFacadeMixin:
             client=self._api,
         )
 
+    def delete_change_request_comment(self, path: Any, comment_id: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``delete_change_request_comment``."""
+
+        return execute_sync(
+            "delete_change_request_comment",
+            _op_delete_change_request_comment.sync_detailed,
+            self._namespace, path, comment_id, number=number,
+            client=self._api,
+        )
+
     def delete_item(self, path: Any, *, preview: Any = UNSET, version: Any = UNSET):
         """OpenAPI operation ``delete_item``."""
 
@@ -549,6 +614,16 @@ class _NamespaceFacadeMixin:
             client=self._api,
         )
 
+    def diff_change_request(self, path: Any, *, number: Any = UNSET, against: Any = UNSET, reveal: Any = UNSET):
+        """OpenAPI operation ``diff_change_request``."""
+
+        return execute_sync(
+            "diff_change_request",
+            _op_diff_change_request.sync_detailed,
+            self._namespace, path, number=number, against=against, reveal=reveal,
+            client=self._api,
+        )
+
     def diff_item(self, path: Any, *, from_: Any = UNSET, to: Any = UNSET, to_path: Any = UNSET, reveal: Any = UNSET):
         """OpenAPI operation ``diff_item``."""
 
@@ -576,6 +651,16 @@ class _NamespaceFacadeMixin:
             "enable_resolver",
             _op_enable_resolver.sync_detailed,
             self._namespace, path,
+            client=self._api,
+        )
+
+    def get_change_request(self, path: Any, *, number: Any = UNSET, include_content: Any = UNSET):
+        """OpenAPI operation ``get_change_request``."""
+
+        return execute_sync(
+            "get_change_request",
+            _op_get_change_request.sync_detailed,
+            self._namespace, path, number=number, include_content=include_content,
             client=self._api,
         )
 
@@ -616,6 +701,26 @@ class _NamespaceFacadeMixin:
             "get_namespace_audit_event",
             _op_get_namespace_audit_event.sync_detailed,
             self._namespace, event_id,
+            client=self._api,
+        )
+
+    def list_change_request_comments(self, path: Any, *, number: Any = UNSET, limit: Any = UNSET, offset: Any = UNSET):
+        """OpenAPI operation ``list_change_request_comments``."""
+
+        return execute_sync(
+            "list_change_request_comments",
+            _op_list_change_request_comments.sync_detailed,
+            self._namespace, path, number=number, limit=limit, offset=offset,
+            client=self._api,
+        )
+
+    def list_change_requests(self, path: Any, *, status: Any = UNSET, created_by: Any = UNSET, limit: Any = UNSET, offset: Any = UNSET):
+        """OpenAPI operation ``list_change_requests``."""
+
+        return execute_sync(
+            "list_change_requests",
+            _op_list_change_requests.sync_detailed,
+            self._namespace, path, status=status, created_by=created_by, limit=limit, offset=offset,
             client=self._api,
         )
 
@@ -699,6 +804,16 @@ class _NamespaceFacadeMixin:
             client=self._api,
         )
 
+    def patch_change_request_metadata(self, path: Any, *, number: Any = UNSET, title: Any = UNSET, description: Any = UNSET, body: Any = UNSET):
+        """OpenAPI operation ``patch_change_request_metadata``."""
+
+        return execute_sync(
+            "patch_change_request_metadata",
+            _op_patch_change_request_metadata.sync_detailed,
+            self._namespace, path, number=number, title=title, description=description, body=body,
+            client=self._api,
+        )
+
     def propagate_config(self, path: Any, *, version: Any = UNSET):
         """OpenAPI operation ``propagate_config``."""
 
@@ -706,6 +821,16 @@ class _NamespaceFacadeMixin:
             "propagate_config",
             _op_propagate_config.sync_detailed,
             self._namespace, path, version=version,
+            client=self._api,
+        )
+
+    def reject_change_request(self, path: Any, *, number: Any = UNSET, reason: Any = UNSET, body: Any = UNSET):
+        """OpenAPI operation ``reject_change_request``."""
+
+        return execute_sync(
+            "reject_change_request",
+            _op_reject_change_request.sync_detailed,
+            self._namespace, path, number=number, reason=reason, body=body,
             client=self._api,
         )
 
@@ -779,6 +904,36 @@ class _NamespaceFacadeMixin:
             client=self._api,
         )
 
+    def unapprove_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``unapprove_change_request``."""
+
+        return execute_sync(
+            "unapprove_change_request",
+            _op_unapprove_change_request.sync_detailed,
+            self._namespace, path, number=number,
+            client=self._api,
+        )
+
+    def update_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``update_change_request``."""
+
+        return execute_sync(
+            "update_change_request",
+            _op_update_change_request.sync_detailed,
+            self._namespace, path, number=number,
+            client=self._api,
+        )
+
+    def update_change_request_comment(self, path: Any, comment_id: Any, *, number: Any = UNSET, body: Any = UNSET):
+        """OpenAPI operation ``update_change_request_comment``."""
+
+        return execute_sync(
+            "update_change_request_comment",
+            _op_update_change_request_comment.sync_detailed,
+            self._namespace, path, comment_id, number=number, body=body,
+            client=self._api,
+        )
+
     def update_config(self, path: Any, *, content: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``update_config``."""
 
@@ -819,8 +974,38 @@ class _NamespaceFacadeMixin:
             client=self._api,
         )
 
+    def withdraw_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``withdraw_change_request``."""
+
+        return execute_sync(
+            "withdraw_change_request",
+            _op_withdraw_change_request.sync_detailed,
+            self._namespace, path, number=number,
+            client=self._api,
+        )
+
 
 class _AsyncNamespaceFacadeMixin:
+    async def apply_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``apply_change_request``."""
+
+        return await execute_async(
+            "apply_change_request",
+            _op_apply_change_request.asyncio_detailed,
+            self._namespace, path, number=number,
+            client=self._api,
+        )
+
+    async def approve_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``approve_change_request``."""
+
+        return await execute_async(
+            "approve_change_request",
+            _op_approve_change_request.asyncio_detailed,
+            self._namespace, path, number=number,
+            client=self._api,
+        )
+
     async def copy_item(self, path: Any, *, tag_to_copy: Any = UNSET, skip_reference_validation: Any = UNSET, target_path: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``copy_item``."""
 
@@ -828,6 +1013,26 @@ class _AsyncNamespaceFacadeMixin:
             "copy_item",
             _op_copy_item.asyncio_detailed,
             self._namespace, path, tag_to_copy=tag_to_copy, skip_reference_validation=skip_reference_validation, target_path=target_path, body=body,
+            client=self._api,
+        )
+
+    async def create_change_request(self, path: Any, *, title: Any = UNSET, description: Any = UNSET, base_version: Any = UNSET):
+        """OpenAPI operation ``create_change_request``."""
+
+        return await execute_async(
+            "create_change_request",
+            _op_create_change_request.asyncio_detailed,
+            self._namespace, path, title=title, description=description, base_version=base_version,
+            client=self._api,
+        )
+
+    async def create_change_request_comment(self, path: Any, *, number: Any = UNSET, body: Any = UNSET, anchor: Any = UNSET):
+        """OpenAPI operation ``create_change_request_comment``."""
+
+        return await execute_async(
+            "create_change_request_comment",
+            _op_create_change_request_comment.asyncio_detailed,
+            self._namespace, path, number=number, body=body, anchor=anchor,
             client=self._api,
         )
 
@@ -881,6 +1086,16 @@ class _AsyncNamespaceFacadeMixin:
             client=self._api,
         )
 
+    async def delete_change_request_comment(self, path: Any, comment_id: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``delete_change_request_comment``."""
+
+        return await execute_async(
+            "delete_change_request_comment",
+            _op_delete_change_request_comment.asyncio_detailed,
+            self._namespace, path, comment_id, number=number,
+            client=self._api,
+        )
+
     async def delete_item(self, path: Any, *, preview: Any = UNSET, version: Any = UNSET):
         """OpenAPI operation ``delete_item``."""
 
@@ -911,6 +1126,16 @@ class _AsyncNamespaceFacadeMixin:
             client=self._api,
         )
 
+    async def diff_change_request(self, path: Any, *, number: Any = UNSET, against: Any = UNSET, reveal: Any = UNSET):
+        """OpenAPI operation ``diff_change_request``."""
+
+        return await execute_async(
+            "diff_change_request",
+            _op_diff_change_request.asyncio_detailed,
+            self._namespace, path, number=number, against=against, reveal=reveal,
+            client=self._api,
+        )
+
     async def diff_item(self, path: Any, *, from_: Any = UNSET, to: Any = UNSET, to_path: Any = UNSET, reveal: Any = UNSET):
         """OpenAPI operation ``diff_item``."""
 
@@ -938,6 +1163,16 @@ class _AsyncNamespaceFacadeMixin:
             "enable_resolver",
             _op_enable_resolver.asyncio_detailed,
             self._namespace, path,
+            client=self._api,
+        )
+
+    async def get_change_request(self, path: Any, *, number: Any = UNSET, include_content: Any = UNSET):
+        """OpenAPI operation ``get_change_request``."""
+
+        return await execute_async(
+            "get_change_request",
+            _op_get_change_request.asyncio_detailed,
+            self._namespace, path, number=number, include_content=include_content,
             client=self._api,
         )
 
@@ -978,6 +1213,26 @@ class _AsyncNamespaceFacadeMixin:
             "get_namespace_audit_event",
             _op_get_namespace_audit_event.asyncio_detailed,
             self._namespace, event_id,
+            client=self._api,
+        )
+
+    async def list_change_request_comments(self, path: Any, *, number: Any = UNSET, limit: Any = UNSET, offset: Any = UNSET):
+        """OpenAPI operation ``list_change_request_comments``."""
+
+        return await execute_async(
+            "list_change_request_comments",
+            _op_list_change_request_comments.asyncio_detailed,
+            self._namespace, path, number=number, limit=limit, offset=offset,
+            client=self._api,
+        )
+
+    async def list_change_requests(self, path: Any, *, status: Any = UNSET, created_by: Any = UNSET, limit: Any = UNSET, offset: Any = UNSET):
+        """OpenAPI operation ``list_change_requests``."""
+
+        return await execute_async(
+            "list_change_requests",
+            _op_list_change_requests.asyncio_detailed,
+            self._namespace, path, status=status, created_by=created_by, limit=limit, offset=offset,
             client=self._api,
         )
 
@@ -1061,6 +1316,16 @@ class _AsyncNamespaceFacadeMixin:
             client=self._api,
         )
 
+    async def patch_change_request_metadata(self, path: Any, *, number: Any = UNSET, title: Any = UNSET, description: Any = UNSET, body: Any = UNSET):
+        """OpenAPI operation ``patch_change_request_metadata``."""
+
+        return await execute_async(
+            "patch_change_request_metadata",
+            _op_patch_change_request_metadata.asyncio_detailed,
+            self._namespace, path, number=number, title=title, description=description, body=body,
+            client=self._api,
+        )
+
     async def propagate_config(self, path: Any, *, version: Any = UNSET):
         """OpenAPI operation ``propagate_config``."""
 
@@ -1068,6 +1333,16 @@ class _AsyncNamespaceFacadeMixin:
             "propagate_config",
             _op_propagate_config.asyncio_detailed,
             self._namespace, path, version=version,
+            client=self._api,
+        )
+
+    async def reject_change_request(self, path: Any, *, number: Any = UNSET, reason: Any = UNSET, body: Any = UNSET):
+        """OpenAPI operation ``reject_change_request``."""
+
+        return await execute_async(
+            "reject_change_request",
+            _op_reject_change_request.asyncio_detailed,
+            self._namespace, path, number=number, reason=reason, body=body,
             client=self._api,
         )
 
@@ -1141,6 +1416,36 @@ class _AsyncNamespaceFacadeMixin:
             client=self._api,
         )
 
+    async def unapprove_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``unapprove_change_request``."""
+
+        return await execute_async(
+            "unapprove_change_request",
+            _op_unapprove_change_request.asyncio_detailed,
+            self._namespace, path, number=number,
+            client=self._api,
+        )
+
+    async def update_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``update_change_request``."""
+
+        return await execute_async(
+            "update_change_request",
+            _op_update_change_request.asyncio_detailed,
+            self._namespace, path, number=number,
+            client=self._api,
+        )
+
+    async def update_change_request_comment(self, path: Any, comment_id: Any, *, number: Any = UNSET, body: Any = UNSET):
+        """OpenAPI operation ``update_change_request_comment``."""
+
+        return await execute_async(
+            "update_change_request_comment",
+            _op_update_change_request_comment.asyncio_detailed,
+            self._namespace, path, comment_id, number=number, body=body,
+            client=self._api,
+        )
+
     async def update_config(self, path: Any, *, content: Any = UNSET, body: Any = UNSET):
         """OpenAPI operation ``update_config``."""
 
@@ -1178,6 +1483,16 @@ class _AsyncNamespaceFacadeMixin:
             "update_template",
             _op_update_template.asyncio_detailed,
             self._namespace, path, content=content, body=body,
+            client=self._api,
+        )
+
+    async def withdraw_change_request(self, path: Any, *, number: Any = UNSET):
+        """OpenAPI operation ``withdraw_change_request``."""
+
+        return await execute_async(
+            "withdraw_change_request",
+            _op_withdraw_change_request.asyncio_detailed,
+            self._namespace, path, number=number,
             client=self._api,
         )
 

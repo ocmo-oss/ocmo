@@ -28,6 +28,15 @@ Webhooks deliver HTTP push notifications to external systems when config events 
 | `lock.updated` | Existing lock replaced |
 | `lock.deleted` | Lock removed |
 | `propagation.triggered` | Manual propagation triggered |
+| `change_request.created` | Change request opened on a config, template, or secret |
+| `change_request.updated` | CR content or metadata updated (`details.update_kind`: `content` or `metadata`) |
+| `change_request.approved` | Approval recorded on an open CR |
+| `change_request.unapproved` | Approval removed |
+| `change_request.rejected` | CR closed without merge (`details.reject_kind`: `user`, `system`, or `withdrawn`) |
+| `change_request.applied` | CR merged; new item version in `details.applied_version` |
+| `change_request.comment.created` | Discussion comment added (not the initial description on create) |
+
+For change request events, `version` in the payload is the CR number (`~N`). `details` includes `node_type`, `number`, `status`, `base_version`, and `title` where applicable.
 
 ---
 

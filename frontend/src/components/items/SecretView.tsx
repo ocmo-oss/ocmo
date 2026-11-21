@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import MonacoEditor from "@monaco-editor/react";
@@ -35,6 +35,7 @@ import { cn } from "../ui/cn";
 import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode, hasEditorContent } from "../../lib/itemEditorMode";
 import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
+import { useItemTabHash } from "../../hooks/useItemTabHash";
 import { EditorFocusSurface, FocusModeToggleButton } from "../editor/focus";
 
 type Tab = "editor" | "history" | "audit";
@@ -108,6 +109,13 @@ export default function SecretView({
   mode?: ItemEditorMode;
 }) {
   const creating = isCreateMode(mode);
+  const itemTabIds = useMemo((): Tab[] => {
+    if (creating) return ["editor"];
+    const ids: Tab[] = ["editor", "history"];
+    if (permissions.canAudit) ids.push("audit");
+    return ids;
+  }, [creating, permissions.canAudit]);
+  const [activeTab, setActiveTab] = useItemTabHash(itemTabIds, "editor");
   const qc = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
@@ -129,7 +137,6 @@ export default function SecretView({
   const monacoTheme = useMonacoEditorTheme();
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const { focusOpen, openFocus, closeFocus } = useEditorFocusMode();
-  const [activeTab, setActiveTab] = useState<Tab>("editor");
   const [placeholderContent, setPlaceholderContent] = useState(
     pickDummySecretContent,
   );

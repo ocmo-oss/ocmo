@@ -24,6 +24,11 @@ const TemplateEditor = lazy(() => import("../components/items/TemplateEditor"));
 const SecretView = lazy(() => import("../components/items/SecretView"));
 const ResolverView = lazy(() => import("../components/items/ResolverView"));
 const FolderView = lazy(() => import("../components/items/FolderView"));
+const ChangeRequestDetailPage = lazy(() =>
+  import("./ChangeRequestDetailPage").then((m) => ({
+    default: m.ChangeRequestDetailPage,
+  })),
+);
 
 function resolveItemType(
   navigateItem: { type: ItemType } | null | undefined,
@@ -38,6 +43,9 @@ export function ItemDetailPage() {
     namespace: string;
     "*": string;
   }>();
+  const crRoute = path?.match(/^(.+)\/change-requests\/(\d+)$/);
+  const isChangeRequestPage = Boolean(crRoute && namespace);
+  const itemPath = crRoute?.[1] ?? path;
   const { versionRef } = useItemVersion();
 
   const {
@@ -45,9 +53,10 @@ export function ItemDetailPage() {
     isLoading: navLoading,
     error: navError,
   } = useQuery({
-    queryKey: ["item-nav", namespace, path],
-    queryFn: ({ signal }) => treeApi.navigate(namespace!, path!, {}, signal),
-    enabled: !!namespace && !!path,
+    queryKey: ["item-nav", namespace, itemPath],
+    queryFn: ({ signal }) =>
+      treeApi.navigate(namespace!, itemPath!, {}, signal),
+    enabled: !!namespace && !!itemPath && !isChangeRequestPage,
     staleTime: 30_000,
     retry: false,
   });
@@ -58,9 +67,9 @@ export function ItemDetailPage() {
 
   const permissions = useItemPermissions(
     namespace!,
-    path ?? "",
+    itemPath ?? "",
     itemType,
-    !!navData && !navError,
+    !!navData && !navError && !isChangeRequestPage,
   );
 
   const {
@@ -68,17 +77,18 @@ export function ItemDetailPage() {
     isLoading: itemLoading,
     error: itemError,
   } = useQuery({
-    queryKey: ["item", namespace, path, versionRef],
+    queryKey: ["item", namespace, itemPath, versionRef],
     queryFn: ({ signal }) =>
       treeApi.get(
         namespace!,
-        path!,
+        itemPath!,
         versionRef ? { version: versionRef } : {},
         signal,
       ),
     enabled:
       !!namespace &&
-      !!path &&
+      !!itemPath &&
+      !isChangeRequestPage &&
       !!navData &&
       permissions.canRead &&
       !permissions.isLoading,
@@ -96,6 +106,18 @@ export function ItemDetailPage() {
         : undefined;
     pushApiError("Failed to load item", itemError, detail);
   }, [itemError]);
+
+  if (isChangeRequestPage && crRoute && namespace) {
+    return (
+      <Suspense fallback={<Skeleton lines={6} className="m-4" />}>
+        <ChangeRequestDetailPage
+          namespace={namespace}
+          path={crRoute[1]}
+          crNumber={Number(crRoute[2])}
+        />
+      </Suspense>
+    );
+  }
 
   if (!path) {
     return <NamespaceWelcome namespace={namespace!} />;

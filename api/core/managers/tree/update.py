@@ -43,6 +43,10 @@ class TreeUpdateMixin:
                 item_version.save()
                 self.item.tags["latest"] = item_version.version
                 content_changed = True
+            if content_changed and self.item.node_type in ("config", "template", "secret"):
+                from ..change_request import ChangeRequestManager
+
+                ChangeRequestManager.on_version_created(self.namespace, self.item)
         return self._finalize_content_update(
             content_changed,
             actor,

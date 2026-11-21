@@ -123,6 +123,9 @@ class SecretManager:
             version.save()
             secret.tags["latest"] = version.version
             secret.save()
+            from .change_request import ChangeRequestManager
+
+            ChangeRequestManager.on_version_created(self.namespace, secret)
 
         self._new_version_num = version.version
         enrich_audit(object_version=version.version)

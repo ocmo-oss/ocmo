@@ -37,6 +37,7 @@ import { cn } from "../ui/cn";
 import type { ItemEditorMode } from "../../lib/itemEditorMode";
 import { isCreateMode } from "../../lib/itemEditorMode";
 import { useEditorFocusMode } from "../../hooks/useEditorFocusMode";
+import { useItemTabHash } from "../../hooks/useItemTabHash";
 import { EditorFocusSurface, FocusModeToggleButton } from "../editor/focus";
 
 type Tab = "editor" | "history" | "audit";
@@ -77,7 +78,13 @@ export default function TemplateEditor({
     canUntag,
     canRemove,
   } = useHistorySelection();
-  const [activeTab, setActiveTab] = useState<Tab>("editor");
+  const itemTabIds = useMemo((): Tab[] => {
+    if (creating) return ["editor"];
+    const ids: Tab[] = ["editor", "history"];
+    if (permissions.canAudit) ids.push("audit");
+    return ids;
+  }, [creating, permissions.canAudit]);
+  const [activeTab, setActiveTab] = useItemTabHash(itemTabIds, "editor");
   const [content, setContent] = useState(item.content ?? "");
   const [isDirty, setIsDirty] = useState(false);
   const [diffPair, setDiffPair] = useState<{ from: string; to: string } | null>(

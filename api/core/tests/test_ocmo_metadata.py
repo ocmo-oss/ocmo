@@ -51,6 +51,20 @@ class OcmoMetadataSchemaTests(TestCase):
                 }
             )
 
+    def test_projected_parameter_does_not_require_body_placeholder(self):
+        doc = (
+            "_ocmo:\n"
+            "  parameters:\n"
+            "    app_name:\n"
+            "      type: projected\n"
+            "      value: .Data.labels.app\n"
+            "      description: Application label\n"
+            "labels:\n"
+            "  app: myapp\n"
+        )
+        ns = create_test_namespace("ocmo-projected-param")
+        TreeManager(ns, "app/projected", auth=None).create_item(doc, "config")
+
     def test_unused_declared_parameter_rejected(self):
         doc = (
             "_ocmo:\n"

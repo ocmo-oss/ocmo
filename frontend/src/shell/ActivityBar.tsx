@@ -12,6 +12,7 @@ import { cn } from "../components/ui/cn";
 import { useNamespacePermissions } from "../hooks/useNamespacePermissions";
 import { useLockPermissions } from "../hooks/useLockPermissions";
 import { permissionsConfigPath } from "../lib/builtinPaths";
+import { parseChangeRequestRoute } from "../lib/changeRequestRoutes";
 
 function isNamespaceRoute(pathname: string, segment: string): boolean {
   return new RegExp(`^/ns/[^/]+/${segment}(?:/|$)`).test(pathname);
@@ -102,6 +103,8 @@ export function ActivityBar() {
     lockCanRead: lockPermissions.canRead,
   };
 
+  const changeRequestBack = parseChangeRequestRoute(pathname);
+
   const visibleAreas = AREAS.filter((area) => {
     if (nsPermissions.isLoading || !lockPermissions.isReady) {
       return area.id === "configs";
@@ -116,12 +119,20 @@ export function ActivityBar() {
     >
       {visibleAreas.map((area) => {
         const active = area.isActive ? area.isActive(pathname) : undefined;
+        const to =
+          area.id === "configs" && changeRequestBack
+            ? `/ns/${changeRequestBack.namespace}/configs/${changeRequestBack.itemPath}`
+            : area.path(namespace);
 
         return (
           <NavLink
             key={area.id}
-            to={area.path(namespace)}
-            title={area.label}
+            to={to}
+            title={
+              area.id === "configs" && changeRequestBack
+                ? "Back to resource"
+                : area.label
+            }
             end={!area.isActive}
             className={({ isActive }) =>
               cn(

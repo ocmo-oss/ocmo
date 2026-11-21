@@ -71,6 +71,13 @@ webhooks:
       - lock.updated
       - lock.deleted
       - propagation.triggered
+      - change_request.created
+      - change_request.updated
+      - change_request.approved
+      - change_request.unapproved
+      - change_request.rejected
+      - change_request.applied
+      - change_request.comment.created
     signature_header: X-Hook-Sig
     signature_key: "test-hmac-key-1234"
     payload:
@@ -983,3 +990,120 @@ webhooks:
             events = [json.loads(c.kwargs.get("data") or c[1]["data"])["event"] for c in mock_post.call_args_list]
             self.assertIn("config.resolved", events)
             self.assertNotIn("secret.resolved", events)
+
+
+@override_settings(OCMO_MASTER_KEY=_TEST_MASTER_KEY)
+class ChangeRequestWebhookIntegrationTests(TestCase):
+    """Change request manager hooks deliver configured webhook events."""
+
+    def setUp(self):
+        WebhookManager._config_cache.clear()
+        self.client = Client()
+        self.ns = _create_full_test_namespace("wh-cr-test")
+        self.ns.change_requests_enabled = True
+        self.ns.save(update_fields=["change_requests_enabled"])
+        TreeManager(self.ns, "_webhooks", auth=None).update_item(_WEBHOOKS_CFG)
+        WebhookManager._config_cache.clear()
+        TreeManager(self.ns, "app/cfg", auth=None).create_item("key: v1\n", "config")
+
+    def tearDown(self):
+        WebhookManager._config_cache.clear()
+
+    @staticmethod
+    def _payloads(mock_post) -> list[dict]:
+        return [json.loads(c.kwargs.get("data") or c[1]["data"]) for c in mock_post.call_args_list]
+
+    def test_change_request_created_fires_event(self):
+        with patch("requests.post") as mock_post:
+            mock_post.return_value = MagicMock(ok=True, status_code=200)
+            with self.captureOnCommitCallbacks(execute=True):
+                resp = self.client.post(
+                    f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?title=Hook+CR",
+                    data="key: cr\n",
+                    content_type="text/plain",
+                )
+            self.assertEqual(resp.status_code, 201, resp.content)
+            events = [p["event"] for p in self._payloads(mock_post)]
+            self.assertIn("change_request.created", events)
+            created = next(p for p in self._payloads(mock_post) if p["event"] == "change_request.created")
+            self.assertEqual(created["path"], "app/cfg")
+            self.assertEqual(created["version"], 1)
+            self.assertEqual(created["details"]["node_type"], "config")
+
+    def test_change_request_updated_content_has_discriminator(self):
+        self.client.post(
+            f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?title=Hook+CR",
+            data="key: cr\n",
+            content_type="text/plain",
+        )
+        WebhookManager._config_cache.clear()
+        with patch("requests.post") as mock_post:
+            mock_post.return_value = MagicMock(ok=True, status_code=200)
+            with self.captureOnCommitCallbacks(execute=True):
+                resp = self.client.put(
+                    f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?number=1",
+                    data="key: cr-updated\n",
+                    content_type="text/plain",
+                )
+            self.assertEqual(resp.status_code, 200, resp.content)
+            updated = next(p for p in self._payloads(mock_post) if p["event"] == "change_request.updated")
+            self.assertEqual(updated["details"]["update_kind"], "content")
+
+    def test_change_request_system_reject_on_new_version(self):
+        self.client.post(
+            f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?title=Hook+CR",
+            data="key: cr\n",
+            content_type="text/plain",
+        )
+        WebhookManager._config_cache.clear()
+        with patch("requests.post") as mock_post:
+            mock_post.return_value = MagicMock(ok=True, status_code=200)
+            with self.captureOnCommitCallbacks(execute=True):
+                resp = self.client.put(
+                    f"/api/v1/ns/{self.ns.name}/~config/~update/app/cfg",
+                    data=b"key: v2\n",
+                    content_type="application/yaml",
+                )
+            self.assertEqual(resp.status_code, 200, resp.content)
+            rejected = [p for p in self._payloads(mock_post) if p["event"] == "change_request.rejected"]
+            self.assertEqual(len(rejected), 1)
+            self.assertEqual(rejected[0]["details"]["reject_kind"], "system")
+            self.assertEqual(rejected[0]["actor"]["type"], "system")
+
+    def test_change_request_withdraw_uses_rejected_event(self):
+        self.client.post(
+            f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?title=Hook+CR",
+            data="key: cr\n",
+            content_type="text/plain",
+        )
+        WebhookManager._config_cache.clear()
+        with patch("requests.post") as mock_post:
+            mock_post.return_value = MagicMock(ok=True, status_code=200)
+            with self.captureOnCommitCallbacks(execute=True):
+                resp = self.client.post(
+                    f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg/~withdraw/?number=1",
+                )
+            self.assertEqual(resp.status_code, 200, resp.content)
+            evt = next(p for p in self._payloads(mock_post) if p["event"] == "change_request.rejected")
+            self.assertEqual(evt["details"]["reject_kind"], "withdrawn")
+
+    def test_change_request_comment_created(self):
+        self.client.post(
+            f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?title=Hook+CR",
+            data="key: cr\n",
+            content_type="text/plain",
+        )
+        WebhookManager._config_cache.clear()
+        with patch("requests.post") as mock_post:
+            mock_post.return_value = MagicMock(ok=True, status_code=200)
+            with self.captureOnCommitCallbacks(execute=True):
+                resp = self.client.post(
+                    f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg/~comments/?number=1",
+                    data=json.dumps({"body": "Looks good"}),
+                    content_type="application/json",
+                )
+            self.assertEqual(resp.status_code, 201, resp.content)
+            events = [p["event"] for p in self._payloads(mock_post)]
+            self.assertIn("change_request.comment.created", events)
+            comment_evt = next(p for p in self._payloads(mock_post) if p["event"] == "change_request.comment.created")
+            self.assertEqual(comment_evt["details"]["comment_id"], resp.json()["id"])
