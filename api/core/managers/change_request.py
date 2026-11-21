@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal
@@ -41,8 +40,9 @@ from ..shortcuts import (
     validate_path_characters,
 )
 from ..utils.change_request_content import (
+    change_request_cache_stamp,
     is_substantive_content_change,
-    rewrite_cr_ref_in_content,
+    rewrite_cr_refs_in_body,
 )
 from .auth import AuthManager
 from .crypto import CryptoManager
@@ -225,6 +225,19 @@ class ChangeRequestManager:
         return _CrVersionView(version=number, data=self._plaintext_content(cr))
 
     @classmethod
+    def cache_stamp_for(cls, item: TreeItem, version_ref: str) -> str | None:
+        """Return a resolve-cache stamp for ``path@~N``, or None when not a live CR ref."""
+        if not is_change_request_ref(version_ref):
+            return None
+        number = change_request_number_from_ref(version_ref)
+        cr = ChangeRequest.objects.filter(tree_item_id=item.pk, number=number).first()
+        if cr is None:
+            return None
+        mgr = cls(item.namespace, item.path.strip("/"), auth=None)
+        plaintext = mgr._plaintext_content(cr)
+        return change_request_cache_stamp(cr.updated_at, plaintext)
+
+    @classmethod
     def on_version_created(cls, namespace: Namespace, item: TreeItem) -> None:
         if not namespace.change_requests_auto_reject_on_new_version:
             return
@@ -276,26 +289,27 @@ class ChangeRequestManager:
     ) -> list[int]:
         """Rewrite ``path@~N`` → ``path@V`` in open CRs; return affected CR numbers."""
         path = applied_item.path.strip("/")
-        pattern = re.compile(
-            rf"((?:\.\./)*{re.escape(path)}|{re.escape(path)})@~{applied_cr_number}\b",
-        )
         affected: list[int] = []
         open_crs = ChangeRequest.objects.filter(
             tree_item__namespace=namespace,
             status=ChangeRequest.STATUS_OPEN,
         ).select_related("tree_item")
+        mgr = cls(namespace, path, auth=None)
         for cr in open_crs:
-            if cr.tree_item.node_type != "secret":
-                body = cr.content or ""
-            elif cr.content_encrypted:
-                body = CryptoManager(namespace).decrypt_secret(cr.content_encrypted) or ""
-            else:
-                body = ""
-            if not pattern.search(body):
+            peer_item = cr.tree_item
+            body = mgr._plaintext_content(cr)
+            new_body = rewrite_cr_refs_in_body(
+                body,
+                node_type=peer_item.node_type,
+                item_path=peer_item.path,
+                target_resolved_path=path,
+                cr_number=applied_cr_number,
+                applied_version=applied_version,
+            )
+            if new_body == body:
                 continue
-            new_body = rewrite_cr_ref_in_content(body, path, applied_cr_number, applied_version)
-            mgr = cls(namespace, cr.tree_item.path, auth=None)
-            mgr._store_content(cr.tree_item, new_body, cr)
+            peer_mgr = cls(namespace, peer_item.path, auth=None)
+            peer_mgr._store_content(peer_item, new_body, cr)
             cr.save(update_fields=["content", "content_encrypted", "updated_at"])
             affected.append(cr.number)
         return affected
@@ -429,10 +443,15 @@ class ChangeRequestManager:
         actor = AuthManager.resolve_actor_identity(self.auth)
         body = self._plaintext_content(cr)
         has_cr_refs = self.body_has_cr_refs(item, body) if cr.status == ChangeRequest.STATUS_OPEN else False
+        identical_to_latest = any(
+            issue == "Content is identical to the latest published version." for issue in self._collect_issues(cr, item)
+        )
         can_apply = (
             cr.status == ChangeRequest.STATUS_OPEN
             and approval_count >= required
             and not has_cr_refs
+            and not identical_to_latest
+            and bool(body.strip())
             and self._permissions().check_tree(self._write_perm(item.node_type), self.path)
         )
         already_approved = cr.approvals.filter(approver=actor).exists()
@@ -628,6 +647,7 @@ class ChangeRequestManager:
         title = title.strip()
         if not title:
             raise ChangeRequestConflict("Title is required")
+        description = description.strip()
         with transaction.atomic():
             cr = ChangeRequest(
                 tree_item=item,
@@ -856,33 +876,45 @@ class ChangeRequestManager:
         cr = ChangeRequest.objects.filter(tree_item=item, number=number).select_related("tree_item").first()
         if cr is None:
             raise ChangeRequestNotFound(f"Change request ~{number} not found")
-        if cr.status != ChangeRequest.STATUS_OPEN:
-            raise ChangeRequestNotApplicable("Only open change requests can be applied")
         body = self._plaintext_content(cr)
         if self.body_has_cr_refs(item, body):
             raise ChangeRequestNotApplicable("Cannot apply a change request that references other change requests")
         required = self.namespace.change_requests_required_approvals
-        if cr.approvals.count() < required:
-            raise ChangeRequestNotApplicable("Insufficient approvals to apply this change request")
-        tm = TreeManager(self.namespace, self.path, auth=self.auth)
-        last_ver = item.versions.order_by("-version").first()
-        if item.node_type == "secret" and last_ver and last_ver.encrypted_data:
-            existing = CryptoManager(self.namespace).decrypt_secret(last_ver.encrypted_data)
-            if existing == body:
-                raise ChangeRequestConflict("Change request content is identical to the latest version")
-        elif last_ver and getattr(last_ver, "data", None) == body:
-            raise ChangeRequestConflict("Change request content is identical to the latest version")
         with transaction.atomic():
+            cr = ChangeRequest.objects.select_for_update().get(pk=cr.pk)
+            if cr.status != ChangeRequest.STATUS_OPEN:
+                raise ChangeRequestNotApplicable("Only open change requests can be applied")
+            if cr.approvals.count() < required:
+                raise ChangeRequestNotApplicable("Insufficient approvals to apply this change request")
+            body = self._plaintext_content(cr)
+            if not body.strip():
+                raise ChangeRequestNotApplicable("Change request content is empty")
+            last_ver = item.versions.order_by("-version").first()
+            if item.node_type == "secret" and last_ver and last_ver.encrypted_data:
+                existing = CryptoManager(self.namespace).decrypt_secret(last_ver.encrypted_data)
+                if existing == body:
+                    raise ChangeRequestConflict("Change request content is identical to the latest version")
+            elif last_ver and getattr(last_ver, "data", None) == body:
+                raise ChangeRequestConflict("Change request content is identical to the latest version")
+            prev_latest = self._latest_version_number(item)
+            tm = TreeManager(self.namespace, self.path, auth=self.auth)
             if item.node_type == "config":
-                tm.update_configs(body)
+                tm.update_configs(body, skip_change_request_auto_reject=True)
             elif item.node_type == "template":
-                tm.update_templates(body)
+                tm.update_templates(body, skip_change_request_auto_reject=True)
             elif item.node_type == "secret":
                 from .secret import SecretManager
 
-                SecretManager(self.namespace, self.path, secret_obj=item, auth=self.auth).update(body)
+                SecretManager(
+                    self.namespace,
+                    self.path,
+                    secret_obj=item,
+                    auth=self.auth,
+                ).update(body, skip_change_request_auto_reject=True)
             item.refresh_from_db()
             new_version = self._latest_version_number(item)
+            if new_version == prev_latest:
+                raise ChangeRequestConflict("Change request content did not produce a new version")
             cr.status = ChangeRequest.STATUS_APPLIED
             cr.applied_version = new_version
             cr.applied_by = AuthManager.resolve_actor_identity(self.auth)

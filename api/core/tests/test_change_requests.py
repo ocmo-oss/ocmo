@@ -67,7 +67,12 @@ class ChangeRequestTestCase(TestCase):
         PermissionsCompiler._policy_cache.clear()
         PermissionsCompiler._global_cache.clear()
         self.client = Client()
-        self.ns = Namespace.objects.create(name="cr-test-ns", description="test", change_requests_enabled=True)
+        self.ns = Namespace.objects.create(
+            name="cr-test-ns",
+            description="test",
+            change_requests_enabled=True,
+            change_requests_max_open_per_user_per_resource=5,
+        )
         init_namespace_special_configs(self.ns)
         _grant_global(self.ns.name)
         TreeManager(self.ns, "_permissions", auth=None).update_item(_POLICIES)
@@ -447,3 +452,78 @@ class ChangeRequestTestCase(TestCase):
                 content_type="application/json",
             )
         self.assertEqual(patch_resp.status_code, 403, patch_resp.content)
+
+    def test_apply_leaves_sibling_open_cr_on_same_item(self):
+        with self._patch_auth("reader@example.com"):
+            self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?title=First",
+                data="key: first\n",
+                content_type="text/plain",
+            )
+            self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?title=Second",
+                data="key: second\n",
+                content_type="text/plain",
+            )
+        with self._patch_auth("writer@example.com"):
+            self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg/~approve/?number=1",
+            )
+            apply_resp = self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg/~apply/?number=1",
+            )
+            sibling = self.client.get(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?number=2",
+            )
+        self.assertEqual(apply_resp.status_code, 200, apply_resp.content)
+        self.assertEqual(apply_resp.json()["status"], "applied")
+        self.assertEqual(sibling.status_code, 200, sibling.content)
+        self.assertEqual(sibling.json()["status"], "open")
+
+    def test_apply_empty_content_is_rejected(self):
+        TreeManager(self.ns, "app/empty", auth=None).create_item("key: has-content\n", "config")
+        with self._patch_auth("reader@example.com"):
+            create = self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/empty?title=Empty",
+                data="",
+                content_type="text/plain",
+            )
+            self.assertEqual(create.status_code, 201, create.content)
+        with self._patch_auth("writer@example.com"):
+            self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/empty/~approve/?number=1",
+            )
+            resp = self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/empty/~apply/?number=1",
+            )
+        self.assertEqual(resp.status_code, 409, resp.content)
+
+    def test_apply_rewrites_relative_peer_cr_ref(self):
+        TreeManager(self.ns, "app/deep/peer", auth=None).create_item("key: peer-base\n", "config")
+        with self._patch_auth("reader@example.com"):
+            self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg?title=Target",
+                data="key: target\n",
+                content_type="text/plain",
+            )
+            peer_body = "_ocmo:\n  extend:\n    configs:\n      - ../cfg@~1\nkey: peer\n"
+            peer_create = self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/deep/peer?title=Peer",
+                data=peer_body,
+                content_type="text/plain",
+            )
+            self.assertEqual(peer_create.status_code, 201, peer_create.content)
+        with self._patch_auth("writer@example.com"):
+            self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg/~approve/?number=1",
+            )
+            self.client.post(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/cfg/~apply/?number=1",
+            )
+            peer = self.client.get(
+                f"/api/v1/ns/{self.ns.name}/~change-requests/app/deep/peer?number=1&include_content=true",
+            )
+        self.assertEqual(peer.status_code, 200, peer.content)
+        content = peer.json()["content"]
+        self.assertIn("../cfg@2", content)
+        self.assertNotIn("@~1", content)

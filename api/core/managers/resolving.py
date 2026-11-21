@@ -120,6 +120,7 @@ class CacheParticipant:
     ref: str  # original version reference (e.g. "latest", "stable", "3")
     version: int  # resolved version number
     from_cache: bool = False
+    cr_stamp: str | None = None  # change-request draft fingerprint when ref is ``~N``
 
 
 @dataclass
@@ -352,12 +353,21 @@ class ResolvePipelineManager:
             )
 
         # Record this config as a cache participant.
+        from ..models import Config
+        from .change_request import ChangeRequestManager
+
+        cr_stamp = (
+            ChangeRequestManager.cache_stamp_for(self.config_obj, self.requested_version)
+            if isinstance(self.config_obj, Config)
+            else None
+        )
         self._participants.append(
             CacheParticipant(
                 kind="config",
                 path=self.config_obj.path,
                 ref=self.requested_version,
                 version=self.version_obj.version,
+                cr_stamp=cr_stamp,
             )
         )
 
@@ -382,12 +392,19 @@ class ResolvePipelineManager:
 
         # Record resolved secrets as cache participants and add to trace.
         for sec in params_mgr.resolved_secrets:
+            from .change_request import ChangeRequestManager
+
+            secret_item = TreeManager(self.namespace, sec["path"], auth=None).get_item("secret")
+            cr_stamp = (
+                ChangeRequestManager.cache_stamp_for(secret_item, sec["ref"]) if secret_item is not None else None
+            )
             self._participants.append(
                 CacheParticipant(
                     kind="secret",
                     path=sec["path"],
                     ref=sec["ref"],
                     version=sec["version"],
+                    cr_stamp=cr_stamp,
                 )
             )
 
@@ -705,12 +722,17 @@ class ResolvePipelineManager:
             resolved_path = resolve_relative_path(self.base_folder, path)
             version_obj = self.load_render_template(resolved_path, version)
             trace[f"{resolved_path}@{version_obj.version}"] = {}
+            tmpl_item = TreeManager(self.namespace, resolved_path, auth=None).get_item("template")
+            from .change_request import ChangeRequestManager
+
+            cr_stamp = ChangeRequestManager.cache_stamp_for(tmpl_item, version) if tmpl_item is not None else None
             self._participants.append(
                 CacheParticipant(
                     kind="template",
                     path=resolved_path,
                     ref=version,
                     version=version_obj.version,
+                    cr_stamp=cr_stamp,
                 )
             )
             templates.append((ref, resolved_path, version_obj.version, version_obj.data))

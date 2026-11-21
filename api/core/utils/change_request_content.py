@@ -2,9 +2,16 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
+from datetime import datetime
 
-from ..shortcuts import is_change_request_ref, parse_ref
+from ..shortcuts import (
+    change_request_number_from_ref,
+    is_change_request_ref,
+    parse_ref,
+    resolve_relative_path,
+)
 
 # Match @~N at end of a reference segment (after path)
 _CR_REF_SUFFIX_RE = re.compile(r"@~([1-9][0-9]*)")
@@ -26,15 +33,56 @@ def is_substantive_content_change(old_body: str, new_body: str) -> bool:
     return True
 
 
-def rewrite_cr_ref_in_content(content: str, resource_path: str, cr_number: int, version: int) -> str:
-    """Replace references to ``resource_path@~cr_number`` with ``resource_path@version``."""
+def change_request_cache_stamp(updated_at: datetime, content_plaintext: str) -> str:
+    """Fingerprint change-request draft content for resolve-cache keys and revalidation."""
+    digest = hashlib.sha256(content_plaintext.encode("utf-8")).hexdigest()[:16]
+    ts = updated_at.timestamp() if updated_at else 0.0
+    return f"{ts:.6f}:{digest}"
 
-    path = resource_path.strip("/")
-    # References may be relative; match @~N when preceded by path ending
-    pattern = re.compile(
-        rf"((?:\.\./)*{re.escape(path)}|{re.escape(path)})@~{cr_number}\b",
-    )
-    return pattern.sub(lambda m: f"{m.group(1)}@{version}", content)
+
+def rewrite_cr_refs_in_body(
+    content: str,
+    *,
+    node_type: str,
+    item_path: str,
+    target_resolved_path: str,
+    cr_number: int,
+    applied_version: int,
+) -> str:
+    """Replace ``target@~cr_number`` refs (as spelled in metadata) with ``target@applied_version``."""
+
+    target = target_resolved_path.strip("/")
+    if node_type != "config":
+        return content
+    from ..managers.config_validation import ConfigValidationManager
+    from ..managers.tree.config_ops import _reference_strings_from_metadata
+
+    validator = ConfigValidationManager(config_path=item_path, data_yaml=content)
+    validator.parse()
+    metadata = validator.metadata
+    if not metadata.model_dump(exclude_none=True):
+        return content
+    base_folder = "/".join(item_path.strip("/").split("/")[:-1])
+    for ref_str in _reference_strings_from_metadata(metadata):
+        raw = ref_str.strip()
+        if not raw:
+            continue
+        suffix = ""
+        if raw.endswith("?"):
+            suffix = "?"
+            raw = raw[:-1].strip()
+        path_part, version_ref = parse_ref(raw)
+        resolved = resolve_relative_path(base_folder, path_part).strip("/")
+        if resolved != target:
+            continue
+        if not is_change_request_ref(version_ref):
+            continue
+        if change_request_number_from_ref(version_ref) != cr_number:
+            continue
+        new_ref = f"{path_part}@{applied_version}{suffix}"
+        if new_ref != ref_str:
+            content = content.replace(ref_str, new_ref, 1)
+    return content
 
 
 def collect_cr_refs_in_metadata_paths(

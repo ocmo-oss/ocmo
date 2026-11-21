@@ -42,6 +42,16 @@ class SecretManager:
     def resolve_plaintext_at_version(self, version_ref: str) -> tuple[int, str]:
         """Return (version_number, plaintext) for the secret at this manager's path."""
         secret = self.get_or_raise()
+        from ..shortcuts import is_change_request_ref
+
+        if is_change_request_ref(version_ref):
+            version_obj = TreeManager.resolve_version(secret, version_ref)
+            if not version_obj.encrypted_data:
+                raise SecretParameterError(f"Secret {self.path}@{version_ref!r} not available")
+            plaintext = CryptoManager(self.namespace).decrypt_secret(version_obj.encrypted_data)
+            if plaintext is None:
+                raise SecretParameterError(f"Secret {self.path}@{version_ref!r} not available")
+            return version_obj.version, plaintext
         version_number = secret.tags.get(version_ref)
         if version_number is None and version_ref.isdigit():
             version_number = int(version_ref)
@@ -102,7 +112,7 @@ class SecretManager:
     )
     @audit("secret", operation="Update item")
     @require_permissions(PermCheck("secret:write"))
-    def update(self, plaintext: str) -> Secret:
+    def update(self, plaintext: str, *, skip_change_request_auto_reject: bool = False) -> Secret:
         self._new_version_num = None
         self._validate_yaml(plaintext)
         LockManager.ensure_path_writable(self.namespace, self.path)
@@ -123,9 +133,10 @@ class SecretManager:
             version.save()
             secret.tags["latest"] = version.version
             secret.save()
-            from .change_request import ChangeRequestManager
+            if not skip_change_request_auto_reject:
+                from .change_request import ChangeRequestManager
 
-            ChangeRequestManager.on_version_created(self.namespace, secret)
+                ChangeRequestManager.on_version_created(self.namespace, secret)
 
         self._new_version_num = version.version
         enrich_audit(object_version=version.version)

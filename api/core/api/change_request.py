@@ -211,7 +211,7 @@ def list_change_request_comments(
     namespace: str,
     path: str,
     number: int = Query(..., ge=1),
-    limit: int = Query(100, ge=1),
+    limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
     auth = AuthManager.from_request(request)
